@@ -37,7 +37,6 @@ namespace storm {
                 formulas.clear();
                 globalBooleanVariables.clear();
                 globalIntegerVariables.clear();
-                moduleToIndexMap.clear();
                 modules.clear();
                 rewardModels.clear();
                 labels.clear();
