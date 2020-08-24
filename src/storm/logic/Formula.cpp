@@ -192,9 +192,8 @@ namespace storm {
             return checker.conformsToSpecification(*this, fragment);
         }
 
-        FormulaInformation Formula::info() const {
-            FormulaInformationVisitor visitor;
-            return visitor.getInformation(*this);
+        FormulaInformation Formula::info(bool recurseIntoOperators) const {
+            return FormulaInformationVisitor::getInformation(*this, recurseIntoOperators);
         }
 
         std::shared_ptr<Formula const> Formula::getTrueFormula() {
