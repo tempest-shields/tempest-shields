@@ -249,11 +249,17 @@ namespace storm {
         // Flat PCTL.
         FragmentSpecification flatPctl();
 
-        // rPATL for SMGs
-        FragmentSpecification rpatl();
+        // PCTL*
+        FragmentSpecification pctlstar();
 
         // PCTL + cumulative, instantaneous, reachability and long-run rewards.
         FragmentSpecification prctl();
+
+        // PCTL* + cumulative, instantaneous, reachability and long-run rewards.
+        FragmentSpecification prctlstar();
+
+        // rPATL for SMGs
+        FragmentSpecification rpatl();
 
         // Regular CSL.
         FragmentSpecification csl();

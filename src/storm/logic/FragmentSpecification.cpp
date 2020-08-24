@@ -45,12 +45,52 @@ namespace storm {
             return pctl;
         }
 
+        FragmentSpecification pctlstar() {
+            FragmentSpecification pctlstar = pctl();
+
+            pctlstar.setBinaryBooleanPathFormulasAllowed(true);
+            pctlstar.setUnaryBooleanPathFormulasAllowed(true);
+            pctlstar.setNestedOperatorsAllowed(true);
+            pctlstar.setNestedPathFormulasAllowed(true);
+
+            return pctlstar;
+        }
+
         FragmentSpecification flatPctl() {
             FragmentSpecification flatPctl = pctl();
 
             flatPctl.setNestedOperatorsAllowed(false);
 
             return flatPctl;
+        }
+
+        FragmentSpecification prctl() {
+            FragmentSpecification prctl = pctl();
+
+            prctl.setRewardOperatorsAllowed(true);
+            prctl.setCumulativeRewardFormulasAllowed(true);
+            prctl.setInstantaneousFormulasAllowed(true);
+            prctl.setReachabilityRewardFormulasAllowed(true);
+            prctl.setLongRunAverageOperatorsAllowed(true);
+            prctl.setStepBoundedCumulativeRewardFormulasAllowed(true);
+            prctl.setTimeBoundedCumulativeRewardFormulasAllowed(true);
+
+            return prctl;
+        }
+
+        FragmentSpecification prctlstar() {
+            FragmentSpecification prctlstar = pctlstar();
+
+            prctlstar.setRewardOperatorsAllowed(true);
+            prctlstar.setCumulativeRewardFormulasAllowed(true);
+            prctlstar.setInstantaneousFormulasAllowed(true);
+            prctlstar.setReachabilityRewardFormulasAllowed(true);
+            prctlstar.setLongRunAverageOperatorsAllowed(true);
+            prctlstar.setStepBoundedCumulativeRewardFormulasAllowed(true);
+            prctlstar.setTimeBoundedCumulativeRewardFormulasAllowed(true);
+
+            return prctlstar;
+
         }
 
         FragmentSpecification rpatl() {
@@ -71,20 +111,6 @@ namespace storm {
             rpatl.setBoundedGloballyFormulasAllowed(true);
 
             return rpatl;
-        }
-
-        FragmentSpecification prctl() {
-            FragmentSpecification prctl = pctl();
-
-            prctl.setRewardOperatorsAllowed(true);
-            prctl.setCumulativeRewardFormulasAllowed(true);
-            prctl.setInstantaneousFormulasAllowed(true);
-            prctl.setReachabilityRewardFormulasAllowed(true);
-            prctl.setLongRunAverageOperatorsAllowed(true);
-            prctl.setStepBoundedCumulativeRewardFormulasAllowed(true);
-            prctl.setTimeBoundedCumulativeRewardFormulasAllowed(true);
-
-            return prctl;
         }
 
         FragmentSpecification csl() {
