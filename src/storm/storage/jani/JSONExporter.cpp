@@ -208,6 +208,14 @@ namespace storm {
             opDecl["right"] = anyToJson(f.getRightSubformula().accept(*this, data));
             return opDecl;
         }
+        boost::any FormulaToJaniJson::visit(storm::logic::BinaryBooleanPathFormula const& f, boost::any const& data) const{
+            ExportJsonType opDecl;
+            storm::logic::BinaryBooleanPathFormula::OperatorType op = f.getOperator();
+            opDecl["op"] = op == storm::logic::BinaryBooleanPathFormula::OperatorType::And ? "∧" : "∨";
+            opDecl["left"] = boost::any_cast<ExportJsonType>(f.getLeftSubformula().accept(*this, data));
+            opDecl["right"] = boost::any_cast<ExportJsonType>(f.getRightSubformula().accept(*this, data));
+            return opDecl;
+        }
         boost::any FormulaToJaniJson::visit(storm::logic::BooleanLiteralFormula const& f, boost::any const&) const {
             ExportJsonType opDecl(f.isTrueFormula() ? true : false);
             return opDecl;
@@ -585,6 +593,15 @@ namespace storm {
             assert(op == storm::logic::UnaryBooleanStateFormula::OperatorType::Not);
             opDecl["op"] = "¬";
             opDecl["exp"] = anyToJson(f.getSubformula().accept(*this, data));
+            return opDecl;
+        }
+
+        boost::any FormulaToJaniJson::visit(storm::logic::UnaryBooleanPathFormula const& f, boost::any const& data) const {
+            ExportJsonType opDecl;
+            storm::logic::UnaryBooleanPathFormula::OperatorType op = f.getOperator();
+            assert(op == storm::logic::UnaryBooleanPathFormula::OperatorType::Not);
+            opDecl["op"] = "¬";
+            opDecl["exp"] = boost::any_cast<ExportJsonType>(f.getSubformula().accept(*this, data));
             return opDecl;
         }
 

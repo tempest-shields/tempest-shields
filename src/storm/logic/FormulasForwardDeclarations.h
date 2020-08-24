@@ -8,6 +8,7 @@ namespace storm {
         class AtomicExpressionFormula;
         class AtomicLabelFormula;
         class BinaryBooleanStateFormula;
+        class BinaryBooleanPathFormula;
         class BinaryPathFormula;
         class BinaryStateFormula;
         class BooleanLiteralFormula;
@@ -33,6 +34,7 @@ namespace storm {
         class StateFormula;
         class TotalRewardFormula;
         class UnaryBooleanStateFormula;
+        class UnaryBooleanPathFormula;
         class UnaryPathFormula;
         class UnaryStateFormula;
         class UntilFormula;

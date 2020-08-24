@@ -70,8 +70,14 @@ namespace storm {
             bool areUnaryBooleanStateFormulasAllowed() const;
             FragmentSpecification& setUnaryBooleanStateFormulasAllowed(bool newValue);
 
+            bool areUnaryBooleanPathFormulasAllowed() const;
+            FragmentSpecification& setUnaryBooleanPathFormulasAllowed(bool newValue);
+
             bool areBinaryBooleanStateFormulasAllowed() const;
             FragmentSpecification& setBinaryBooleanStateFormulasAllowed(bool newValue);
+
+            bool areBinaryBooleanPathFormulasAllowed() const;
+            FragmentSpecification& setBinaryBooleanPathFormulasAllowed(bool newValue);
 
             bool areCumulativeRewardFormulasAllowed() const;
             FragmentSpecification& setCumulativeRewardFormulasAllowed(bool newValue);
@@ -190,6 +196,8 @@ namespace storm {
             bool booleanLiteralFormula;
             bool unaryBooleanStateFormula;
             bool binaryBooleanStateFormula;
+            bool unaryBooleanPathFormula;
+            bool binaryBooleanPathFormula;
 
             bool cumulativeRewardFormula;
             bool instantaneousRewardFormula;
