@@ -9,12 +9,12 @@
 #include "storm/solver/OptimizationDirection.h"
 
 namespace storm {
-    
+
     class Environment;
-    
+
     namespace modelchecker {
         class CheckResult;
-        
+
         enum class RewardType { Expectation, Variance };
 
         template<typename ModelType>
@@ -39,7 +39,7 @@ namespace storm {
              * @return True iff the model checker can check the given task.
              */
             virtual bool canHandle(CheckTask<storm::logic::Formula, ValueType> const& checkTask) const = 0;
-            
+
             /*!
              * Checks the provided formula.
              *
@@ -47,13 +47,13 @@ namespace storm {
              * @return The verification result.
              */
             virtual std::unique_ptr<CheckResult> check(Environment const& env, CheckTask<storm::logic::Formula, ValueType> const& checkTask);
-            
+
             /*!
              * Checks the provided formula with the default environment.
              * TODO This function is obsolete as soon as the Environment is fully integrated.
              */
             std::unique_ptr<CheckResult> check(CheckTask<storm::logic::Formula, ValueType> const& checkTask);
-            
+
             // The methods to compute probabilities for path formulas.
             virtual std::unique_ptr<CheckResult> computeProbabilities(Environment const& env, CheckTask<storm::logic::Formula, ValueType> const& checkTask);
             virtual std::unique_ptr<CheckResult> computeConditionalProbabilities(Environment const& env, CheckTask<storm::logic::ConditionalFormula, ValueType> const& checkTask);
@@ -63,6 +63,7 @@ namespace storm {
             virtual std::unique_ptr<CheckResult> computeGloballyProbabilities(Environment const& env, CheckTask<storm::logic::GloballyFormula, ValueType> const& checkTask);
             virtual std::unique_ptr<CheckResult> computeNextProbabilities(Environment const& env, CheckTask<storm::logic::NextFormula, ValueType> const& checkTask);
             virtual std::unique_ptr<CheckResult> computeUntilProbabilities(Environment const& env, CheckTask<storm::logic::UntilFormula, ValueType> const& checkTask);
+            virtual std::unique_ptr<CheckResult> computeHOAPathProbabilities(Environment const& env, CheckTask<storm::logic::HOAPathFormula, ValueType> const& checkTask);
 
             // The methods to compute the rewards for path formulas.
             virtual std::unique_ptr<CheckResult> computeRewards(Environment const& env, storm::logic::RewardMeasureType rewardMeasureType, CheckTask<storm::logic::Formula, ValueType> const& checkTask);
@@ -72,12 +73,12 @@ namespace storm {
             virtual std::unique_ptr<CheckResult> computeReachabilityRewards(Environment const& env, storm::logic::RewardMeasureType rewardMeasureType, CheckTask<storm::logic::EventuallyFormula, ValueType> const& checkTask);
             virtual std::unique_ptr<CheckResult> computeTotalRewards(Environment const& env, storm::logic::RewardMeasureType rewardMeasureType, CheckTask<storm::logic::TotalRewardFormula, ValueType> const& checkTask);
             virtual std::unique_ptr<CheckResult> computeLongRunAverageRewards(Environment const& env, storm::logic::RewardMeasureType rewardMeasureType, CheckTask<storm::logic::LongRunAverageRewardFormula, ValueType> const& checkTask);
-            
+
             // The methods to compute the long-run average probabilities and timing measures.
             virtual std::unique_ptr<CheckResult> computeLongRunAverageProbabilities(Environment const& env, CheckTask<storm::logic::StateFormula, ValueType> const& checkTask);
             virtual std::unique_ptr<CheckResult> computeTimes(Environment const& env, storm::logic::RewardMeasureType rewardMeasureType, CheckTask<storm::logic::Formula, ValueType> const& checkTask);
             virtual std::unique_ptr<CheckResult> computeReachabilityTimes(Environment const& env, storm::logic::RewardMeasureType rewardMeasureType, CheckTask<storm::logic::EventuallyFormula, ValueType> const& checkTask);
-            
+
             // The methods to check state formulas.
             virtual std::unique_ptr<CheckResult> checkStateFormula(Environment const& env, CheckTask<storm::logic::StateFormula, ValueType> const& checkTask);
             virtual std::unique_ptr<CheckResult> checkAtomicExpressionFormula(Environment const& env, CheckTask<storm::logic::AtomicExpressionFormula, ValueType> const& checkTask);
