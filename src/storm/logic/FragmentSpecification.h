@@ -55,6 +55,9 @@ namespace storm {
             bool areBoundedGloballyFormulasAllowed() const;
             FragmentSpecification& setBoundedGloballyFormulasAllowed(bool newValue);
 
+            bool areHOAPathFormulasAllowed() const;
+            FragmentSpecification& setHOAPathFormulasAllowed(bool newValue);
+
             bool areAtomicExpressionFormulasAllowed() const;
             FragmentSpecification& setAtomicExpressionFormulasAllowed(bool newValue);
 
@@ -180,6 +183,7 @@ namespace storm {
             bool untilFormula;
             bool boundedUntilFormula;
             bool boundedGloballyFormula;
+            bool hoaPathFormula;
 
             bool atomicExpressionFormula;
             bool atomicLabelFormula;

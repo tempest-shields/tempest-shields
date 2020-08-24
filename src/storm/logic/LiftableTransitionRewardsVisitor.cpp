@@ -147,6 +147,15 @@ namespace storm {
             return boost::any_cast<bool>(f.getLeftSubformula().accept(*this, data)) && boost::any_cast<bool>(f.getRightSubformula().accept(*this));
         }
 
+        boost::any LiftableTransitionRewardsVisitor::visit(HOAPathFormula const& f, boost::any const& data) const {
+            for (auto const& ap : f.getAPMapping()) {
+                if (!boost::any_cast<bool>(ap.second->accept(*this, data))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         bool LiftableTransitionRewardsVisitor::rewardModelHasTransitionRewards(std::string const& rewardModelName) const {
             if (symbolicModelDescription.hasModel()) {
                 if (symbolicModelDescription.isJaniModel()) {

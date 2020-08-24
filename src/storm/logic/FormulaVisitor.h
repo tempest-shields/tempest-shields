@@ -35,6 +35,7 @@ namespace storm {
             virtual boost::any visit(TotalRewardFormula const& f, boost::any const& data) const = 0;
             virtual boost::any visit(UnaryBooleanStateFormula const& f, boost::any const& data) const = 0;
             virtual boost::any visit(UntilFormula const& f, boost::any const& data) const = 0;
+            virtual boost::any visit(HOAPathFormula const& f, boost::any const& data) const = 0;
         };
         
     }

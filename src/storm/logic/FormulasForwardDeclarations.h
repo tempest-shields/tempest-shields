@@ -36,6 +36,7 @@ namespace storm {
         class UnaryPathFormula;
         class UnaryStateFormula;
         class UntilFormula;
+        class HOAPathFormula;
     }
 }
 
