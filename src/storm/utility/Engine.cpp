@@ -124,6 +124,7 @@ namespace storm {
                         case ModelType::MA:
                             return storm::modelchecker::SparseMarkovAutomatonCslModelChecker<storm::models::sparse::MarkovAutomaton<ValueType>>::canHandleStatic(checkTask);
                         case ModelType::POMDP:
+                        case ModelType::SMG:
                             return false;
                         case ModelType::SMG:
                             return storm::modelchecker::SparseSmgRpatlModelChecker<storm::models::sparse::Smg<ValueType>>::canHandleStatic(checkTask);
