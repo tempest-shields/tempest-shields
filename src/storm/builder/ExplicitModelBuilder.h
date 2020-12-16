@@ -131,7 +131,7 @@ namespace storm {
              * @param markovianChoices is set to a bit vector storing whether a choice is Markovian (is only set if the model type requires this information).
              * @param stateValuationsBuilder if not boost::none, we insert valuations for the corresponding states
              */
-            void buildMatrices(storm::storage::SparseMatrixBuilder<ValueType>& transitionMatrixBuilder, std::vector<RewardModelBuilder<typename RewardModelType::ValueType>>& rewardModelBuilders, ChoiceInformationBuilder& choiceInformationBuilder, boost::optional<storm::storage::BitVector>& markovianChoices, boost::optional<std::vector<uint_fast32_t>> playerActionIndices, boost::optional<storm::storage::sparse::StateValuationsBuilder>& stateValuationsBuilder);
+            void buildMatrices(storm::storage::SparseMatrixBuilder<ValueType>& transitionMatrixBuilder, std::vector<RewardModelBuilder<typename RewardModelType::ValueType>>& rewardModelBuilders, ChoiceInformationBuilder& choiceInformationBuilder, boost::optional<storm::storage::BitVector>& markovianChoices, boost::optional<std::vector<uint_fast32_t>>& playerActionIndices, boost::optional<storm::storage::sparse::StateValuationsBuilder>& stateValuationsBuilder);
 
             /*!
              * Explores the state space of the given program and returns the components of the model as a result.
