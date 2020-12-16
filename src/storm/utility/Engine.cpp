@@ -124,7 +124,6 @@ namespace storm {
                         case ModelType::MA:
                             return storm::modelchecker::SparseMarkovAutomatonCslModelChecker<storm::models::sparse::MarkovAutomaton<ValueType>>::canHandleStatic(checkTask);
                         case ModelType::POMDP:
-                        case ModelType::SMG:
                             return false;
                         case ModelType::SMG:
                             return storm::modelchecker::SparseSmgRpatlModelChecker<storm::models::sparse::Smg<ValueType>>::canHandleStatic(checkTask);
@@ -180,10 +179,10 @@ namespace storm {
                             return storm::modelchecker::SparseDtmcPrctlModelChecker<storm::models::sparse::Dtmc<storm::RationalFunction>>::canHandleStatic(checkTask);
                         case ModelType::CTMC:
                             return storm::modelchecker::SparseCtmcCslModelChecker<storm::models::sparse::Ctmc<storm::RationalFunction>>::canHandleStatic(checkTask);
+                        case ModelType::SMG:
                         case ModelType::MDP:
                         case ModelType::MA:
                         case ModelType::POMDP:
-                        case ModelType::SMG:
                             return false;
                     }
                     break;
