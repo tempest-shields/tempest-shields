@@ -6,6 +6,7 @@
 #include "storm/adapters/RationalFunctionAdapter.h"
 
 #include "storm/models/sparse/StandardRewardModel.h"
+#include "storm/models/sparse/Mdp.h"
 
 namespace storm {
     namespace models {
@@ -29,14 +30,17 @@ namespace storm {
             Smg<ValueType, RewardModelType>::Smg(storm::storage::sparse::ModelComponents<ValueType, RewardModelType> const& components, ModelType type)
                     : NondeterministicModel<ValueType, RewardModelType>(type, components) {
                 assert(type == storm::models::ModelType::Smg);
-                // Intentionally left empty
             }
 
-           template <typename ValueType, typename RewardModelType>
+            template <typename ValueType, typename RewardModelType>
             Smg<ValueType, RewardModelType>::Smg(storm::storage::sparse::ModelComponents<ValueType, RewardModelType>&& components, ModelType type)
-                    : NondeterministicModel<ValueType, RewardModelType>(type, std::move(components)) {
+                    : NondeterministicModel<ValueType, RewardModelType>(type, std::move(components)), playerActionIndices(components.playerActionIndices.get()) {
                assert(type == storm::models::ModelType::Smg);
-                // Intentionally left empty
+            }
+
+            template <typename ValueType, typename RewardModelType>
+            std::vector<uint_fast32_t> Smg<ValueType, RewardModelType>::getPlayerActionIndices() const {
+                return playerActionIndices;
             }
 
             template class Smg<double>;

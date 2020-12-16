@@ -48,6 +48,11 @@ namespace storm {
 
                 Smg(Smg<ValueType, RewardModelType>&& other) = default;
                 Smg& operator=(Smg<ValueType, RewardModelType>&& other) = default;
+
+                std::vector<uint_fast64_t> getPlayerActionIndices() const;
+
+            private:
+                std::vector<uint_fast64_t> playerActionIndices;
             };
 
         } // namespace sparse
