@@ -25,9 +25,10 @@ namespace storm {
                     DetTsNoIs, /// deterministic choice at timed states, no instant states (as in DTMCs and CTMCs)
                     DetTsNondetIs, /// deterministic choice at timed states, nondeterministic choice at instant states (as in Markov Automata)
                     DetTsDetIs, /// deterministic choice at timed states, deterministic choice at instant states (as in Markov Automata without any nondeterminisim)
-                    NondetTsNoIs /// nondeterministic choice at timed states, no instant states (as in MDPs)
+                    NondetTsNoIs, /// nondeterministic choice at timed states, no instant states (as in MDPs)
+                    GameNondetTsNoIs // nondeterministic choices of different players at timed states, no instant states (as in SMGs)
                 };
-            
+
                 /*!
                  * Helper class that performs iterations of the value iteration method.
                  * The purpose of the template parameters ComponentType and TransitionsType are used to make this work for various model types.
