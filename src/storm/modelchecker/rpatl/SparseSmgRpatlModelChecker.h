@@ -31,6 +31,8 @@ namespace storm {
 
             virtual std::unique_ptr<CheckResult> computeLongRunAverageProbabilities(Environment const& env, CheckTask<storm::logic::StateFormula, ValueType> const& checkTask) override;
             virtual std::unique_ptr<CheckResult> computeLongRunAverageRewards(Environment const& env, storm::logic::RewardMeasureType rewardMeasureType, CheckTask<storm::logic::LongRunAverageRewardFormula, ValueType> const& checkTask) override;
+
+            void coalitionIndicator(Environment& env, CheckTask<storm::logic::GameFormula, ValueType> const& checkTask);
         };
     } // namespace modelchecker
 } // namespace storm

@@ -110,6 +110,34 @@ namespace storm {
             //std::unique_ptr<CheckResult> result(new ExplicitQuantitativeCheckResult<ValueType>(std::move(values));
             //return result;
             STORM_LOG_THROW(false, storm::exceptions::NotImplementedException, "NYI");
+        template<typename SparseSmgModelType>
+        void SparseSmgRpatlModelChecker<SparseSmgModelType>::coalitionIndicator(Environment& env, CheckTask<storm::logic::GameFormula, ValueType> const& checkTask) {
+            storm::storage::BitVector coalitionIndicators(this->getModel().getTransitionMatrix().getRowGroupCount());
+
+            std::vector<boost::variant<std::string, uint_fast64_t>> formulaPlayerIds = checkTask.getFormula().getCoalition().getPlayerIds();
+            std::vector<uint_fast64_t> playerIds;
+            std::vector<std::pair<std::string, uint_fast64_t>> playerActionIndices = this->getModel().getPlayerActionIndices();
+
+            for(auto const& player : formulaPlayerIds) {
+                // If the player is given via the player name we have to look up its index
+                if(player.type() == typeid(std::string)) {
+                    auto it = std::find_if(playerActionIndices.begin(), playerActionIndices.end(),
+                                           [&player](const std::pair<std::string, uint_fast64_t>& element){ return element.first == boost::get<std::string>(player); });
+                    playerIds.push_back(it->second);
+                // If the player is given by its index we have to shift it to match internal mappings
+                } else if(player.type() == typeid(uint_fast64_t)) {
+                    playerIds.push_back(boost::get<uint_fast64_t>(player) - 1);
+                }
+            }
+
+            for(uint i = 0; i < playerActionIndices.size(); i++) {
+                if(std::find(playerIds.begin(), playerIds.end(), playerActionIndices.at(i).second) != playerIds.end()) {
+                    coalitionIndicators.set(i);
+                }
+            }
+            coalitionIndicators.complement();
+
+            env.solver().multiplier().setOptimizationDirectionOverride(coalitionIndicators);
         }
 
         template class SparseSmgRpatlModelChecker<storm::models::sparse::Smg<double>>;
