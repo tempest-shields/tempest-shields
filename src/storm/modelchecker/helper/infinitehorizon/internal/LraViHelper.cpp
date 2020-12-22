@@ -173,7 +173,14 @@ namespace storm {
                     while (!maxIter.is_initialized() || iter < maxIter.get()) {
                         ++iter;
                         performIterationStep(env, dir);
-                        
+
+                        std::vector<ValueType> xOldTemp = xOld();
+                        std::vector<ValueType> xNewTemp = xNew();
+                        if(gameNondetTs() && iter > 1) {
+                            // Weight values with current iteration step
+                            storm::utility::vector::applyPointwise<ValueType, ValueType>(xOld(), xOld(), [&iter] (ValueType const& x_i) -> ValueType { return x_i / (double)(iter - 1); });
+                            storm::utility::vector::applyPointwise<ValueType, ValueType>(xNew(), xNew(), [&iter] (ValueType const& x_i) -> ValueType { return x_i / (double)iter; });
+                        }
                         // Check if we are done
                         auto convergenceCheckResult = checkConvergence(relative, precision);
                         result = convergenceCheckResult.currentValue;
@@ -183,6 +190,12 @@ namespace storm {
                         if (storm::utility::resources::isTerminate()) {
                             break;
                         }
+
+                        if(gameNondetTs() && iter > 1) {
+                            xOld() = xOldTemp;
+                            xNew() = xNewTemp;
+                        }
+
                         // If there will be a next iteration, we have to prepare it.
                         prepareNextIteration(env);
                         
@@ -350,7 +363,7 @@ namespace storm {
                     // The result of this ongoing computation will be stored in xNew()
                     
                     // Compute the values obtained by a single uniformization step between timed states only
-                    if (nondetTs()) {
+                    if (nondetTs() && !gameNondetTs()) {
                         if (choices == nullptr) {
                             _TsMultiplier->multiplyAndReduce(env, *dir, xOld(), &_TsChoiceValues, xNew());
                         } else {
@@ -361,6 +374,14 @@ namespace storm {
                             // Hence, in this branch we don't have to care for choices at instant states.
                             STORM_LOG_ASSERT(!_hasInstantStates, "Nondeterministic timed states are only supported if there are no instant states.");
                             setInputModelChoices(*choices, tsChoices);
+                        }
+                    } else if(gameNondetTs()) { // TODO DRYness? exact same behaviour as case above?
+                        if (choices == nullptr) {
+                            _TsMultiplier->multiplyAndReduce(env, *dir, xOld(), &_TsChoiceValues, xNew());
+                        } else {
+                            std::vector<uint64_t> tsChoices(_TsTransitions.getRowGroupCount());
+                            _TsMultiplier->multiplyAndReduce(env, *dir, xOld(), &_TsChoiceValues, xNew(), &tsChoices);
+                            setInputModelChoices(*choices, tsChoices); // no components -> no need for that call?
                         }
                     } else {
                         _TsMultiplier->multiply(env, xOld(), &_TsChoiceValues, xNew());
