@@ -96,19 +96,19 @@ namespace storm {
              *
              * @param The player index associated with this choice.
              */
-            void setPlayerIndex(uint_fast32_t playerIndex);
+            void setPlayer(std::pair<std::string, uint_fast64_t> player);
 
             /*!
              * Returns whether there is an index for the player defined for this choice.
              */
-            bool hasPlayerIndex() const;
+            bool hasPlayer() const;
 
             /*!
              * Retrieves the players index associated with this choice
              *
              * @return The player index associated with this choice.
              */
-            uint_fast32_t const& getPlayerIndex() const;
+            std::pair<std::string, uint_fast64_t> const& getPlayer() const;
 
             /*!
              * Adds the given data that specifies the origin of this choice w.r.t. the model specification
@@ -196,8 +196,8 @@ namespace storm {
             // The labels of this choice
             boost::optional<std::set<std::string>> labels;
 
-            // The playerIndex of this choice
-            boost::optional<uint_fast32_t> playerIndex = boost::none;
+            // The player of this choice
+            boost::optional<std::pair<std::string, uint_fast64_t>> player = boost::none;
         };
 
         template<typename ValueType, typename StateType>

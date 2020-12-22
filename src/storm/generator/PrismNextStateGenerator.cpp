@@ -83,7 +83,7 @@ namespace storm {
 
             if (program.getModelType() == storm::prism::Program::ModelType::SMG) {
                 for (auto const& player : program.getPlayers()) {
-                    uint_fast32_t playerIndex = program.getIndexOfPlayer(player.getName());
+                    uint_fast64_t playerIndex = program.getIndexOfPlayer(player.getName());
                     for (auto const& moduleIndexPair : player.getModules()) {
                         moduleIndexToPlayerIndexMap[moduleIndexPair.second] = playerIndex;
                     }
@@ -382,12 +382,12 @@ namespace storm {
             }
 
             if (program.getModelType() == storm::prism::Program::ModelType::SMG) {
-                uint_fast32_t statePlayerIndex = allChoices.at(0).getPlayerIndex();
+                uint_fast64_t statePlayerIndex = allChoices.at(0).getPlayer().second;
                 for(auto& choice : allChoices) {
                     if (allChoices.size() == 1) break;
                     // getPlayerIndex().is_initialized()?
-                    if (choice.hasPlayerIndex()) {
-                        STORM_LOG_ASSERT(choice.getPlayerIndex() == statePlayerIndex, "State '" << this->stateToString(*this->state) << "' comprises choices for different players.");
+                    if (choice.hasPlayer()) {
+                        STORM_LOG_ASSERT(choice.getPlayer().second == statePlayerIndex, "State '" << this->stateToString(*this->state) << "' comprises choices for different players.");
                     } else {
                         STORM_LOG_WARN("State '" << this->stateToString(*this->state) << "' features a choice without player index.");
                     }
@@ -612,7 +612,8 @@ namespace storm {
                     if (program.getModelType() == storm::prism::Program::ModelType::SMG) {
                         // Can we trust the model ordering here?
                         // I.e. is i the correct moduleIndex set in Program.cpp:805? TODO
-                        choice.setPlayerIndex(moduleIndexToPlayerIndexMap[i]);
+                        uint_fast64_t playerIndex = moduleIndexToPlayerIndexMap[i];
+                        choice.setPlayer(std::make_pair(program.getPlayers()[playerIndex].getName(), playerIndex));
                     }
 
                     if (this->options.isExplorationChecksSet()) {
@@ -678,7 +679,8 @@ namespace storm {
                         Choice<ValueType>& choice = choices.back();
 
                         if (program.getModelType() == storm::prism::Program::ModelType::SMG) {
-                            choice.setPlayerIndex(commandIndexToPlayerIndexMap[actionIndex]);
+                            uint_fast64_t playerIndex = commandIndexToPlayerIndexMap[actionIndex];
+                            choice.setPlayer(std::make_pair(program.getPlayers()[playerIndex].getName(), playerIndex));
                         }
 
                         // Remember the choice label and origins only if we were asked to.

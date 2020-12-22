@@ -3,8 +3,12 @@
 namespace storm {
     namespace logic {
 
-        Coalition::Coalition(std::vector<boost::variant<std::string, uint64_t>> playerIds) : playerIds(playerIds) {
+        Coalition::Coalition(std::vector<boost::variant<std::string, uint_fast64_t>> playerIds) : playerIds(playerIds) {
             // Intentionally left empty.
+        }
+
+        std::vector<boost::variant<std::string, uint_fast64_t>> Coalition::getPlayerIds() const {
+            return playerIds;
         }
 
         std::ostream& operator<<(std::ostream& stream, Coalition const& coalition) {

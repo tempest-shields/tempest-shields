@@ -15,13 +15,15 @@ namespace storm {
         class Coalition {
         public:
             Coalition() = default;
-            Coalition(std::vector<boost::variant<std::string, uint64_t>>);
+            Coalition(std::vector<boost::variant<std::string, uint_fast64_t>>);
             Coalition(Coalition const& other) = default;
+
+            std::vector<boost::variant<std::string, uint_fast64_t>> getPlayerIds() const;
 
             friend std::ostream& operator<<(std::ostream& stream, Coalition const& coalition);
 
         private:
-            std::vector<boost::variant<std::string, uint64_t>> playerIds;
+            std::vector<boost::variant<std::string, uint_fast64_t>> playerIds;
         };
     }
 }

@@ -39,7 +39,7 @@ namespace storm {
             }
 
             template <typename ValueType, typename RewardModelType>
-            std::vector<uint_fast32_t> Smg<ValueType, RewardModelType>::getPlayerActionIndices() const {
+            std::vector<std::pair<std::string, uint_fast64_t>> Smg<ValueType, RewardModelType>::getPlayerActionIndices() const {
                 return playerActionIndices;
             }
 

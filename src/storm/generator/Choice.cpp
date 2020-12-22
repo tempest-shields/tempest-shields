@@ -93,18 +93,18 @@ namespace storm {
         }
 
         template<typename ValueType, typename StateType>
-        void Choice<ValueType, StateType>::setPlayerIndex(uint_fast32_t playerIndex) {
-            this->playerIndex = playerIndex;
+        void Choice<ValueType, StateType>::setPlayer(std::pair<std::string, uint_fast64_t> player) {
+            this->player = player;
         }
 
         template<typename ValueType, typename StateType>
-        bool Choice<ValueType, StateType>::hasPlayerIndex() const {
-            return playerIndex.is_initialized();
+        bool Choice<ValueType, StateType>::hasPlayer() const {
+            return player.is_initialized();
         }
 
         template<typename ValueType, typename StateType>
-        uint_fast32_t const& Choice<ValueType, StateType>::getPlayerIndex() const {
-            return playerIndex.get();
+        std::pair<std::string, uint_fast64_t> const& Choice<ValueType, StateType>::getPlayer() const {
+            return player.get();
         }
 
         template<typename ValueType, typename StateType>

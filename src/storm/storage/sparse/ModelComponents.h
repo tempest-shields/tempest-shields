@@ -31,7 +31,7 @@ namespace storm {
                                 bool rateTransitions = false,
                                 boost::optional<storm::storage::BitVector> const& markovianStates = boost::none,
                                 boost::optional<storm::storage::SparseMatrix<storm::storage::sparse::state_type>> const& player1Matrix = boost::none,
-                                boost::optional<std::vector<uint_fast32_t>> const& playerActionIndices = boost::none)
+                                boost::optional<std::vector<std::pair<std::string, uint_fast32_t>>> const& playerActionIndices = boost::none)
                         : transitionMatrix(transitionMatrix), stateLabeling(stateLabeling), rewardModels(rewardModels), rateTransitions(rateTransitions), markovianStates(markovianStates), player1Matrix(player1Matrix), playerActionIndices(playerActionIndices) {
                     // Intentionally left empty
                 }
@@ -42,7 +42,7 @@ namespace storm {
                                 bool rateTransitions = false,
                                 boost::optional<storm::storage::BitVector>&& markovianStates = boost::none,
                                 boost::optional<storm::storage::SparseMatrix<storm::storage::sparse::state_type>>&& player1Matrix = boost::none,
-                                boost::optional<std::vector<uint_fast32_t>>&& playerActionIndices = boost::none)
+                                boost::optional<std::vector<std::pair<std::string, uint_fast32_t>>>&& playerActionIndices = boost::none)
                         : transitionMatrix(std::move(transitionMatrix)), stateLabeling(std::move(stateLabeling)), rewardModels(std::move(rewardModels)), rateTransitions(rateTransitions), markovianStates(std::move(markovianStates)), player1Matrix(std::move(player1Matrix)), playerActionIndices(std::move(playerActionIndices)) {
                     // Intentionally left empty
                 }
@@ -85,7 +85,7 @@ namespace storm {
 
                 // Stochastic multiplayer game specific components:
                 // The vector mapping state choices to players
-                boost::optional<std::vector<uint_fast32_t>> playerActionIndices;
+                boost::optional<std::vector<std::pair<std::string, uint_fast32_t>>> playerActionIndices;
             };
         }
     }

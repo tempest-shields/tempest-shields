@@ -120,7 +120,7 @@ namespace storm {
         }
 
         template <typename ValueType, typename RewardModelType, typename StateType>
-        void ExplicitModelBuilder<ValueType, RewardModelType, StateType>::buildMatrices(storm::storage::SparseMatrixBuilder<ValueType>& transitionMatrixBuilder, std::vector<RewardModelBuilder<typename RewardModelType::ValueType>>& rewardModelBuilders, ChoiceInformationBuilder& choiceInformationBuilder, boost::optional<storm::storage::BitVector>& markovianStates, boost::optional<std::vector<uint_fast32_t>>& playerActionIndices, boost::optional<storm::storage::sparse::StateValuationsBuilder>& stateValuationsBuilder) {
+        void ExplicitModelBuilder<ValueType, RewardModelType, StateType>::buildMatrices(storm::storage::SparseMatrixBuilder<ValueType>& transitionMatrixBuilder, std::vector<RewardModelBuilder<typename RewardModelType::ValueType>>& rewardModelBuilders, ChoiceInformationBuilder& choiceInformationBuilder, boost::optional<storm::storage::BitVector>& markovianStates, boost::optional<std::vector<std::pair<std::string, uint_fast64_t>>>& playerActionIndices, boost::optional<storm::storage::sparse::StateValuationsBuilder>& stateValuationsBuilder) {
 
             // Create markovian states bit vector, if required.
             if (generator->getModelType() == storm::generator::ModelType::MA) {
@@ -130,7 +130,7 @@ namespace storm {
 
             // Create the player indices vector, if required.
             if (generator->getModelType() == storm::generator::ModelType::SMG) {
-                playerActionIndices = std::vector<uint_fast32_t>{};
+                playerActionIndices = std::vector<std::pair<std::string, uint_fast64_t>>{};
                 playerActionIndices.get().reserve(1000);
             }
 
@@ -211,7 +211,7 @@ namespace storm {
 
                         if (playerActionIndices) {
                             // TODO change this to storm::utility::infinity<ValueType>() ?
-                            playerActionIndices.get().push_back(-1);
+                            playerActionIndices.get().emplace_back("", -1);
                         }
 
                         ++currentRow;
@@ -270,7 +270,7 @@ namespace storm {
                     }
 
                     if (playerActionIndices) {
-                        playerActionIndices.get().push_back(behavior.getChoices().at(0).getPlayerIndex());
+                        playerActionIndices.get().push_back(behavior.getChoices().at(0).getPlayer());
                     }
                     ++currentRowGroup;
                 }
@@ -350,7 +350,7 @@ namespace storm {
             }
             ChoiceInformationBuilder choiceInformationBuilder;
             boost::optional<storm::storage::BitVector> markovianStates;
-            boost::optional<std::vector<uint_fast32_t>> playerActionIndices;
+            boost::optional<std::vector<std::pair<std::string, uint_fast64_t>>> playerActionIndices;
 
             // If we need to build state valuations, initialize them now.
             boost::optional<storm::storage::sparse::StateValuationsBuilder> stateValuationsBuilder;
