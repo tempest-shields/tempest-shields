@@ -128,7 +128,9 @@ namespace storm {
                     /// @return true iff there potentially is a nondeterministic choice at instant states. Returns false if there are no instant states.
                     bool nondetIs() const;
 
-                    
+                    /// @return true iff there potentially are nondeterministic choices for different players at timed states
+                    bool gameNondetTs() const;
+
                     void setComponent(ComponentType component);
                     
                     // We need to make sure that states/choices will be processed in ascending order
