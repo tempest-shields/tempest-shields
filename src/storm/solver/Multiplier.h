@@ -147,6 +147,11 @@ namespace storm {
              */
             boost::optional<storm::storage::BitVector> getOptimizationDirectionOverride() const;
 
+            /*
+             *  TODO
+             */
+            bool isOverridden(uint_fast64_t const index) const;
+
         protected:
             mutable std::unique_ptr<std::vector<ValueType>> cachedVector;
             storm::storage::SparseMatrix<ValueType> const& matrix;
