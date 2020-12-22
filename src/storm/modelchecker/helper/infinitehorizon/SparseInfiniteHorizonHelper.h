@@ -93,8 +93,8 @@ namespace storm {
                  * @param actionValuesGetter a function returning a value for a given (global) choice index
                  * @return a value for each state
                  */
-                std::vector<ValueType> computeLongRunAverageValues(Environment const& env, ValueGetter const& stateValuesGetter,  ValueGetter const& actionValuesGetter);
-                
+                virtual std::vector<ValueType> computeLongRunAverageValues(Environment const& env, ValueGetter const& stateValuesGetter,  ValueGetter const& actionValuesGetter);
+
                 /*!
                  * @param stateValuesGetter a function returning a value for a given state index
                  * @param actionValuesGetter a function returning a value for a given (global) choice index
