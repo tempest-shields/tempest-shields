@@ -485,7 +485,7 @@ namespace storm {
                 
                 template <typename ValueType, typename ComponentType, LraViTransitionsType TransitionsType>
                 bool LraViHelper<ValueType, ComponentType, TransitionsType>::nondetTs() const {
-                    return TransitionsType == LraViTransitionsType::NondetTsNoIs;
+                    return TransitionsType == LraViTransitionsType::NondetTsNoIs || gameNondetTs();
                 }
                 
                 template <typename ValueType, typename ComponentType, LraViTransitionsType TransitionsType>
