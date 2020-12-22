@@ -492,9 +492,16 @@ namespace storm {
                 bool LraViHelper<ValueType, ComponentType, TransitionsType>::nondetIs() const {
                     return TransitionsType == LraViTransitionsType::DetTsNondetIs;
                 }
-                
+
+                template <typename ValueType, typename ComponentType, LraViTransitionsType TransitionsType>
+                bool LraViHelper<ValueType, ComponentType, TransitionsType>::gameNondetTs() const {
+                    return TransitionsType == LraViTransitionsType::GameNondetTsNoIs;
+                }
+
                 template class LraViHelper<double, storm::storage::MaximalEndComponent, LraViTransitionsType::NondetTsNoIs>;
                 template class LraViHelper<storm::RationalNumber, storm::storage::MaximalEndComponent, LraViTransitionsType::NondetTsNoIs>;
+                template class LraViHelper<double, storm::storage::MaximalEndComponent, LraViTransitionsType::GameNondetTsNoIs>;
+                template class LraViHelper<storm::RationalNumber, storm::storage::MaximalEndComponent, LraViTransitionsType::GameNondetTsNoIs>;
                 template class LraViHelper<double, storm::storage::MaximalEndComponent, LraViTransitionsType::DetTsNondetIs>;
                 template class LraViHelper<storm::RationalNumber, storm::storage::MaximalEndComponent, LraViTransitionsType::DetTsNondetIs>;
                 
