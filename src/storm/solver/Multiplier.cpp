@@ -85,6 +85,12 @@ namespace storm {
         }
 
         template<typename ValueType>
+        bool Multiplier<ValueType>::isOverridden(uint_fast64_t const index) const {
+            if(!optimizationDirectionOverride.is_initialized()) return false;
+            return optimizationDirectionOverride.get().get(index);
+        }
+
+        template<typename ValueType>
         std::unique_ptr<Multiplier<ValueType>> MultiplierFactory<ValueType>::create(Environment const& env, storm::storage::SparseMatrix<ValueType> const& matrix) {
             auto type = env.solver().multiplier().getType();
 
