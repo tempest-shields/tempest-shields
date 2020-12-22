@@ -14,6 +14,7 @@
 #include "storm/environment/solver/SolverEnvironment.h"
 #include "storm/environment/solver/LongRunAverageSolverEnvironment.h"
 #include "storm/environment/solver/MinMaxSolverEnvironment.h"
+#include "storm/environment/solver/MultiplierEnvironment.h"
 
 
 #include "storm/exceptions/UnmetRequirementException.h"
@@ -305,6 +306,9 @@ namespace storm {
                         // Set up multipliers for transitions connecting timed and instant states
                         _TsToIsMultiplier = storm::solver::MultiplierFactory<ValueType>().create(env, _TsToIsTransitions);
                         _IsToTsMultiplier = storm::solver::MultiplierFactory<ValueType>().create(env, _IsToTsTransitions);
+                    }
+                    if(env.solver().multiplier().getOptimizationDirectionOverride().is_initialized()) {
+                        _TsMultiplier->setOptimizationDirectionOverride(env.solver().multiplier().getOptimizationDirectionOverride().get());
                     }
                 }
                 
