@@ -816,7 +816,6 @@ namespace storm {
                         STORM_LOG_THROW(false, storm::exceptions::WrongFormatException, "Parsing error in " << this->getFilename() << " for player " << playerName << ": No action named '" << actionName << "' present.");
                     }
                 }
-                STORM_LOG_DEBUG("PLAYER created:" << playerName);
                 return storm::prism::Player(playerName, controlledModuleIndices, controlledActionIndices);
             } else {
                 return storm::prism::Player();
