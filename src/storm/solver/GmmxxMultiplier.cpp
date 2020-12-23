@@ -221,7 +221,7 @@ namespace storm {
                             oldSelectedChoiceValue = newValue;
                         }
 
-                        if(isOverridden(currentRowGroup) ? !compare(newValue, currentValue) : compare(newValue, currentValue)) {
+                        if(this->isOverridden(currentRowGroup) ? !compare(newValue, currentValue) : compare(newValue, currentValue)) {
                             currentValue = newValue;
                             if (choices) {
                                 selectedChoice = currentRow - *row_group_it;
@@ -241,8 +241,10 @@ namespace storm {
 
                     // Finally write value to target vector.
                     *target_it = currentValue;
-                    if(choices && isOverridden(currentRowGroup) ? !compare(currentValue, oldSelectedChoiceValue) : compare(currentValue, oldSelectedChoiceValue) ) {
-                        *choice_it = selectedChoice;
+                    if(choices) {
+                        if(this->isOverridden(currentRowGroup) ? !compare(currentValue, oldSelectedChoiceValue) : compare(currentValue, oldSelectedChoiceValue) ) {
+                            *choice_it = selectedChoice;
+                        }
                     }
                 }
 
