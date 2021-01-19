@@ -228,6 +228,7 @@ namespace storm {
                         }
                         //std::cout << newValue << ", ";
                         //STORM_LOG_DEBUG(std::setprecision(3) << vect_sp(gmm::linalg_traits<MatrixType>::row(itr), x) << " + " << *add_it << "; ");
+                        if(this->isOverridden(currentRowGroup) ? compare(currentValue, newValue) : compare(newValue, currentValue)) {
                             currentValue = newValue;
                             if (choices) {
                                 selectedChoice = currentRow - *row_group_it;
@@ -250,7 +251,7 @@ namespace storm {
                     // Finally write value to target vector.
                     *target_it = currentValue;
                     if(choices) {
-                        if(this->isOverridden(currentRowGroup) ? !compare(currentValue, oldSelectedChoiceValue) : compare(currentValue, oldSelectedChoiceValue) ) {
+                        if(this->isOverridden(currentRowGroup) ? compare(oldSelectedChoiceValue, currentValue) : compare(currentValue, oldSelectedChoiceValue) ) {
                             *choice_it = selectedChoice;
                         }
                     }
