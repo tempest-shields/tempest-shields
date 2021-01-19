@@ -795,12 +795,12 @@ namespace storm {
                     if (moduleIndexPair != globalProgramInformation.moduleToIndexMap.end()) {
                         controlledModuleIndices.insert(std::pair<std::string, uint_fast64_t>(moduleIndexPair->first, moduleIndexPair->second));
                         if (std::find(globalProgramInformation.playerControlledModules.begin(), globalProgramInformation.playerControlledModules.end(), moduleName) != globalProgramInformation.playerControlledModules.end()) {
-                            STORM_LOG_THROW(false, storm::exceptions::WrongFormatException, "Parsing error in " << this->getFilename() << " for player " << playerName << ": Module '" << moduleName << "' already controlled by another player.");
+                            STORM_LOG_THROW(false, storm::exceptions::WrongFormatException, "Parsing error in " << this->getFilename() << " for player '" << playerName << "': Module '" << moduleName << "' already controlled by another player.");
                         } else {
                             globalProgramInformation.playerControlledModules.push_back(moduleName);
                         }
                     } else {
-                        STORM_LOG_THROW(false, storm::exceptions::WrongFormatException, "Parsing error in " << this->getFilename() << " for player " << playerName << ": No module named '" << moduleName << "' present.");
+                        STORM_LOG_THROW(false, storm::exceptions::WrongFormatException, "Parsing error in " << this->getFilename() << " for player '" << playerName << "': No module named '" << moduleName << "' present.");
                     }
                 }
                 for(std::string actionName : actionNames) {
@@ -808,12 +808,12 @@ namespace storm {
                     if (actionIndexPair != globalProgramInformation.actionIndices.end()) {
                         controlledActionIndices.insert(std::pair<std::string, uint_fast64_t>(actionIndexPair->first, actionIndexPair->second));
                         if (std::find(globalProgramInformation.playerControlledCommands.begin(), globalProgramInformation.playerControlledCommands.end(), actionName) != globalProgramInformation.playerControlledCommands.end()) {
-                            STORM_LOG_THROW(false, storm::exceptions::WrongFormatException, "Parsing error in " << this->getFilename() << " for player " << playerName << ": Command '" << actionName << "' already controlled by another player.");
+                            STORM_LOG_THROW(false, storm::exceptions::WrongFormatException, "Parsing error in " << this->getFilename() << " for player '" << playerName << "': Command '" << actionName << "' already controlled by another player.");
                         } else {
                             globalProgramInformation.playerControlledCommands.push_back(actionName);
                         }
                     } else {
-                        STORM_LOG_THROW(false, storm::exceptions::WrongFormatException, "Parsing error in " << this->getFilename() << " for player " << playerName << ": No action named '" << actionName << "' present.");
+                        STORM_LOG_THROW(false, storm::exceptions::WrongFormatException, "Parsing error in " << this->getFilename() << " for player '" << playerName << "': No action named '" << actionName << "' present.");
                     }
                 }
                 return storm::prism::Player(playerName, controlledModuleIndices, controlledActionIndices);
