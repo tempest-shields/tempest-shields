@@ -4,6 +4,7 @@
 
 #include "storm/storage/SparseMatrix.h"
 #include "storm/storage/MaximalEndComponentDecomposition.h"
+#include "storm/storage/GameMaximalEndComponentDecomposition.h"
 #include "storm/storage/Scheduler.h"
 
 #include "storm/solver/MinMaxLinearEquationSolver.h"
@@ -61,7 +62,7 @@ namespace storm {
                         this->_computedBackwardTransitions = std::make_unique<storm::storage::SparseMatrix<ValueType>>(this->_transitionMatrix.transpose(true));
                         this->_backwardTransitions = this->_computedBackwardTransitions.get();
                     }
-                    this->_computedLongRunComponentDecomposition = std::make_unique<storm::storage::MaximalEndComponentDecomposition<ValueType>>(this->_transitionMatrix, *this->_backwardTransitions);
+                    this->_computedLongRunComponentDecomposition = std::make_unique<storm::storage::GameMaximalEndComponentDecomposition<ValueType>>(this->_transitionMatrix, *this->_backwardTransitions);
                     this->_longRunComponentDecomposition = this->_computedLongRunComponentDecomposition.get();
                 }
             }
