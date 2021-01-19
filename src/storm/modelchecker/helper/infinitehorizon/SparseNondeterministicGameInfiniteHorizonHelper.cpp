@@ -63,7 +63,10 @@ namespace storm {
                         this->_backwardTransitions = this->_computedBackwardTransitions.get();
                     }
                     this->_computedLongRunComponentDecomposition = std::make_unique<storm::storage::GameMaximalEndComponentDecomposition<ValueType>>(this->_transitionMatrix, *this->_backwardTransitions);
+
                     this->_longRunComponentDecomposition = this->_computedLongRunComponentDecomposition.get();
+                    //STORM_LOG_DEBUG("\n" << this->_transitionMatrix);
+                    STORM_LOG_DEBUG("GMEC: " << *(this->_longRunComponentDecomposition));
                 }
             }
 

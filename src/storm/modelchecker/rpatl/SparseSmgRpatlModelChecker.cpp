@@ -65,6 +65,7 @@ namespace storm {
             Environment solverEnv = env;
             coalitionIndicator(solverEnv, checkTask);
 
+
             storm::logic::GameFormula const& gameFormula = checkTask.getFormula();
             storm::logic::Formula const& subFormula = gameFormula.getSubformula();
 
@@ -143,6 +144,8 @@ namespace storm {
                     playerIds.push_back(boost::get<uint_fast64_t>(player) - 1);
                 }
             }
+            //for(auto const& p : playerActionIndices) std::cout << p.first << " - " << p.second << ", "; std::cout << std::endl;
+            //for(auto const& p : playerIds) std::cout << p << ", "; std::cout << std::endl;
 
             for(uint i = 0; i < playerActionIndices.size(); i++) {
                 if(std::find(playerIds.begin(), playerIds.end(), playerActionIndices.at(i).second) != playerIds.end()) {
@@ -151,6 +154,7 @@ namespace storm {
             }
             coalitionIndicators.complement();
 
+            //std::cout << "MINMAX OVERRIDE: " << coalitionIndicators << std::endl;
             env.solver().multiplier().setOptimizationDirectionOverride(coalitionIndicators);
         }
 
