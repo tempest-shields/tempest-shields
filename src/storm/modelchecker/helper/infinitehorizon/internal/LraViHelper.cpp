@@ -185,6 +185,12 @@ namespace storm {
                         // Check if we are done
                         auto convergenceCheckResult = checkConvergence(relative, precision);
                         result = convergenceCheckResult.currentValue;
+
+                        if(gameNondetTs() && iter > 1) {
+                            xOld() = xOldTemp;
+                            xNew() = xNewTemp;
+                        }
+
                         if (convergenceCheckResult.isPrecisionAchieved) {
                             break;
                         }
@@ -192,13 +198,11 @@ namespace storm {
                             break;
                         }
 
-                        if(gameNondetTs() && iter > 1) {
-                            xOld() = xOldTemp;
-                            xNew() = xNewTemp;
-                        }
 
                         // If there will be a next iteration, we have to prepare it.
-                        prepareNextIteration(env);
+                        if(!gameNondetTs()) {
+                            prepareNextIteration(env);
+                        }
 
                     }
                     if (maxIter.is_initialized() && iter == maxIter.get()) {
@@ -211,17 +215,18 @@ namespace storm {
 
                     if (choices) {
                         // We will be doing one more iteration step and track scheduler choices this time.
-                        prepareNextIteration(env);
+                        if(!gameNondetTs()) {
+                            prepareNextIteration(env);
+                        }
                         performIterationStep(env, dir, choices);
                     }
                     std::cout << "result (" << iter << " steps):" << std::endl;
-                    for(int i = 0; i < xNew().size() ; i++ ) {
-                        std::cout << std::setprecision(4) << i << "\t: " << xNew().at(i) << "\t" << xNew().at(i) * _uniformizationRate << "\t" << std::setprecision(16) << xOld().at(i) *_uniformizationRate << std::endl;
-                        //if(i == 50) {std::cout << "only showing top 50 lines"; break; }
+                    storm::utility::vector::applyPointwise<ValueType, ValueType>(xNew(), xNew(), [&iter] (ValueType const& x_i) -> ValueType { return x_i / (double)iter; });
                     for(int i = 0; i < xNew().size() ; i++ ) {
                         std::cout << std::setprecision(4) << i << "\t: " << xNew().at(i) << "\t" << xNew().at(i) * _uniformizationRate << "\t" << std::setprecision(16) << xOld().at(i) *_uniformizationRate << std::endl;
                         //if(i == 50) {std::cout << "only showing top 50 lines"; break; }
                     }
+                    if(gameNondetTs()) result = xOld().at(0) * _uniformizationRate; // TODO is "init" always going to be .at(0) ?
                     return result;
                 }
 
