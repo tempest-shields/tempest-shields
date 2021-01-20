@@ -41,11 +41,7 @@ namespace storm {
         template<typename SparseSmgModelType>
         bool SparseSmgRpatlModelChecker<SparseSmgModelType>::canHandleStatic(CheckTask<storm::logic::Formula, ValueType> const& checkTask, bool* requiresSingleInitialState) {
             storm::logic::Formula const& formula = checkTask.getFormula();
-            if (formula.isInFragment(storm::logic::rpatl().setGameFormulasAllowed(true).setRewardOperatorsAllowed(true).setLongRunAverageRewardFormulasAllowed(true).setLongRunAverageProbabilitiesAllowed(true).setLongRunAverageOperatorsAllowed(true))) {
-                return true;
-            } else {
-                return false;
-            }
+            return formula.isInFragment(storm::logic::rpatl());
         }
 
         template<typename SparseSmgModelType>
