@@ -63,6 +63,9 @@ namespace storm {
             rpatl.setLongRunAverageRewardFormulasAllowed(true);
             rpatl.setLongRunAverageOperatorsAllowed(true);
 
+            rpatl.setProbabilityOperatorsAllowed(true);
+            rpatl.setReachabilityProbabilityFormulasAllowed(true);
+
             return rpatl;
         }
 
