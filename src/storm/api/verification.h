@@ -39,7 +39,7 @@
 
 namespace storm {
     namespace api {
-        
+
         template<typename ValueType>
         storm::modelchecker::CheckTask<storm::logic::Formula, ValueType> createTask(std::shared_ptr<const storm::logic::Formula> const& formula, bool onlyInitialStatesRelevant = false) {
             return storm::modelchecker::CheckTask<storm::logic::Formula, ValueType>(*formula, onlyInitialStatesRelevant);
@@ -53,7 +53,7 @@ namespace storm {
             AbstractionRefinementOptions(std::vector<storm::expressions::Expression>&& constraints, std::vector<std::vector<storm::expressions::Expression>>&& injectedRefinementPredicates) : constraints(std::move(constraints)), injectedRefinementPredicates(std::move(injectedRefinementPredicates)) {
                 // Intentionally left empty.
             }
-            
+
             std::vector<storm::expressions::Expression> constraints;
             std::vector<std::vector<storm::expressions::Expression>> injectedRefinementPredicates;
         };
@@ -228,13 +228,13 @@ namespace storm {
         template<typename ValueType>
         typename std::enable_if<!std::is_same<ValueType, storm::RationalFunction>::value, std::unique_ptr<storm::modelchecker::CheckResult>>::type verifyWithSparseEngine(storm::Environment const& env, std::shared_ptr<storm::models::sparse::MarkovAutomaton<ValueType>> const& ma, storm::modelchecker::CheckTask<storm::logic::Formula, ValueType> const& task) {
             std::unique_ptr<storm::modelchecker::CheckResult> result;
-            
+
             // Close the MA, if it is not already closed.
             if (!ma->isClosed()) {
                 STORM_LOG_WARN("Closing Markov automaton. Consider closing the MA before verification.");
                 ma->close();
             }
-            
+
             storm::modelchecker::SparseMarkovAutomatonCslModelChecker<storm::models::sparse::MarkovAutomaton<ValueType>> modelchecker(*ma);
             if (modelchecker.canHandle(task)) {
                 result = modelchecker.check(env, task);
@@ -254,7 +254,7 @@ namespace storm {
         }
 
         template<typename ValueType>
-        typename std::enable_if<std::is_same<ValueType, double>::value, std::unique_ptr<storm::modelchecker::CheckResult>>::type verifyWithSparseEngine(storm::Environment const& env, std::shared_ptr<storm::models::sparse::Smg<ValueType>> const& smg, storm::modelchecker::CheckTask<storm::logic::Formula, ValueType> const& task) {
+        typename std::enable_if<!std::is_same<ValueType, storm::RationalFunction>::value, std::unique_ptr<storm::modelchecker::CheckResult>>::type verifyWithSparseEngine(storm::Environment const& env, std::shared_ptr<storm::models::sparse::Smg<ValueType>> const& smg, storm::modelchecker::CheckTask<storm::logic::Formula, ValueType> const& task) {
             std::unique_ptr<storm::modelchecker::CheckResult> result;
             storm::modelchecker::SparseSmgRpatlModelChecker<storm::models::sparse::Smg<ValueType>> modelchecker(*smg);
             if (modelchecker.canHandle(task)) {
@@ -264,7 +264,7 @@ namespace storm {
         }
 
         template<typename ValueType>
-        typename std::enable_if<!std::is_same<ValueType, double>::value, std::unique_ptr<storm::modelchecker::CheckResult>>::type verifyWithSparseEngine(storm::Environment const& env, std::shared_ptr<storm::models::sparse::Smg<ValueType>> const& mdp, storm::modelchecker::CheckTask<storm::logic::Formula, ValueType> const& task) {
+        typename std::enable_if<std::is_same<ValueType, storm::RationalFunction>::value, std::unique_ptr<storm::modelchecker::CheckResult>>::type verifyWithSparseEngine(storm::Environment const& env, std::shared_ptr<storm::models::sparse::Smg<ValueType>> const& mdp, storm::modelchecker::CheckTask<storm::logic::Formula, ValueType> const& task) {
             STORM_LOG_THROW(false, storm::exceptions::NotSupportedException, "Sparse engine cannot verify SMGs with this data type.");
         }
 
@@ -298,6 +298,33 @@ namespace storm {
         std::unique_ptr<storm::modelchecker::CheckResult> verifyWithSparseEngine(std::shared_ptr<storm::models::sparse::Model<ValueType>> const& model, storm::modelchecker::CheckTask<storm::logic::Formula, ValueType> const& task) {
             Environment env;
             return verifyWithSparseEngine(env, model, task);
+        }
+
+        template<typename ValueType>
+        std::unique_ptr<storm::modelchecker::CheckResult> computeSteadyStateDistributionWithSparseEngine(storm::Environment const& env, std::shared_ptr<storm::models::sparse::Dtmc<ValueType>> const& dtmc) {
+            std::unique_ptr<storm::modelchecker::CheckResult> result;
+            storm::modelchecker::SparseDtmcPrctlModelChecker<storm::models::sparse::Dtmc<ValueType>> modelchecker(*dtmc);
+            return modelchecker.computeSteadyStateDistribution(env);
+        }
+
+        template<typename ValueType>
+        std::unique_ptr<storm::modelchecker::CheckResult> computeSteadyStateDistributionWithSparseEngine(storm::Environment const& env, std::shared_ptr<storm::models::sparse::Ctmc<ValueType>> const& ctmc) {
+            std::unique_ptr<storm::modelchecker::CheckResult> result;
+            storm::modelchecker::SparseCtmcCslModelChecker<storm::models::sparse::Ctmc<ValueType>> modelchecker(*ctmc);
+            return modelchecker.computeSteadyStateDistribution(env);
+        }
+
+        template<typename ValueType>
+        std::unique_ptr<storm::modelchecker::CheckResult> computeSteadyStateDistributionWithSparseEngine(storm::Environment const& env, std::shared_ptr<storm::models::sparse::Model<ValueType>> const& model) {
+            std::unique_ptr<storm::modelchecker::CheckResult> result;
+            if (model->getType() == storm::models::ModelType::Dtmc) {
+                result = computeSteadyStateDistributionWithSparseEngine(env, model->template as<storm::models::sparse::Dtmc<ValueType>>());
+            } else if (model->getType() == storm::models::ModelType::Ctmc) {
+                result = computeSteadyStateDistributionWithSparseEngine(env, model->template as<storm::models::sparse::Ctmc<ValueType>>());
+            } else {
+                STORM_LOG_THROW(false, storm::exceptions::NotSupportedException, "Computing the long run average distribution for the model type " << model->getType() << " is not supported.");
+            }
+            return result;
         }
 
         //
@@ -458,6 +485,6 @@ namespace storm {
             Environment env;
             return verifyWithDdEngine(env, model, task);
         }
-        
+
     }
 }

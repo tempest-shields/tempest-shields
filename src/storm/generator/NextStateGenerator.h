@@ -11,6 +11,7 @@
 #include "storm/storage/expressions/ExpressionEvaluator.h"
 #include "storm/storage/sparse/ChoiceOrigins.h"
 #include "storm/storage/sparse/StateValuations.h"
+#include "storm/storage/PlayerIndex.h"
 
 #include "storm/builder/BuilderOptions.h"
 #include "storm/builder/RewardModelInformation.h"
@@ -74,6 +75,8 @@ namespace storm {
             std::string stateToString(CompressedState const& state) const;
 
             uint32_t observabilityClass(CompressedState const& state) const;
+            
+            virtual std::map<std::string, storm::storage::PlayerIndex> getPlayerNameToIndexMap() const;
 
             virtual storm::models::sparse::StateLabeling label(storm::storage::sparse::StateStorage<StateType> const& stateStorage, std::vector<StateType> const& initialStateIndices = {}, std::vector<StateType> const& deadlockStateIndices = {}) = 0;
 
@@ -96,6 +99,15 @@ namespace storm {
              */
             storm::models::sparse::StateLabeling label(storm::storage::sparse::StateStorage<StateType> const& stateStorage, std::vector<StateType> const& initialStateIndices, std::vector<StateType> const& deadlockStateIndices, std::vector<std::pair<std::string, storm::expressions::Expression>> labelsAndExpressions);
 
+            /*!
+             * Sets the values of all transient variables in the current state to the given evaluator.
+             * @pre The values of non-transient variables have been set in the provided evaluator
+             * @param state The current state
+             * @param evaluator the evaluator to which the values will be set
+             * @post The values of all transient variables are set in the given evaluator (including the transient variables without an explicit assignment in the current locations).
+             */
+            virtual void unpackTransientVariableValuesIntoEvaluator(CompressedState const& state, storm::expressions::ExpressionEvaluator<ValueType>& evaluator) const;
+            
             virtual storm::storage::BitVector evaluateObservationLabels(CompressedState const& state) const =0;
 
             virtual storm::storage::sparse::StateValuationsBuilder initializeObservationValuationsBuilder() const;

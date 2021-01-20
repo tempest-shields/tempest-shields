@@ -9,54 +9,55 @@
 #include <boost/any.hpp>
 
 #include "storm/storage/Distribution.h"
+#include "storm/storage/PlayerIndex.h"
 
 namespace storm {
     namespace generator {
-        
+
         // A structure holding information about a particular choice.
         template<typename ValueType, typename StateType=uint32_t>
         struct Choice {
         public:
             Choice(uint_fast64_t actionIndex = 0, bool markovian = false);
-            
+
             Choice(Choice const& other) = default;
             Choice& operator=(Choice const& other) = default;
             Choice(Choice&& other) = default;
             Choice& operator=(Choice&& other) = default;
-            
+
             /*!
              * Adds the given choice to the current one.
              */
             void add(Choice const& other);
-            
+
             /*!
              * Returns an iterator to the distribution associated with this choice.
              *
              * @return An iterator to the first element of the distribution.
              */
             typename storm::storage::Distribution<ValueType, StateType>::iterator begin();
-            
+
             /*!
              * Returns an iterator to the distribution associated with this choice.
              *
              * @return An iterator to the first element of the distribution.
              */
             typename storm::storage::Distribution<ValueType, StateType>::const_iterator begin() const;
-            
+
             /*!
              * Returns an iterator past the end of the distribution associated with this choice.
              *
              * @return An iterator past the end of the distribution.
              */
             typename storm::storage::Distribution<ValueType, StateType>::iterator end();
-            
+
             /*!
              * Returns an iterator past the end of the distribution associated with this choice.
              *
              * @return An iterator past the end of the distribution.
              */
             typename storm::storage::Distribution<ValueType, StateType>::const_iterator end() const;
-            
+
             /*!
              * Inserts the contents of this object to the given output stream.
              *
@@ -96,19 +97,19 @@ namespace storm {
              *
              * @param The player index associated with this choice.
              */
-            void setPlayer(std::pair<std::string, uint_fast64_t> player);
+            void setPlayerIndex(storm::storage::PlayerIndex playerIndex);
 
             /*!
              * Returns whether there is an index for the player defined for this choice.
              */
-            bool hasPlayer() const;
+            bool hasPlayerIndex() const;
 
             /*!
              * Retrieves the players index associated with this choice
              *
              * @return The player index associated with this choice.
              */
-            std::pair<std::string, uint_fast64_t> const& getPlayer() const;
+            storm::storage::PlayerIndex const& getPlayerIndex() const;
 
             /*!
              * Adds the given data that specifies the origin of this choice w.r.t. the model specification
@@ -196,8 +197,8 @@ namespace storm {
             // The labels of this choice
             boost::optional<std::set<std::string>> labels;
 
-            // The player of this choice
-            boost::optional<std::pair<std::string, uint_fast64_t>> player = boost::none;
+            // The playerIndex of this choice
+            boost::optional<storm::storage::PlayerIndex> playerIndex;
         };
 
         template<typename ValueType, typename StateType>

@@ -182,7 +182,7 @@ namespace storm {
             uint64_t currentRowGroup = backwards ? rowGroupIndices.size() - 1 : 0;
             auto row_group_it = backwards ? rowGroupIndices.end() - 2 : rowGroupIndices.begin();
             auto row_group_ite = backwards ? rowGroupIndices.begin() - 1 : rowGroupIndices.end() - 1;
-            //if(choices) STORM_LOG_DEBUG(" ");
+            if(choices) STORM_LOG_DEBUG(" ");
             while (row_group_it != row_group_ite) {
                 ValueType currentValue = storm::utility::zero<ValueType>();
 
@@ -217,7 +217,6 @@ namespace storm {
                     uint64_t rowGroupSize = *(row_group_it + 1) - *row_group_it;
                     uint choiceforprintout = 0;
                     //std::cout << currentRowGroup << ": " << currentValue << ", ";
-                    //STORM_LOG_DEBUG(std::setprecision(3) << vect_sp(gmm::linalg_traits<MatrixType>::row(itr), x) << " + " << *add_it << "; ");
                     //STORM_LOG_DEBUG(std::setprecision(3) << vect_sp(gmm::linalg_traits<MatrixType>::row(itr), x) << " + " << *add_it << "; ");
                     for (uint64_t i = 1; i < rowGroupSize; ++i) {
                         ValueType newValue = b ? *add_it : storm::utility::zero<ValueType>();
@@ -270,7 +269,7 @@ namespace storm {
                     ++currentRowGroup;
                 }
             }
-                //std::cout << std::endl;
+                std::cout << std::endl;
         }
 
         template<>

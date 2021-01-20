@@ -1,11 +1,13 @@
 #ifndef STORM_MODELCHECKER_SPARSESMGRPATLMODELCHECKER_H_
 #define STORM_MODELCHECKER_SPARSESMGRPATLMODELCHECKER_H_
 
+
 #include "storm/modelchecker/propositional/SparsePropositionalModelChecker.h"
 #include "storm/models/sparse/Smg.h"
 #include "storm/utility/solver.h"
 #include "storm/solver/LinearEquationSolver.h"
 #include "storm/storage/StronglyConnectedComponent.h"
+#include "storm/storage/BitVector.h"
 
 namespace storm {
     namespace modelchecker {
@@ -34,7 +36,9 @@ namespace storm {
             std::unique_ptr<CheckResult> computeLongRunAverageProbabilities(Environment const& env, CheckTask<storm::logic::StateFormula, ValueType> const& checkTask) override;
             std::unique_ptr<CheckResult> computeLongRunAverageRewards(Environment const& env, storm::logic::RewardMeasureType rewardMeasureType, CheckTask<storm::logic::LongRunAverageRewardFormula, ValueType> const& checkTask) override;
 
-            void coalitionIndicator(Environment& env, CheckTask<storm::logic::GameFormula, ValueType> const& checkTask);
+            //void coalitionIndicator(Environment& env, CheckTask<storm::logic::GameFormula, ValueType> const& checkTask);
+        private:
+            storm::storage::BitVector statesOfCoalition;
         };
     } // namespace modelchecker
 } // namespace storm

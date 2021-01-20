@@ -44,7 +44,7 @@ namespace storm {
             ExportJsonType res = std::move(*boost::any_cast<ExportJsonType>(&tmp));
             return res;
         }
-        
+
         ExportJsonType buildExpression(storm::expressions::Expression const& exp,  std::vector<storm::jani::Constant> const& constants, VariableSet const& globalVariables = VariableSet(), VariableSet const& localVariables = VariableSet(), std::unordered_set<std::string> const& auxiliaryVariables = {}) {
             STORM_LOG_TRACE("Exporting " << exp);
             return ExpressionToJson::translate(exp,  constants, globalVariables, localVariables, auxiliaryVariables);
@@ -53,14 +53,14 @@ namespace storm {
         class CompositionJsonExporter : public CompositionVisitor {
         public:
             CompositionJsonExporter(bool allowRecursion) : allowRecursion(allowRecursion){
-                
+
             }
-            
+
             static ExportJsonType translate(storm::jani::Composition const& comp, bool allowRecursion = true) {
                 CompositionJsonExporter visitor(allowRecursion);
                 return anyToJson(comp.accept(visitor, boost::none));
             }
-            
+
             virtual boost::any visit(AutomatonComposition const& composition, boost::any const&) {
                 ExportJsonType compDecl;
                 ExportJsonType autDecl;
@@ -70,10 +70,10 @@ namespace storm {
                 compDecl["elements"] = elements;
                 return compDecl;
             }
-            
+
             virtual boost::any visit(ParallelComposition const& composition, boost::any const& data) {
                 ExportJsonType compDecl;
-                
+
                 std::vector<ExportJsonType> elems;
                 for (auto const& subcomp : composition.getSubcompositions()) {
                     ExportJsonType elemDecl;
@@ -103,14 +103,14 @@ namespace storm {
                 if (!synElems.empty()) {
                     compDecl["syncs"] = synElems;
                 }
-                
+
                 return compDecl;
             }
-            
+
         private:
             bool allowRecursion;
         };
-        
+
         std::string comparisonTypeToJani(storm::logic::ComparisonType ct) {
             switch(ct) {
                 case storm::logic::ComparisonType::Less:
@@ -124,12 +124,12 @@ namespace storm {
             }
             STORM_LOG_THROW(false, storm::exceptions::IllegalArgumentException, "Unknown ComparisonType");
         }
-        
+
         ExportJsonType FormulaToJaniJson::constructPropertyInterval(boost::optional<storm::expressions::Expression> const& lower, boost::optional<bool> const& lowerExclusive, boost::optional<storm::expressions::Expression> const& upper, boost::optional<bool> const& upperExclusive) const {
             STORM_LOG_THROW((lower.is_initialized() || upper.is_initialized()), storm::exceptions::InvalidJaniException, "PropertyInterval needs either a lower or an upper bound, but none was given.");
             STORM_LOG_THROW((lower.is_initialized() || !lowerExclusive.is_initialized()), storm::exceptions::InvalidJaniException, "PropertyInterval defines wether the lower bound is exclusive but no lower bound is given.");
             STORM_LOG_THROW((upper.is_initialized() || !upperExclusive.is_initialized()), storm::exceptions::InvalidJaniException, "PropertyInterval defines wether the upper bound is exclusive but no upper bound is given.");
-            
+
             ExportJsonType iDecl;
             if (lower) {
                 iDecl["lower"] = buildExpression(*lower, model.getConstants(), model.getGlobalVariables());
@@ -145,17 +145,17 @@ namespace storm {
             }
             return iDecl;
         }
-        
+
         ExportJsonType FormulaToJaniJson::constructRewardAccumulation(storm::logic::RewardAccumulation const& rewardAccumulation, std::string const& rewardModelName) const {
             storm::jani::RewardModelInformation info(model, rewardModelName);
-            
+
             bool steps = rewardAccumulation.isStepsSet() && (info.hasActionRewards() || info.hasTransitionRewards());
             bool time = rewardAccumulation.isTimeSet() && !model.isDiscreteTimeModel() && info.hasStateRewards();
             bool exit = rewardAccumulation.isExitSet() && info.hasStateRewards();
-            
+
             return constructRewardAccumulation(storm::logic::RewardAccumulation(steps, time, exit));
         }
-        
+
         ExportJsonType FormulaToJaniJson::constructRewardAccumulation(storm::logic::RewardAccumulation const& rewardAccumulation) const {
             std::vector<std::string> res;
             if (rewardAccumulation.isStepsSet()) {
@@ -178,7 +178,7 @@ namespace storm {
                 return constructRewardAccumulation(storm::logic::RewardAccumulation(true, true, false), rewardModelName);
             }
         }
-        
+
         ExportJsonType FormulaToJaniJson::translate(storm::logic::Formula const& formula, storm::jani::Model const& model, storm::jani::ModelFeatures& modelFeatures) {
             FormulaToJaniJson translator(model);
             auto result = anyToJson(formula.accept(translator));
@@ -187,15 +187,15 @@ namespace storm {
             }
             return result;
         }
-        
+
         bool FormulaToJaniJson::containsStateExitRewards() const {
             return stateExitRewards;
         }
-        
+
         boost::any FormulaToJaniJson::visit(storm::logic::AtomicExpressionFormula const& f, boost::any const&) const {
             return buildExpression(f.getExpression(), model.getConstants(), model.getGlobalVariables());
         }
-        
+
         boost::any FormulaToJaniJson::visit(storm::logic::AtomicLabelFormula const& f, boost::any const&) const {
             ExportJsonType opDecl(f.getLabel());
             return opDecl;
@@ -218,10 +218,10 @@ namespace storm {
             opDecl["op"] = "U";
             opDecl["left"] = anyToJson(f.getLeftSubformula().accept(*this, data));
             opDecl["right"] = anyToJson(f.getRightSubformula().accept(*this, data));
-            
+
             bool hasStepBounds(false), hasTimeBounds(false);
             std::vector<ExportJsonType> rewardBounds;
-            
+
             for (uint64_t i = 0; i < f.getDimension(); ++i) {
                 boost::optional<storm::expressions::Expression> lower, upper;
                 boost::optional<bool> lowerExclusive, upperExclusive;
@@ -234,7 +234,7 @@ namespace storm {
                     upperExclusive = f.isUpperBoundStrict(i);
                 }
                 ExportJsonType propertyInterval = constructPropertyInterval(lower, lowerExclusive, upper, upperExclusive);
-    
+
                 auto tbr = f.getTimeBoundReference(i);
                 if (tbr.isStepBound() || (model.isDiscreteTimeModel() && tbr.isTimeBound())) {
                     STORM_LOG_THROW(!hasStepBounds, storm::exceptions::NotSupportedException, "Jani export of until formulas with multiple step bounds is not supported.");
@@ -262,15 +262,15 @@ namespace storm {
             return opDecl;
 
         }
-        
+
         boost::any FormulaToJaniJson::visit(storm::logic::ConditionalFormula const&, boost::any const&) const {
             STORM_LOG_THROW(false, storm::exceptions::NotSupportedException, "Jani currently does not support conditional formulae");
         }
-        
+
         boost::any FormulaToJaniJson::visit(storm::logic::CumulativeRewardFormula const&, boost::any const&) const {
             STORM_LOG_THROW(false, storm::exceptions::NotSupportedException, "Storm currently does not support translating cumulative reward formulae");
         }
-        
+
         boost::any FormulaToJaniJson::visit(storm::logic::EventuallyFormula const& f, boost::any const& data) const {
             ExportJsonType opDecl;
             opDecl["op"] = "U";
@@ -278,10 +278,10 @@ namespace storm {
             opDecl["right"] = anyToJson(f.getSubformula().accept(*this, data));
             return opDecl;
         }
-        
+
         boost::any FormulaToJaniJson::visit(storm::logic::TimeOperatorFormula const& f, boost::any const& data) const {
             ExportJsonType opDecl;
-            
+
             // Create standard reward accumulation for time operator formulas.
             storm::logic::RewardAccumulation rewAcc(model.isDiscreteTimeModel(), !model.isDiscreteTimeModel(), false);
             if (f.getSubformula().isEventuallyFormula() && f.getSubformula().asEventuallyFormula().hasRewardAccumulation()) {
@@ -333,7 +333,7 @@ namespace storm {
         }
 
         boost::any FormulaToJaniJson::visit(storm::logic::GameFormula const& f, boost::any const& data) const {
-            STORM_LOG_THROW(false, storm::exceptions::NotImplementedException, "We currently do not support conversion of game formulas to Jani. (Does jani support games?)");
+            STORM_LOG_THROW(false, storm::exceptions::NotImplementedException, "Conversion of game formulas to Jani is not supported.");
         }
 
         boost::any FormulaToJaniJson::visit(storm::logic::InstantaneousRewardFormula const&, boost::any const&) const {
@@ -357,7 +357,7 @@ namespace storm {
                 if(f.hasOptimalityType()) {
                     opDecl["op"] = f.getOptimalityType() == storm::solver::OptimizationDirection::Minimize ? "Smin" : "Smax";
                     opDecl["exp"] = anyToJson(f.getSubformula().accept(*this, data));
-                    
+
                 } else {
                     // TODO add checks
                     opDecl["op"] = "Smin";
@@ -366,7 +366,7 @@ namespace storm {
             }
             return opDecl;
         }
-        
+
         boost::any FormulaToJaniJson::visit(storm::logic::LongRunAverageRewardFormula const&, boost::any const&) const {
 //            ExportJsonType opDecl;
 //            if(f.()) {
@@ -384,7 +384,7 @@ namespace storm {
 //                if(f.hasOptimalityType()) {
 //                    opDecl["op"] = f.getOptimalityType() == storm::solver::OptimizationDirection::Minimize ? "Smin" : "Smax";
 //                    opDecl["exp"] = anyToJson(f.getSubformula().accept(*this, boost::none));
-//                    
+//
 //                } else {
 //                    // TODO add checks
 //                    opDecl["op"] = "Pmin";
@@ -392,19 +392,19 @@ namespace storm {
 //                }
 //            }
 //            return opDecl;
-            
+
             STORM_LOG_THROW(false, storm::exceptions::NotImplementedException, "Jani currently does not support conversion of an LRA reward formula");
         }
-        
-        
+
+
         boost::any FormulaToJaniJson::visit(storm::logic::MultiObjectiveFormula const&, boost::any const&) const {
             STORM_LOG_THROW(false, storm::exceptions::NotImplementedException, "Jani currently does not support conversion of a multi-objective formula");
         }
-        
+
         boost::any FormulaToJaniJson::visit(storm::logic::QuantileFormula const&, boost::any const&) const {
             STORM_LOG_THROW(false, storm::exceptions::NotImplementedException, "Jani currently does not support conversion of a Quantile formula");
         }
-        
+
         boost::any FormulaToJaniJson::visit(storm::logic::NextFormula const& f, boost::any const& data) const {
             ExportJsonType opDecl;
             opDecl["op"] = "U";
@@ -414,13 +414,13 @@ namespace storm {
             opDecl["step-bounds"] = constructPropertyInterval(intervalExpressionManager->integer(1), false, intervalExpressionManager->integer(1), false);
             return opDecl;
         }
-        
-      
-        
-        
+
+
+
+
         boost::any FormulaToJaniJson::visit(storm::logic::ProbabilityOperatorFormula const& f, boost::any const& data) const {
             ExportJsonType opDecl;
-            
+
             if(f.hasBound()) {
                 auto bound = f.getBound();
                 opDecl["op"] = comparisonTypeToJani(bound.comparisonType);
@@ -436,7 +436,7 @@ namespace storm {
                 if(f.hasOptimalityType()) {
                     opDecl["op"] = f.getOptimalityType() == storm::solver::OptimizationDirection::Minimize ? "Pmin" : "Pmax";
                     opDecl["exp"] = anyToJson(f.getSubformula().accept(*this, data));
-                    
+
                 } else {
                     // TODO add checks
                     opDecl["op"] = "Pmin";
@@ -445,10 +445,10 @@ namespace storm {
             }
             return opDecl;
         }
-        
+
         boost::any FormulaToJaniJson::visit(storm::logic::RewardOperatorFormula const& f, boost::any const& data) const {
             ExportJsonType opDecl;
-            
+
             std::string instantName;
             if (model.isDiscreteTimeModel()) {
                 instantName = "step-instant";
@@ -514,7 +514,7 @@ namespace storm {
                 }
             }
             opDecl["exp"] = buildExpression(model.getRewardModelExpression(rewardModelName), model.getConstants(), model.getGlobalVariables());
-            
+
             if(f.hasBound()) {
                 ExportJsonType compDecl;
                 auto bound = f.getBound();
@@ -526,11 +526,11 @@ namespace storm {
                 return opDecl;
             }
         }
-        
+
         boost::any FormulaToJaniJson::visit(storm::logic::TotalRewardFormula const&, boost::any const&) const {
             STORM_LOG_THROW(false, storm::exceptions::NotImplementedException, "Jani currently does not support a total reward formula");
         }
-        
+
         boost::any FormulaToJaniJson::visit(storm::logic::UnaryBooleanStateFormula const& f, boost::any const& data) const {
             ExportJsonType opDecl;
             storm::logic::UnaryBooleanStateFormula::OperatorType op = f.getOperator();
@@ -539,7 +539,7 @@ namespace storm {
             opDecl["exp"] = anyToJson(f.getSubformula().accept(*this, data));
             return opDecl;
         }
-        
+
         boost::any FormulaToJaniJson::visit(storm::logic::UntilFormula const& f, boost::any const& data) const {
             ExportJsonType opDecl;
             opDecl["op"] = "U";
@@ -547,9 +547,9 @@ namespace storm {
             opDecl["right"] = anyToJson(f.getRightSubformula().accept(*this, data));
             return opDecl;
         }
-        
+
         std::string operatorTypeToJaniString(storm::expressions::OperatorType optype) {
-            
+
             using OpType = storm::expressions::OperatorType;
             switch(optype) {
                 case OpType::And:
@@ -602,16 +602,16 @@ namespace storm {
                     STORM_LOG_THROW(false, storm::exceptions::InvalidJaniException, "Operator not supported by Jani");
             }
         }
-        
+
         ExportJsonType ExpressionToJson::translate(storm::expressions::Expression const& expr, std::vector<storm::jani::Constant> const& constants, VariableSet const& globalVariables, VariableSet const& localVariables, std::unordered_set<std::string> const& auxiliaryVariables) {
-            
+
             // Simplify the expression first and reduce the nesting
             auto simplifiedExpr = storm::jani::reduceNestingInJaniExpression(expr.simplify());
-            
+
             ExpressionToJson visitor(constants, globalVariables, localVariables, auxiliaryVariables);
             return anyToJson(simplifiedExpr.accept(visitor, boost::none));
         }
-        
+
         boost::any ExpressionToJson::visit(storm::expressions::IfThenElseExpression const& expression, boost::any const& data) {
             ExportJsonType opDecl;
             opDecl["op"] = "ite";
@@ -679,7 +679,7 @@ namespace storm {
         boost::any ExpressionToJson::visit(storm::expressions::RationalLiteralExpression const& expression, boost::any const&) {
             return ExportJsonType(expression.getValue());
         }
-        
+
         boost::any ExpressionToJson::visit(storm::expressions::ValueArrayExpression const& expression, boost::any const& data) {
             ExportJsonType opDecl;
             opDecl["op"] = "av";
@@ -691,7 +691,7 @@ namespace storm {
             opDecl["elements"] = std::move(elements);
             return opDecl;
         }
-        
+
         boost::any ExpressionToJson::visit(storm::expressions::ConstructorArrayExpression const& expression, boost::any const& data) {
             ExportJsonType opDecl;
             opDecl["op"] = "ac";
@@ -704,7 +704,7 @@ namespace storm {
             }
             return opDecl;
         }
-        
+
         boost::any ExpressionToJson::visit(storm::expressions::ArrayAccessExpression const& expression, boost::any const& data) {
             ExportJsonType opDecl;
             opDecl["op"] = "aa";
@@ -712,7 +712,7 @@ namespace storm {
             opDecl["index"] = anyToJson(expression.getOperand(1)->accept(*this, data));
             return opDecl;
         }
-        
+
         boost::any ExpressionToJson::visit(storm::expressions::FunctionCallExpression const& expression, boost::any const& data) {
             ExportJsonType opDecl;
             opDecl["op"] = "call";
@@ -724,14 +724,14 @@ namespace storm {
             opDecl["args"] = std::move(arguments);
             return opDecl;
         }
-        
+
         void JsonExporter::toFile(storm::jani::Model const& janiModel, std::vector<storm::jani::Property> const& formulas, std::string const& filepath, bool checkValid, bool compact) {
             std::ofstream stream;
             storm::utility::openFile(filepath, stream, false, true);
             toStream(janiModel, formulas, stream, checkValid, compact);
             storm::utility::closeFile(stream);
         }
-        
+
         void JsonExporter::toStream(storm::jani::Model const& janiModel,  std::vector<storm::jani::Property> const& formulas, std::ostream& os, bool checkValid, bool compact) {
             if(checkValid) {
                 janiModel.checkValid();
@@ -752,7 +752,7 @@ namespace storm {
             }
             STORM_LOG_INFO("Conversion completed " << janiModel.getName() << ".");
         }
-        
+
         ExportJsonType buildActionArray(std::vector<storm::jani::Action> const& actions) {
             std::vector<ExportJsonType> actionReprs;
             uint64_t actIndex = 0;
@@ -766,11 +766,11 @@ namespace storm {
                 actEntry["name"] = act.getName();
                 actionReprs.push_back(actEntry);
             }
-            
+
             return ExportJsonType(actionReprs);
-            
+
         }
-        
+
         ExportJsonType buildTypeDescription(storm::expressions::Type const& type) {
             ExportJsonType typeDescr;
             if (type.isIntegerType()) {
@@ -787,7 +787,7 @@ namespace storm {
             }
             return typeDescr;
         }
-        
+
         void getBoundsFromConstraints(ExportJsonType& typeDesc, storm::expressions::Variable const& var, storm::expressions::Expression const& constraint, std::vector<storm::jani::Constant> const& constants) {
             if (constraint.getBaseExpression().isBinaryBooleanFunctionExpression() && constraint.getBaseExpression().getOperator() == storm::expressions::OperatorType::And) {
                 getBoundsFromConstraints(typeDesc, var, constraint.getBaseExpression().getOperand(0), constants);
@@ -811,7 +811,7 @@ namespace storm {
                 STORM_LOG_THROW(false, storm::exceptions::NotSupportedException, "Jani Export for constant constraint " << constraint << " is not supported.");
             }
         }
-        
+
         ExportJsonType buildConstantsArray(std::vector<storm::jani::Constant> const& constants) {
             std::vector<ExportJsonType> constantDeclarations;
             for(auto const& constant : constants) {
@@ -833,8 +833,8 @@ namespace storm {
             }
             return ExportJsonType(constantDeclarations);
         }
-        
-        
+
+
         ExportJsonType buildVariablesArray(storm::jani::VariableSet const& varSet, std::vector<storm::jani::Constant> const& constants, VariableSet const& globalVariables, VariableSet const& localVariables = VariableSet()) {
             ExportJsonType variableDeclarations = std::vector<ExportJsonType>();
             for(auto const& variable : varSet) {
@@ -916,7 +916,7 @@ namespace storm {
             }
             return functionDeclarations;
         }
-        
+
         ExportJsonType buildAssignmentArray(storm::jani::OrderedAssignments const& orderedAssignments, std::vector<storm::jani::Constant> const& constants, VariableSet const& globalVariables, VariableSet const& localVariables, bool commentExpressions) {
             ExportJsonType assignmentDeclarations = std::vector<ExportJsonType>();
             bool addIndex = orderedAssignments.hasMultipleLevels();
@@ -943,7 +943,7 @@ namespace storm {
             }
             return assignmentDeclarations;
         }
-        
+
         ExportJsonType buildLocationsArray(std::vector<storm::jani::Location> const& locations, std::vector<storm::jani::Constant> const& constants, VariableSet const& globalVariables, VariableSet const& localVariables, bool commentExpressions) {
             ExportJsonType locationDeclarations = std::vector<ExportJsonType>();
             for(auto const& location : locations) {
@@ -964,7 +964,7 @@ namespace storm {
             }
             return locationDeclarations;
         }
-        
+
         ExportJsonType buildInitialLocations(storm::jani::Automaton const& automaton) {
             std::vector<std::string> names;
             for(auto const& initLocIndex : automaton.getInitialLocationIndices()) {
@@ -972,7 +972,7 @@ namespace storm {
             }
             return ExportJsonType(names);
         }
-        
+
         ExportJsonType buildDestinations(std::vector<EdgeDestination> const& destinations, std::map<uint64_t, std::string> const& locationNames, std::vector<storm::jani::Constant> const& constants, VariableSet const& globalVariables, VariableSet const& localVariables, bool commentExpressions) {
             assert(destinations.size() > 0);
             ExportJsonType destDeclarations = std::vector<ExportJsonType>();
@@ -998,7 +998,7 @@ namespace storm {
             }
             return destDeclarations;
         }
-        
+
         ExportJsonType buildEdge(Edge const& edge , std::map<uint64_t, std::string> const& actionNames, std::map<uint64_t, std::string> const& locationNames, std::vector<storm::jani::Constant> const& constants, VariableSet const& globalVariables, VariableSet const& localVariables, bool commentExpressions) {
             STORM_LOG_THROW(edge.getDestinations().size() > 0, storm::exceptions::InvalidJaniException, "An edge without destinations is not allowed.");
             ExportJsonType edgeEntry;
@@ -1024,7 +1024,7 @@ namespace storm {
             }
             return edgeEntry;
         }
-        
+
         ExportJsonType buildEdges(std::vector<Edge> const& edges , std::map<uint64_t, std::string> const& actionNames, std::map<uint64_t, std::string> const& locationNames, std::vector<storm::jani::Constant> const& constants, VariableSet const& globalVariables, VariableSet const& localVariables, bool commentExpressions) {
             ExportJsonType edgeDeclarations = std::vector<ExportJsonType>();
             for(auto const& edge : edges) {
@@ -1035,7 +1035,7 @@ namespace storm {
             }
             return edgeDeclarations;
         }
-        
+
         ExportJsonType buildAutomataArray(std::vector<storm::jani::Automaton> const& automata, std::map<uint64_t, std::string> const& actionNames, std::vector<storm::jani::Constant> const& constants, VariableSet const& globalVariables, bool commentExpressions) {
             ExportJsonType automataDeclarations = std::vector<ExportJsonType>();
             for(auto const& automaton : automata) {
@@ -1055,7 +1055,7 @@ namespace storm {
             }
             return automataDeclarations;
         }
-        
+
         void JsonExporter::convertModel(storm::jani::Model const& janiModel, bool commentExpressions) {
             modelFeatures = janiModel.getModelFeatures();
             jsonStruct["jani-version"] = janiModel.getJaniVersion();
@@ -1071,12 +1071,12 @@ namespace storm {
             jsonStruct["automata"] = buildAutomataArray(janiModel.getAutomata(), janiModel.getActionIndexToNameMap(), janiModel.getConstants(), janiModel.getGlobalVariables(), commentExpressions);
             jsonStruct["system"] = CompositionJsonExporter::translate(janiModel.getSystemComposition());
         }
-        
+
         ExportJsonType JsonExporter::getEdgeAsJson(storm::jani::Model const& janiModel, uint64_t automatonIndex, uint64_t edgeIndex, bool commentExpressions) {
             auto const& automaton = janiModel.getAutomaton(automatonIndex);
             return buildEdge(automaton.getEdge(edgeIndex), janiModel.getActionIndexToNameMap(), automaton.buildIdToLocationNameMap(), janiModel.getConstants(), janiModel.getGlobalVariables(), automaton.getVariables(), commentExpressions);
         }
-        
+
         std::string janiFilterTypeString(storm::modelchecker::FilterType const& ft) {
             switch(ft) {
                 case storm::modelchecker::FilterType::MIN:
@@ -1102,7 +1102,7 @@ namespace storm {
             }
             STORM_LOG_THROW(false, storm::exceptions::IllegalArgumentException, "Unknown FilterType");
         }
-        
+
         ExportJsonType convertFilterExpression(storm::jani::FilterExpression const& fe, storm::jani::Model const& model, storm::jani::ModelFeatures& modelFeatures) {
             ExportJsonType propDecl;
             propDecl["states"]["op"] = "initial";
@@ -1111,11 +1111,11 @@ namespace storm {
             propDecl["values"] = FormulaToJaniJson::translate(*fe.getFormula(), model, modelFeatures);
             return propDecl;
         }
-        
-        
+
+
         void JsonExporter::convertProperties( std::vector<storm::jani::Property> const& formulas, storm::jani::Model const& model) {
             ExportJsonType properties;
-            
+
             // Unset model-features that only relate to properties. These are only set if such properties actually exist.
             modelFeatures.remove(storm::jani::ModelFeature::StateExitRewards);
             if (formulas.empty()) {
@@ -1133,7 +1133,7 @@ namespace storm {
             }
             jsonStruct["properties"] = std::move(properties);
         }
-        
+
         ExportJsonType JsonExporter::finalize() {
             jsonStruct["features"] = ExportJsonType::parse(modelFeatures.toString());
             return jsonStruct;

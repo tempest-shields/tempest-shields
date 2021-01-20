@@ -1,8 +1,9 @@
 #include "storm/storage/prism/Player.h"
+#include <ostream>
 
 namespace storm {
     namespace prism {
-        Player::Player(std::string const& playerName, std::map<std::string, uint_fast32_t> const& controlledModules, std::map<std::string, uint_fast32_t> const& controlledCommands, std::string const& filename, uint_fast32_t lineNumber) : LocatedInformation(filename, lineNumber), playerName(playerName), controlledModules(controlledModules), controlledCommands(controlledCommands) {
+        Player::Player(std::string const& playerName, std::unordered_set<std::string> const& controlledModules, std::unordered_set<std::string> const& controlledActions, std::string const& filename, uint_fast32_t lineNumber) : LocatedInformation(filename, lineNumber), playerName(playerName), controlledModules(controlledModules), controlledActions(controlledActions) {
             // Nothing to do here.
         }
 
@@ -10,12 +11,12 @@ namespace storm {
             return this->playerName;
         }
 
-        std::map<std::string, uint_fast32_t> const& Player::getModules() const {
+        std::unordered_set<std::string> const& Player::getModules() const {
             return this->controlledModules;
         }
 
-        std::map<std::string, uint_fast32_t> const& Player::getCommands() const {
-            return this->controlledCommands;
+        std::unordered_set<std::string> const& Player::getActions() const {
+            return this->controlledActions;
         }
 
         std::ostream& operator<<(std::ostream& stream, Player const& player) {
@@ -23,14 +24,24 @@ namespace storm {
             if (player.getName() != "") {
                 stream << " " << player.getName();
             }
-            stream << std::endl;
+            bool firstElement = true;
             for (auto const& module : player.getModules()) {
-                stream << "\t" << module.first << std::endl;
+                if (firstElement) {
+                    firstElement = false;
+                } else {
+                    stream << ",";
+                }
+                stream << std::endl << "\t" << module;
             }
-            for (auto const& command : player.getCommands()) {
-                stream << "\t[" << command.first << "]" << std::endl;
+            for (auto const& action : player.getActions()) {
+                if (firstElement) {
+                    firstElement = false;
+                } else {
+                    stream << ",";
+                }
+                stream << std::endl <<  "\t[" << action << "]";
             }
-            stream << "endplayer" << std::endl;
+            stream << std::endl << "endplayer" << std::endl;
             return stream;
         }
     } // namespace prism

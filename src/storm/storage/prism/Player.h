@@ -1,18 +1,13 @@
-#ifndef STORM_STORAGE_PRISM_PLAYER_H_
-#define STORM_STORAGE_PRISM_PLAYER_H_
+#pragma once
 
 #include <string>
-#include <vector>
+#include <unordered_set>
 
-#include "storm/storage/prism/Module.h"
-#include "storm/storage/prism/Command.h"
-
-// needed?
-#include "storm/storage/BoostTypes.h"
-#include "storm/utility/OsDetection.h"
+#include "storm/storage/prism/LocatedInformation.h"
 
 namespace storm {
     namespace prism {
+        
         class Player : public LocatedInformation {
         public:
             /*!
@@ -20,11 +15,11 @@ namespace storm {
              *
              * @param playerName The name of the player.
              * @param controlledModules The controlled modules.
-             * @param controlledCommands The controlled actions.
+             * @param controlledActions The controlled actions.
              * @param filename The filename in which the player is defined.
              * @param lineNumber The line number in which the player is defined.
              */
-            Player(std::string const& playerName, std::map<std::string, uint_fast32_t> const& controlledModules, std::map<std::string, uint_fast32_t> const& controlledCommands, std::string const& filename = "", uint_fast32_t lineNumber = 0);
+            Player(std::string const& playerName, std::unordered_set<std::string> const& controlledModules, std::unordered_set<std::string> const& controlledActions, std::string const& filename = "", uint_fast32_t lineNumber = 0);
 
             // Create default implementations of constructors/assignment.
             Player() = default;
@@ -45,14 +40,14 @@ namespace storm {
              *
              * @return The modules controlled by the player.
              */
-            std::map<std::string, uint_fast32_t> const& getModules() const; // TODO
+            std::unordered_set<std::string> const& getModules() const;
 
             /*!
-             * Retrieves all controlled Commands of the player.
+             * Retrieves all controlled Actions of the player.
              *
-             * @return The commands controlled by the player.
+             * @return The Actions controlled by the player.
              */
-            std::map<std::string, uint_fast32_t> const& getCommands() const;
+            std::unordered_set<std::string> const& getActions() const;
 
             friend std::ostream& operator<<(std::ostream& stream, Player const& player);
         private:
@@ -60,13 +55,12 @@ namespace storm {
             std::string playerName;
 
             // The modules associated with this player.
-            std::map<std::string, uint_fast32_t> controlledModules;
+            std::unordered_set<std::string> controlledModules;
 
-            // The commands associated with this player.
-            std::map<std::string, uint_fast32_t> controlledCommands;
+            // The Actions associated with this player.
+            std::unordered_set<std::string>  controlledActions;
         };
 
     } // namespace prism
 } // namespace storm
 
-#endif /* STORM_STORAGE_PRISM_PLAYER_H_ */

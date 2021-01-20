@@ -26,7 +26,7 @@
 
 namespace storm {
     namespace utility {
-        
+
         // Returns a list of all available engines (excluding Unknown)
         std::vector<Engine> getEngines() {
             std::vector<Engine> res;
@@ -35,7 +35,7 @@ namespace storm {
             }
             return res;
         }
-        
+
         std::string toString(Engine const& engine) {
             switch (engine) {
                 case Engine::Sparse:
@@ -61,7 +61,7 @@ namespace storm {
                     return "UNKNOWN";
             }
         }
-        
+
         std::ostream& operator<<(std::ostream& os, Engine const& engine) {
             os << toString(engine);
             return os;
@@ -80,7 +80,7 @@ namespace storm {
             STORM_LOG_ERROR("The engine '" << engineStr << "' was not found.");
             return Engine::Unknown;
         }
-        
+
         storm::builder::BuilderType getBuilderType(Engine const& engine) {
             switch (engine) {
                 case Engine::Sparse:
@@ -179,10 +179,10 @@ namespace storm {
                             return storm::modelchecker::SparseDtmcPrctlModelChecker<storm::models::sparse::Dtmc<storm::RationalFunction>>::canHandleStatic(checkTask);
                         case ModelType::CTMC:
                             return storm::modelchecker::SparseCtmcCslModelChecker<storm::models::sparse::Ctmc<storm::RationalFunction>>::canHandleStatic(checkTask);
-                        case ModelType::SMG:
                         case ModelType::MDP:
                         case ModelType::MA:
                         case ModelType::POMDP:
+                        case ModelType::SMG:
                             return false;
                     }
                     break;
@@ -217,7 +217,7 @@ namespace storm {
             STORM_LOG_ERROR("The selected combination of engine (" << engine << ") and model type (" << modelType << ") does not seem to be supported for this value type.");
             return false;
         }
-        
+
         template <typename ValueType>
         bool canHandle(storm::utility::Engine const& engine, std::vector<storm::jani::Property> const& properties, storm::storage::SymbolicModelDescription const& modelDescription) {
             // Check handability of properties based on model type
@@ -233,7 +233,7 @@ namespace storm {
             // Check whether the model builder can handle the model description
             return storm::builder::canHandle<ValueType>(getBuilderType(engine), modelDescription, properties);
         }
-        
+
         // explicit template instantiations.
         template bool canHandle<double>(storm::utility::Engine const&, std::vector<storm::jani::Property> const&, storm::storage::SymbolicModelDescription const&);
         template bool canHandle<storm::RationalNumber>(storm::utility::Engine const&, std::vector<storm::jani::Property> const&, storm::storage::SymbolicModelDescription const&);

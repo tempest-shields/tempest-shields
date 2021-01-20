@@ -202,6 +202,8 @@ namespace storm {
                 return this->checkAtomicLabelFormula(env, checkTask.substituteFormula(stateFormula.asAtomicLabelFormula()));
             } else if (stateFormula.isBooleanLiteralFormula()) {
                 return this->checkBooleanLiteralFormula(env, checkTask.substituteFormula(stateFormula.asBooleanLiteralFormula()));
+            } else if (stateFormula.isGameFormula()) {
+                return this->checkGameFormula(env, checkTask.substituteFormula(stateFormula.asGameFormula()));
             }
             STORM_LOG_THROW(false, storm::exceptions::InvalidArgumentException, "The given formula '" << stateFormula << "' is invalid.");
         }

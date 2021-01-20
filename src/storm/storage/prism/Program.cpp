@@ -16,6 +16,7 @@
 #include "storm/exceptions/WrongFormatException.h"
 #include "storm/exceptions/InvalidTypeException.h"
 #include "storm/exceptions/InvalidOperationException.h"
+#include "storm/exceptions/InternalException.h"
 #include "storm/solver/SmtSolver.h"
 #include "storm/storage/jani/expressions/JaniExpressionSubstitutionVisitor.h"
 
@@ -483,16 +484,53 @@ namespace storm {
             return this->players;
         }
 
+        std::size_t Program::getNumberOfPlayers() const {
+            return this->getPlayers().size();
+        }
+
+        storm::storage::PlayerIndex const& Program::getIndexOfPlayer(std::string const& playerName) const {
+            return this->playerToIndexMap.at(playerName);
+        }
+
+        std::map<std::string, storm::storage::PlayerIndex> const& Program::getPlayerNameToIndexMapping() const {
+            return playerToIndexMap;
+        }
+        
+        std::vector<storm::storage::PlayerIndex> Program::buildModuleIndexToPlayerIndexMap() const {
+            std::vector<storm::storage::PlayerIndex> result(this->getModules().size(), storm::storage::INVALID_PLAYER_INDEX);
+            for (storm::storage::PlayerIndex i = 0; i < this->getPlayers().size(); ++i) {
+                for (auto const& module : this->getPlayers()[i].getModules()) {
+                    STORM_LOG_ASSERT(hasModule(module), "Module " << module << " not found.");
+                    STORM_LOG_ASSERT(moduleToIndexMap.at(module) < this->getModules().size(), "module index " << moduleToIndexMap.at(module) << " out of range.");
+                    result[moduleToIndexMap.at(module)] = i;
+                }
+            }
+            return result;
+        }
+        
+        std::map<uint64_t, storm::storage::PlayerIndex> Program::buildActionIndexToPlayerIndexMap() const {
+            std::map<uint64_t, storm::storage::PlayerIndex> result;
+            // First insert an invalid player index for all available actions
+            for (auto const& action : indexToActionMap) {
+                result.emplace_hint(result.end(), action.first, storm::storage::INVALID_PLAYER_INDEX);
+            }
+            // Now set the actual player indices.
+            // Note that actions that are not assigned to a player will still have INVALID_PLAYER_INDEX afterwards
+            for (storm::storage::PlayerIndex i = 0; i < this->getPlayers().size(); ++i) {
+                for (auto const& act : this->getPlayers()[i].getActions()) {
+                    STORM_LOG_ASSERT(hasAction(act), "Action " << act << " not found.");
+                    result[actionToIndexMap.at(act)] = i;
+                }
+            }
+            return result;
+        }
+
         std::size_t Program::getNumberOfFormulas() const {
             return this->getFormulas().size();
         }
 
         std::size_t Program::getNumberOfModules() const {
             return this->getModules().size();
-        }
-
-        std::size_t Program::getNumberOfPlayers() const {
-            return this->getPlayers().size();
         }
 
         storm::prism::Module const& Program::getModule(uint_fast64_t index) const {
@@ -511,10 +549,6 @@ namespace storm {
 
         std::vector<storm::prism::Module> const& Program::getModules() const {
             return this->modules;
-        }
-
-        uint_fast32_t const& Program::getIndexOfPlayer(std::string playerName) const {
-            return this->playerToIndexMap.at(playerName);
         }
 
         std::map<std::string, uint_fast64_t> const& Program::getActionNameToIndexMapping() const {
@@ -813,7 +847,7 @@ namespace storm {
             for (uint_fast64_t moduleIndex = 0; moduleIndex < this->getNumberOfModules(); ++moduleIndex) {
                 this->moduleToIndexMap[this->getModules()[moduleIndex].getName()] = moduleIndex;
             }
-            for (uint_fast64_t playerIndex = 0; playerIndex < this->getNumberOfPlayers(); ++playerIndex) {
+            for (storm::storage::PlayerIndex playerIndex = 0; playerIndex < this->getNumberOfPlayers(); ++playerIndex) {
                 this->playerToIndexMap[this->getPlayers()[playerIndex].getName()] = playerIndex;
             }
             for (uint_fast64_t rewardModelIndex = 0; rewardModelIndex < this->getNumberOfRewardModels(); ++rewardModelIndex) {
@@ -1367,6 +1401,17 @@ namespace storm {
                 STORM_LOG_THROW(label.getStatePredicateExpression().hasBooleanType(), storm::exceptions::WrongFormatException, "Error in " << label.getFilename() << ", line " << label.getLineNumber() << ": label predicate must evaluate to type 'bool'.");
             }
 
+            // Check the players
+            for (auto const& player : this->getPlayers()) {
+                // The stored action/module names shall be available
+                for (auto const& controlledAction : player.getActions()) {
+                    STORM_LOG_THROW(this->hasAction(controlledAction), storm::exceptions::InternalException, "Error in " << player.getFilename() << ", line " << player.getLineNumber() << ": The player controlled action " << controlledAction << " is not available.");
+                }
+                for (auto const& controlledModule : player.getModules()) {
+                    STORM_LOG_THROW(this->hasModule(controlledModule), storm::exceptions::InternalException, "Error in " << player.getFilename() << ", line " << player.getLineNumber() << ": The player controlled module " << controlledModule << " is not available.");
+                }
+            }
+            
             if(lvl >= Program::ValidityCheckLevel::READYFORPROCESSING) {
                 // We check for each global variable and each labeled command, whether there is at most one instance writing to that variable.
                 std::set<std::pair<std::string, std::string>> globalBVarsWrittenToByCommand;
@@ -1496,6 +1541,7 @@ namespace storm {
             // If we have to delete whole actions, do so now.
             std::map<std::string, uint_fast64_t> newActionToIndexMap;
             std::vector<RewardModel> newRewardModels;
+            std::vector<Player> newPlayers;
             if (!actionIndicesToDelete.empty()) {
                 storm::storage::FlatSet<uint_fast64_t> actionsToKeep;
                 std::set_difference(this->getSynchronizingActionIndices().begin(), this->getSynchronizingActionIndices().end(), actionIndicesToDelete.begin(), actionIndicesToDelete.end(), std::inserter(actionsToKeep, actionsToKeep.begin()));
@@ -1515,10 +1561,22 @@ namespace storm {
                     newRewardModels.emplace_back(rewardModel.restrictActionRelatedRewards(actionsToKeep));
                 }
 
+                // Restrict action name to index mapping. Old action indices remain valid.
                 for (auto const& entry : this->getActionNameToIndexMapping()) {
                     if (actionsToKeep.find(entry.second) != actionsToKeep.end()) {
                         newActionToIndexMap.emplace(entry.first, entry.second);
                     }
+                }
+                
+                // Restrict player controlled actions
+                for (auto const& player : this->getPlayers()) {
+                    std::unordered_set<std::string> newControlledActions;
+                    for (auto const& act : player.getActions()) {
+                        if (newActionToIndexMap.count(act) != 0) {
+                            newControlledActions.insert(act);
+                        }
+                    }
+                    newPlayers.emplace_back(player.getName(), player.getModules(), newControlledActions, player.getFilename(), player.getLineNumber());
                 }
             }
 
@@ -1527,7 +1585,7 @@ namespace storm {
                 newLabels.emplace_back(label.getName(), label.getStatePredicateExpression().simplify());
             }
 
-            return Program(this->manager, modelType, newConstants, getGlobalBooleanVariables(), getGlobalIntegerVariables(), getFormulas(), this->getPlayers(), newModules, actionIndicesToDelete.empty() ? getActionNameToIndexMapping() : newActionToIndexMap, actionIndicesToDelete.empty() ? this->getRewardModels() : newRewardModels, newLabels, getObservationLabels(), getOptionalInitialConstruct(), this->getOptionalSystemCompositionConstruct(), prismCompatibility);
+            return Program(this->manager, modelType, newConstants, getGlobalBooleanVariables(), getGlobalIntegerVariables(), getFormulas(), actionIndicesToDelete.empty() ? this->getPlayers() : newPlayers, newModules, actionIndicesToDelete.empty() ? getActionNameToIndexMapping() : newActionToIndexMap, actionIndicesToDelete.empty() ? this->getRewardModels() : newRewardModels, newLabels, getObservationLabels(), getOptionalInitialConstruct(), this->getOptionalSystemCompositionConstruct(), prismCompatibility);
         }
 
         Program Program::flattenModules(std::shared_ptr<storm::utility::solver::SmtSolverFactory> const& smtSolverFactory) const {

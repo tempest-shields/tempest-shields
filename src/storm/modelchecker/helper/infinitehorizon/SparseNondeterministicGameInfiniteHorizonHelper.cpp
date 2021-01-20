@@ -10,6 +10,9 @@
 #include "storm/solver/MinMaxLinearEquationSolver.h"
 #include "storm/solver/Multiplier.h"
 
+// TODO this should be removed as soon as the other TOOD is fixed
+#include "storm/environment/solver/MultiplierEnvironment.h"
+
 #include "storm/utility/solver.h"
 #include "storm/utility/vector.h"
 
@@ -24,7 +27,7 @@ namespace storm {
         namespace helper {
 
             template <typename ValueType>
-            SparseNondeterministicGameInfiniteHorizonHelper<ValueType>::SparseNondeterministicGameInfiniteHorizonHelper(storm::storage::SparseMatrix<ValueType> const& transitionMatrix, std::vector<std::pair<std::string, uint_fast64_t>> const& player) : SparseInfiniteHorizonHelper<ValueType, true>(transitionMatrix), player(player) {
+            SparseNondeterministicGameInfiniteHorizonHelper<ValueType>::SparseNondeterministicGameInfiniteHorizonHelper(storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::BitVector statesOfCoalition) : SparseInfiniteHorizonHelper<ValueType, true>(transitionMatrix), statesOfCoalition(statesOfCoalition) {
                 // Intentionally left empty.
             }
 
@@ -73,6 +76,12 @@ namespace storm {
             template <typename ValueType>
             std::vector<ValueType> SparseNondeterministicGameInfiniteHorizonHelper<ValueType>::computeLongRunAverageValues(Environment const& env, ValueGetter const& stateValuesGetter,  ValueGetter const& actionValuesGetter) {
                 auto underlyingSolverEnvironment = env;
+                // TODO needs to be removed:
+                statesOfCoalition.complement();
+                underlyingSolverEnvironment.solver().multiplier().setOptimizationDirectionOverride(statesOfCoalition);
+
+                STORM_LOG_DEBUG(statesOfCoalition);
+                // should be replaced with passing the bitvector
                 std::vector<ValueType> componentLraValues;
                 createDecomposition();
                 componentLraValues.reserve(this->_longRunComponentDecomposition->size());

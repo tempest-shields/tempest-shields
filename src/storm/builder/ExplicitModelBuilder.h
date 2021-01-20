@@ -35,15 +35,15 @@ namespace storm {
     namespace utility {
         template<typename ValueType> class ConstantsComparator;
     }
-    
+
     namespace builder {
-        
+
         using namespace storm::utility::prism;
         using namespace storm::generator;
-        
+
         // Forward-declare classes.
         template <typename ValueType> class RewardModelBuilder;
-        class ChoiceInformationBuilder;
+        class StateAndChoiceInformationBuilder;
 
         template<typename StateType>
         class ExplicitStateLookup {
@@ -59,21 +59,21 @@ namespace storm {
             VariableInformation varInfo;
             storm::storage::BitVectorHashMap<StateType>  stateToId;
         };
-        
+
         template<typename ValueType, typename RewardModelType = storm::models::sparse::StandardRewardModel<ValueType>, typename StateType = uint32_t>
         class ExplicitModelBuilder {
         public:
-            
+
             struct Options {
                 /*!
                  * Creates an object representing the default building options.
                  */
                 Options();
-                
+
                 // The order in which to explore the model.
                 ExplorationOrder explorationOrder;
             };
-            
+
             /*!
              * Creates an explicit model builder that uses the provided generator.
              *
@@ -94,7 +94,7 @@ namespace storm {
              * @param model The JANI model for which to build the model.
              */
             ExplicitModelBuilder(storm::jani::Model const& model, storm::generator::NextStateGeneratorOptions const& generatorOptions = storm::generator::NextStateGeneratorOptions(), Options const& builderOptions = Options());
-            
+
             /*!
              * Convert the program given at construction time to an abstract model. The type of the model is the one
              * specified in the program. The given reward model name selects the rewards that the model will contain.
@@ -121,17 +121,15 @@ namespace storm {
              * @return A pair indicating whether the state was already discovered before and the state id of the state.
              */
             StateType getOrAddStateIndex(CompressedState const& state);
-    
+
             /*!
              * Builds the transition matrix and the transition reward matrix based for the given program.
              *
              * @param transitionMatrixBuilder The builder of the transition matrix.
              * @param rewardModelBuilders The builders for the selected reward models.
-             * @param choiceInformationBuilder The builder for the requested information of the choices
-             * @param markovianChoices is set to a bit vector storing whether a choice is Markovian (is only set if the model type requires this information).
-             * @param stateValuationsBuilder if not boost::none, we insert valuations for the corresponding states
+             * @param stateAndChoiceInformationBuilder The builder for the requested information of the individual states and choices
              */
-            void buildMatrices(storm::storage::SparseMatrixBuilder<ValueType>& transitionMatrixBuilder, std::vector<RewardModelBuilder<typename RewardModelType::ValueType>>& rewardModelBuilders, ChoiceInformationBuilder& choiceInformationBuilder, boost::optional<storm::storage::BitVector>& markovianChoices, boost::optional<std::vector<std::pair<std::string, uint_fast64_t>>>& playerActionIndices, boost::optional<storm::storage::sparse::StateValuationsBuilder>& stateValuationsBuilder);
+            void buildMatrices(storm::storage::SparseMatrixBuilder<ValueType>& transitionMatrixBuilder, std::vector<RewardModelBuilder<typename RewardModelType::ValueType>>& rewardModelBuilders, StateAndChoiceInformationBuilder& stateAndChoiceInformationBuilder);
 
             /*!
              * Explores the state space of the given program and returns the components of the model as a result.
