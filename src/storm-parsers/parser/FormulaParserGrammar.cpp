@@ -153,7 +153,6 @@ namespace storm {
             gameFormula.name("game formula");
 
             stateFormula = (orStateFormula | multiFormula | quantileFormula | gameFormula);
->>>>>>> f106b8332... WIP added grammar rules for gameFormula
             stateFormula.name("state formula");
 
             formulaName = qi::lit("\"") >> identifier >> qi::lit("\"") >> qi::lit(":");
