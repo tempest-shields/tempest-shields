@@ -196,7 +196,7 @@ namespace storm {
                                 rewardModelBuilder.addStateActionReward(storm::utility::zero<ValueType>());
                             }
                         }
-                        
+
                         // This state shall be Markovian (to not introduce Zeno behavior)
                         if (stateAndChoiceInformationBuilder.isBuildMarkovianStates()) {
                             stateAndChoiceInformationBuilder.addMarkovianState(currentRowGroup);
@@ -340,7 +340,7 @@ namespace storm {
             stateAndChoiceInformationBuilder.setBuildStateValuations(generator->getOptions().isBuildStateValuationsSet());
 
             buildMatrices(transitionMatrixBuilder, rewardModelBuilders, stateAndChoiceInformationBuilder);
-            
+
             // Initialize the model components with the obtained information.
             storm::storage::sparse::ModelComponents<ValueType, RewardModelType> modelComponents(transitionMatrixBuilder.build(0, transitionMatrixBuilder.getCurrentRowGroupCount()), buildStateLabeling(), std::unordered_map<std::string, RewardModelType>(), !generator->isDiscreteTimeModel());
 
