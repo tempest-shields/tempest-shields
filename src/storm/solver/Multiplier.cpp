@@ -30,13 +30,13 @@ namespace storm {
         }
 
         template<typename ValueType>
-        void Multiplier<ValueType>::multiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices) const {
-            multiplyAndReduce(env, dir, this->matrix.getRowGroupIndices(), x, b, result, choices);
+        void Multiplier<ValueType>::multiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
+            multiplyAndReduce(env, dir, this->matrix.getRowGroupIndices(), x, b, result, choices, dirOverride);
         }
 
         template<typename ValueType>
-        void Multiplier<ValueType>::multiplyAndReduceGaussSeidel(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType>& x, std::vector<ValueType> const* b, std::vector<uint_fast64_t>* choices, bool backwards) const {
-            multiplyAndReduceGaussSeidel(env, dir, this->matrix.getRowGroupIndices(), x, b, choices, backwards);
+        void Multiplier<ValueType>::multiplyAndReduceGaussSeidel(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType>& x, std::vector<ValueType> const* b, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride, bool backwards) const {
+            multiplyAndReduceGaussSeidel(env, dir, this->matrix.getRowGroupIndices(), x, b, choices, dirOverride, backwards);
         }
 
         template<typename ValueType>
@@ -55,7 +55,7 @@ namespace storm {
         }
 
         template<typename ValueType>
-        void Multiplier<ValueType>::repeatedMultiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType>& x, std::vector<ValueType> const* b, uint64_t n) const {
+        void Multiplier<ValueType>::repeatedMultiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType>& x, std::vector<ValueType> const* b, uint64_t n, storm::storage::BitVector* dirOverride) const {
             storm::utility::ProgressMeasurement progress("multiplications");
             progress.setMaxCount(n);
             progress.startNewMeasurement(0);
@@ -72,22 +72,6 @@ namespace storm {
         void Multiplier<ValueType>::multiplyRow2(uint64_t const& rowIndex, std::vector<ValueType> const& x1, ValueType& val1, std::vector<ValueType> const& x2, ValueType& val2) const {
             multiplyRow(rowIndex, x1, val1);
             multiplyRow(rowIndex, x2, val2);
-        }
-
-        template<typename ValueType>
-        void Multiplier<ValueType>::setOptimizationDirectionOverride(storm::storage::BitVector const& optDirOverride) {
-            optimizationDirectionOverride = optDirOverride;
-        }
-
-        template<typename ValueType>
-        boost::optional<storm::storage::BitVector> Multiplier<ValueType>::getOptimizationDirectionOverride() const {
-            return optimizationDirectionOverride;
-        }
-
-        template<typename ValueType>
-        bool Multiplier<ValueType>::isOverridden(uint_fast64_t const index) const {
-            if(!optimizationDirectionOverride.is_initialized()) return false;
-            return optimizationDirectionOverride.get().get(index);
         }
 
         template<typename ValueType>

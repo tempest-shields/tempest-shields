@@ -70,8 +70,8 @@ namespace storm {
              * to the number of rows of A. Can be the same as the x vector.
              * @param choices If given, the choices made in the reduction process are written to this vector.
              */
-            void multiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices = nullptr) const;
-            virtual void multiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices = nullptr) const = 0;
+            void multiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices = nullptr, storm::storage::BitVector* dirOverride = nullptr) const;
+            virtual void multiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices = nullptr, storm::storage::BitVector* dirOverride = nullptr) const = 0;
 
             /*!
              * Performs a matrix-vector multiplication in gauss-seidel style and then minimizes/maximizes over the row groups
@@ -88,8 +88,8 @@ namespace storm {
              * @param choices If given, the choices made in the reduction process are written to this vector.
              * @param backwards if true, the iterations will be performed beginning from the last rowgroup and ending at the first rowgroup.
              */
-            void multiplyAndReduceGaussSeidel(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType>& x, std::vector<ValueType> const* b, std::vector<uint_fast64_t>* choices = nullptr, bool backwards = true) const;
-            virtual void multiplyAndReduceGaussSeidel(Environment const& env, OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType>& x, std::vector<ValueType> const* b, std::vector<uint_fast64_t>* choices = nullptr, bool backwards = true) const = 0;
+            void multiplyAndReduceGaussSeidel(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType>& x, std::vector<ValueType> const* b, std::vector<uint_fast64_t>* choices = nullptr, storm::storage::BitVector* dirOverride = nullptr, bool backwards = true) const;
+            virtual void multiplyAndReduceGaussSeidel(Environment const& env, OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType>& x, std::vector<ValueType> const* b, std::vector<uint_fast64_t>* choices = nullptr, storm::storage::BitVector* dirOverride = nullptr, bool backwards = true) const = 0;
 
             /*!
              * Performs repeated matrix-vector multiplication, using x[0] = x and x[i + 1] = A*x[i] + b. After
@@ -117,7 +117,7 @@ namespace storm {
              * to the number of rows of A.
              * @param n The number of times to perform the multiplication.
              */
-            void repeatedMultiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType>& x, std::vector<ValueType> const* b, uint64_t n) const;
+            void repeatedMultiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType>& x, std::vector<ValueType> const* b, uint64_t n, storm::storage::BitVector* dirOverride = nullptr) const;
 
             /*!
              * Multiplies the row with the given index with x and adds the result to the provided value
@@ -137,26 +137,9 @@ namespace storm {
              */
             virtual void multiplyRow2(uint64_t const& rowIndex, std::vector<ValueType> const& x1, ValueType& val1, std::vector<ValueType> const& x2, ValueType& val2) const;
 
-            /*
-             *  TODO
-             */
-            void setOptimizationDirectionOverride(storm::storage::BitVector const& optimizationDirectionOverride);
-
-            /*
-             *  TODO
-             */
-            boost::optional<storm::storage::BitVector> getOptimizationDirectionOverride() const;
-
-            /*
-             *  TODO
-             */
-            bool isOverridden(uint_fast64_t const index) const;
-
         protected:
             mutable std::unique_ptr<std::vector<ValueType>> cachedVector;
             storm::storage::SparseMatrix<ValueType> const& matrix;
-
-            boost::optional<storm::storage::BitVector> optimizationDirectionOverride = boost::none;
         };
 
         template<typename ValueType>
