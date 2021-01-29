@@ -141,18 +141,6 @@ namespace storm {
             gameFormula.name("game formula");
 
             stateFormula = (orStateFormula | multiFormula | quantileFormula | gameFormula);
-
-            coalitionOperator = (qi::lit("<<")
-                    > *(    (identifier[phoenix::push_back(qi::_a, qi::_1)]
-                        |    qi::int_[phoenix::push_back(qi::_a, qi::_1)]) % ','
-                        )
-                    > qi::lit(">>"))[qi::_val = phoenix::bind(&FormulaParserGrammar::createCoalition, phoenix::ref(*this), qi::_a)];
-            coalitionOperator.name("coalition operator");
-
-            gameFormula = (coalitionOperator > operatorFormula)[qi::_val = phoenix::bind(&FormulaParserGrammar::createGameFormula, phoenix::ref(*this), qi::_1, qi::_2)];
-            gameFormula.name("game formula");
-
-            stateFormula = (orStateFormula | multiFormula | quantileFormula | gameFormula);
             stateFormula.name("state formula");
 
             formulaName = qi::lit("\"") >> identifier >> qi::lit("\"") >> qi::lit(":");

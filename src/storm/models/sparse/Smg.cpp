@@ -38,6 +38,7 @@ namespace storm {
             storm::storage::PlayerIndex Smg<ValueType, RewardModelType>::getPlayerOfState(uint64_t stateIndex) const {
                 STORM_LOG_ASSERT(stateIndex < this->getNumberOfStates(), "Invalid state index: " << stateIndex << ".");
                 return statePlayerIndications[stateIndex];
+            }
 
             template <typename ValueType, typename RewardModelType>
             storm::storage::PlayerIndex Smg<ValueType, RewardModelType>::getPlayerIndex(std::string const& playerName) const {
