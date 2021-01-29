@@ -197,7 +197,6 @@ namespace storm {
                         if (storm::utility::resources::isTerminate()) {
                             break;
                         }
-
                         // If there will be a next iteration, we have to prepare it.
                         if(!gameNondetTs()) {
                             prepareNextIteration(env);
@@ -396,7 +395,6 @@ namespace storm {
                             _TsMultiplier->multiplyAndReduce(env, *dir, xOld(), &_TsChoiceValues, xNew(), &tsChoices);
                             setInputModelChoices(*choices, tsChoices); // no components -> no need for that call?
                         }
-                        //std::cin.get();
                     } else {
                         _TsMultiplier->multiply(env, xOld(), &_TsChoiceValues, xNew());
                     }

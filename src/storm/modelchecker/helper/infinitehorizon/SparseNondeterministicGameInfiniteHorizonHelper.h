@@ -28,7 +28,7 @@ namespace storm {
                 /*!
                  * Initializes the helper for a discrete time model with different players (i.e. SMG)
                  */
-                SparseNondeterministicGameInfiniteHorizonHelper(storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::BitVector statesOfCoalition);
+                SparseNondeterministicGameInfiniteHorizonHelper(storm::storage::SparseMatrix<ValueType> const& transitionMatrix, std::vector<std::pair<std::string, uint_fast64_t>> const& player);
 
                 /*! TODO
                  * Computes the long run average value given the provided state and action based rewards
@@ -64,7 +64,7 @@ namespace storm {
                 std::vector<ValueType> buildAndSolveSsp(Environment const& env, std::vector<ValueType> const& mecLraValues);
 
             private:
-                storm::storage::BitVector statesOfCoalition;
+                std::vector<std::pair<std::string, uint_fast64_t>> player;
             };
 
 
