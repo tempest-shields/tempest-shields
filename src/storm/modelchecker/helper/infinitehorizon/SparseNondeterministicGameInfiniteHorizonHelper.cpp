@@ -24,7 +24,7 @@ namespace storm {
         namespace helper {
 
             template <typename ValueType>
-            SparseNondeterministicGameInfiniteHorizonHelper<ValueType>::SparseNondeterministicGameInfiniteHorizonHelper(storm::storage::SparseMatrix<ValueType> const& transitionMatrix, std::vector<std::pair<std::string, uint_fast64_t>> const& player) : SparseInfiniteHorizonHelper<ValueType, true>(transitionMatrix), player(player) {
+            SparseNondeterministicGameInfiniteHorizonHelper<ValueType>::SparseNondeterministicGameInfiniteHorizonHelper(storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::BitVector statesOfCoalition) : SparseInfiniteHorizonHelper<ValueType, true>(transitionMatrix), statesOfCoalition(statesOfCoalition) {
                 // Intentionally left empty.
             }
 
