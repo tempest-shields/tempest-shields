@@ -154,6 +154,7 @@ namespace storm {
             while (!statesToExplore.empty()) {
                 // Get the first state in the queue.
                 CompressedState currentState = statesToExplore.front().first;
+                STORM_LOG_DEBUG("Exploring (" << currentRowGroup << ") : " << toString(currentState, this->generator->getVariableInformation()));
                 StateType currentIndex = statesToExplore.front().second;
                 statesToExplore.pop_front();
 

@@ -16,25 +16,26 @@
 
 namespace storm {
     namespace solver {
-        
+
         template<typename ValueType>
         GmmxxMultiplier<ValueType>::GmmxxMultiplier(storm::storage::SparseMatrix<ValueType> const& matrix) : Multiplier<ValueType>(matrix) {
             // Intentionally left empty.
+            //STORM_LOG_DEBUG("\n" << matrix);
         }
-        
+
         template<typename ValueType>
         void GmmxxMultiplier<ValueType>::initialize() const {
             if (gmmMatrix.nrows() == 0) {
                 gmmMatrix = std::move(*storm::adapters::GmmxxAdapter<ValueType>().toGmmxxSparseMatrix(this->matrix));
             }
         }
-        
+
         template<typename ValueType>
         void GmmxxMultiplier<ValueType>::clearCache() const {
             gmmMatrix = gmm::csr_matrix<ValueType>();
             Multiplier<ValueType>::clearCache();
         }
-        
+
         template<typename ValueType>
         bool GmmxxMultiplier<ValueType>::parallelize(Environment const& env) const {
 #ifdef STORM_HAVE_INTELTBB
@@ -43,7 +44,7 @@ namespace storm {
             return false;
 #endif
         }
-        
+
         template<typename ValueType>
         void GmmxxMultiplier<ValueType>::multiply(Environment const& env, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result) const {
             initialize();
@@ -65,7 +66,7 @@ namespace storm {
                 std::swap(result, *this->cachedVector);
             }
         }
-        
+
         template<typename ValueType>
         void GmmxxMultiplier<ValueType>::multiplyGaussSeidel(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> const* b, bool backwards) const {
             initialize();
@@ -84,7 +85,7 @@ namespace storm {
                 }
             }
         }
-        
+
         template<typename ValueType>
         void GmmxxMultiplier<ValueType>::multiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices) const {
             initialize();
@@ -106,13 +107,13 @@ namespace storm {
                 std::swap(result, *this->cachedVector);
             }
         }
-        
+
         template<typename ValueType>
         void GmmxxMultiplier<ValueType>::multiplyAndReduceGaussSeidel(Environment const& env, OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType>& x, std::vector<ValueType> const* b, std::vector<uint_fast64_t>* choices, bool backwards) const {
             initialize();
             multAddReduceHelper(dir, rowGroupIndices, x, b, x, choices, backwards);
         }
-        
+
         template<typename ValueType>
         void GmmxxMultiplier<ValueType>::multiplyRow(uint64_t const& rowIndex, std::vector<ValueType> const& x, ValueType& value) const {
             initialize();
@@ -148,14 +149,14 @@ namespace storm {
                 }
             }
         }
-        
+
         template<typename ValueType>
         template<typename Compare, bool backwards>
         void GmmxxMultiplier<ValueType>::multAddReduceHelper(std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices) const {
             Compare compare;
             typedef std::vector<ValueType> VectorType;
             typedef gmm::csr_matrix<ValueType> MatrixType;
-            
+
             typename gmm::linalg_traits<VectorType>::const_iterator add_it, add_ite;
             if (b) {
                 add_it = backwards ? gmm::vect_end(*b) - 1 : gmm::vect_begin(*b);
@@ -181,6 +182,7 @@ namespace storm {
             uint64_t currentRowGroup = backwards ? rowGroupIndices.size() - 1 : 0;
             auto row_group_it = backwards ? rowGroupIndices.end() - 2 : rowGroupIndices.begin();
             auto row_group_ite = backwards ? rowGroupIndices.begin() - 1 : rowGroupIndices.end() - 1;
+            //if(choices) STORM_LOG_DEBUG(" ");
             while (row_group_it != row_group_ite) {
                 ValueType currentValue = storm::utility::zero<ValueType>();
 
@@ -199,7 +201,7 @@ namespace storm {
                             oldSelectedChoiceValue = currentValue;
                         }
                     }
-                    
+
                     // move row-based iterators to the next row
                     if (backwards) {
                         --itr;
@@ -213,6 +215,10 @@ namespace storm {
 
                     // Process the (rowGroupSize-1) remaining rows within the current row Group
                     uint64_t rowGroupSize = *(row_group_it + 1) - *row_group_it;
+                    uint choiceforprintout = 0;
+                    //std::cout << currentRowGroup << ": " << currentValue << ", ";
+                    //STORM_LOG_DEBUG(std::setprecision(3) << vect_sp(gmm::linalg_traits<MatrixType>::row(itr), x) << " + " << *add_it << "; ");
+                    //STORM_LOG_DEBUG(std::setprecision(3) << vect_sp(gmm::linalg_traits<MatrixType>::row(itr), x) << " + " << *add_it << "; ");
                     for (uint64_t i = 1; i < rowGroupSize; ++i) {
                         ValueType newValue = b ? *add_it : storm::utility::zero<ValueType>();
                         newValue += vect_sp(gmm::linalg_traits<MatrixType>::row(itr), x);
@@ -220,12 +226,13 @@ namespace storm {
                         if (choices && currentRow == *choice_it + *row_group_it) {
                             oldSelectedChoiceValue = newValue;
                         }
-
-                        if(this->isOverridden(currentRowGroup) ? !compare(newValue, currentValue) : compare(newValue, currentValue)) {
+                        //std::cout << newValue << ", ";
+                        //STORM_LOG_DEBUG(std::setprecision(3) << vect_sp(gmm::linalg_traits<MatrixType>::row(itr), x) << " + " << *add_it << "; ");
                             currentValue = newValue;
                             if (choices) {
                                 selectedChoice = currentRow - *row_group_it;
                             }
+                            choiceforprintout = currentRow - *row_group_it;
                         }
                         // move row-based iterators to the next row
                         if (backwards) {
@@ -238,7 +245,8 @@ namespace storm {
                              ++add_it;
                         }
                     }
-
+                    //STORM_LOG_DEBUG("\t= " << currentValue << "\tchoice: " << choiceforprintout);
+                    //std::cout << std::fixed << std::setprecision(2) << " | v(" << currentRowGroup << ")=" << currentValue << " c: " << choiceforprintout << " |\n" ;
                     // Finally write value to target vector.
                     *target_it = currentValue;
                     if(choices) {
@@ -261,6 +269,7 @@ namespace storm {
                     ++currentRowGroup;
                 }
             }
+                //std::cout << std::endl;
         }
 
         template<>
@@ -286,7 +295,7 @@ namespace storm {
             multAdd(x, b, result);
 #endif
         }
-        
+
 #ifdef STORM_HAVE_INTELTBB
         template<typename ValueType, typename Compare>
         class TbbMultAddReduceFunctor {
@@ -294,14 +303,14 @@ namespace storm {
             TbbMultAddReduceFunctor(std::vector<uint64_t> const& rowGroupIndices, gmm::csr_matrix<ValueType> const& matrix, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices) : rowGroupIndices(rowGroupIndices), matrix(matrix), x(x), b(b), result(result), choices(choices) {
                 // Intentionally left empty.
             }
-            
+
             void operator()(tbb::blocked_range<unsigned long> const& range) const {
                 typedef std::vector<ValueType> VectorType;
                 typedef gmm::csr_matrix<ValueType> MatrixType;
 
                 auto groupIt = rowGroupIndices.begin() + range.begin();
                 auto groupIte = rowGroupIndices.begin() + range.end();
-                
+
                 auto itr = mat_row_const_begin(matrix) + *groupIt;
                 typename std::vector<ValueType>::const_iterator bIt;
                 if (b) {
@@ -311,40 +320,40 @@ namespace storm {
                 if (choices) {
                     choiceIt = choices->begin() + range.begin();
                 }
-                
+
                 auto resultIt = result.begin() + range.begin();
-                
+
                 // Variables for correctly tracking choices (only update if new choice is strictly better).
                 ValueType oldSelectedChoiceValue;
                 uint64_t selectedChoice;
-                
+
                 uint64_t currentRow = *groupIt;
                 for (; groupIt != groupIte; ++groupIt, ++resultIt, ++choiceIt) {
                     ValueType currentValue = storm::utility::zero<ValueType>();
-                    
+
                     // Only multiply and reduce if the row group is not empty.
                     if (*groupIt != *(groupIt + 1)) {
                         if (b) {
                             currentValue = *bIt;
                             ++bIt;
                         }
-                        
+
                         currentValue += vect_sp(gmm::linalg_traits<MatrixType>::row(itr), x);
-                        
+
                         if (choices) {
                             selectedChoice = currentRow - *groupIt;
                             if (*choiceIt == selectedChoice) {
                                 oldSelectedChoiceValue = currentValue;
                             }
                         }
-                        
+
                         ++itr;
                         ++currentRow;
-                        
+
                         for (auto itre = mat_row_const_begin(matrix) + *(groupIt + 1); itr != itre; ++itr, ++bIt, ++currentRow) {
                             ValueType newValue = b ? *bIt : storm::utility::zero<ValueType>();
                             newValue += vect_sp(gmm::linalg_traits<MatrixType>::row(itr), x);
-                            
+
                             if (compare(newValue, currentValue)) {
                                 currentValue = newValue;
                                 if (choices) {
@@ -353,7 +362,7 @@ namespace storm {
                             }
                         }
                     }
-                    
+
                     // Finally write value to target vector.
                     *resultIt = currentValue;
                     if (choices && compare(currentValue, oldSelectedChoiceValue)) {
@@ -361,7 +370,7 @@ namespace storm {
                     }
                 }
             }
-            
+
         private:
             Compare compare;
             std::vector<uint64_t> const& rowGroupIndices;
@@ -372,7 +381,7 @@ namespace storm {
             std::vector<uint64_t>* choices;
         };
 #endif
-        
+
         template<typename ValueType>
         void GmmxxMultiplier<ValueType>::multAddReduceParallel(storm::solver::OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices) const {
 #ifdef STORM_HAVE_INTELTBB
@@ -386,18 +395,18 @@ namespace storm {
             multAddReduceHelper(dir, rowGroupIndices, x, b, result, choices);
 #endif
         }
-        
+
         template<>
         void GmmxxMultiplier<storm::RationalFunction>::multAddReduceParallel(storm::solver::OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<storm::RationalFunction> const& x, std::vector<storm::RationalFunction> const* b, std::vector<storm::RationalFunction>& result, std::vector<uint64_t>* choices) const {
             STORM_LOG_THROW(false, storm::exceptions::NotSupportedException, "This operation is not supported.");
         }
-        
+
         template class GmmxxMultiplier<double>;
-        
+
 #ifdef STORM_HAVE_CARL
         template class GmmxxMultiplier<storm::RationalNumber>;
         template class GmmxxMultiplier<storm::RationalFunction>;
 #endif
-        
+
     }
 }

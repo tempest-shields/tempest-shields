@@ -24,11 +24,11 @@ namespace storm {
     namespace modelchecker {
         namespace helper {
             namespace internal {
-                
+
                 template <typename ValueType, typename ComponentType, LraViTransitionsType TransitionsType>
                 LraViHelper<ValueType, ComponentType, TransitionsType>::LraViHelper(ComponentType const& component, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, ValueType const& aperiodicFactor, storm::storage::BitVector const* timedStates, std::vector<ValueType> const* exitRates) : _transitionMatrix(transitionMatrix), _timedStates(timedStates), _hasInstantStates(TransitionsType == LraViTransitionsType::DetTsNondetIs || TransitionsType == LraViTransitionsType::DetTsDetIs), _Tsx1IsCurrent(false) {
                     setComponent(component);
-                    
+
                     // Run through the component and collect some data:
                     // We create two submodels, one consisting of the timed states of the component and one consisting of the instant states of the component.
                     // For this, we create a state index map that point from state indices of the input model to indices of the corresponding submodel of that state.
@@ -141,8 +141,9 @@ namespace storm {
                         _IsTransitions = isTransitionsBuilder.build();
                         _IsToTsTransitions = isToTsTransitionsBuilder.build();
                     }
+                    STORM_LOG_DEBUG(uniformizationFactor << " - " << _uniformizationRate);
                 }
-                
+
                 template <typename ValueType, typename ComponentType, LraViTransitionsType TransitionsType>
                 void LraViHelper<ValueType, ComponentType, TransitionsType>::setComponent(ComponentType component) {
                     _component.clear();
@@ -156,7 +157,7 @@ namespace storm {
                     }
                 }
 
-                
+
                 template <typename ValueType, typename ComponentType, LraViTransitionsType TransitionsType>
                 ValueType LraViHelper<ValueType, ComponentType, TransitionsType>::performValueIteration(Environment const& env, ValueGetter const& stateValueGetter, ValueGetter const& actionValueGetter, std::vector<ValueType> const* exitRates, storm::solver::OptimizationDirection const* dir, std::vector<uint64_t>* choices) {
                     initializeNewValues(stateValueGetter, actionValueGetter, exitRates);
@@ -166,7 +167,7 @@ namespace storm {
                     if (env.solver().lra().isMaximalIterationCountSet()) {
                         maxIter = env.solver().lra().getMaximalIterationCount();
                     }
-                
+
                     // start the iterations
                     ValueType result = storm::utility::zero<ValueType>();
                     uint64_t iter = 0;
@@ -198,7 +199,7 @@ namespace storm {
 
                         // If there will be a next iteration, we have to prepare it.
                         prepareNextIteration(env);
-                        
+
                     }
                     if (maxIter.is_initialized() && iter == maxIter.get()) {
                         STORM_LOG_WARN("LRA computation did not converge within " << iter << " iterations.");
@@ -207,15 +208,23 @@ namespace storm {
                     } else {
                         STORM_LOG_TRACE("LRA computation converged after " << iter << " iterations.");
                     }
-                    
+
                     if (choices) {
                         // We will be doing one more iteration step and track scheduler choices this time.
                         prepareNextIteration(env);
                         performIterationStep(env, dir, choices);
                     }
+                    std::cout << "result (" << iter << " steps):" << std::endl;
+                    for(int i = 0; i < xNew().size() ; i++ ) {
+                        std::cout << std::setprecision(4) << i << "\t: " << xNew().at(i) << "\t" << xNew().at(i) * _uniformizationRate << "\t" << std::setprecision(16) << xOld().at(i) *_uniformizationRate << std::endl;
+                        //if(i == 50) {std::cout << "only showing top 50 lines"; break; }
+                    for(int i = 0; i < xNew().size() ; i++ ) {
+                        std::cout << std::setprecision(4) << i << "\t: " << xNew().at(i) << "\t" << xNew().at(i) * _uniformizationRate << "\t" << std::setprecision(16) << xOld().at(i) *_uniformizationRate << std::endl;
+                        //if(i == 50) {std::cout << "only showing top 50 lines"; break; }
+                    }
                     return result;
                 }
-                
+
                 template <typename ValueType, typename ComponentType, LraViTransitionsType TransitionsType>
                 void LraViHelper<ValueType, ComponentType, TransitionsType>::initializeNewValues(ValueGetter const& stateValueGetter, ValueGetter const& actionValueGetter, std::vector<ValueType> const* exitRates) {
                     // clear potential old values and reserve enough space for new values
@@ -225,7 +234,7 @@ namespace storm {
                         _IsChoiceValues.clear();
                         _IsChoiceValues.reserve(_IsTransitions.getRowCount());
                     }
-                    
+
                     // Set the new choice-based values
                     ValueType actionRewardScalingFactor = storm::utility::one<ValueType>() / _uniformizationRate;
                     for (auto const& element : _component) {
@@ -250,14 +259,14 @@ namespace storm {
                     // Set-up new iteration vectors for timed states
                     _Tsx1.assign(_TsTransitions.getRowGroupCount(), storm::utility::zero<ValueType>());
                     _Tsx2 = _Tsx1;
-                    
+
                     if (_hasInstantStates) {
                         // Set-up vectors for storing intermediate results for instant states.
                         _Isx.resize(_IsTransitions.getRowGroupCount(), storm::utility::zero<ValueType>());
                         _Isb = _IsChoiceValues;
                     }
                 }
-                
+
                 template <typename ValueType, typename ComponentType, LraViTransitionsType TransitionsType>
                 void LraViHelper<ValueType, ComponentType, TransitionsType>::prepareSolversAndMultipliers(const Environment& env, storm::solver::OptimizationDirection const* dir) {
                     _TsMultiplier = storm::solver::MultiplierFactory<ValueType>().create(env, _TsTransitions);
@@ -315,7 +324,7 @@ namespace storm {
                                 STORM_LOG_THROW(!req.hasEnabledCriticalRequirement(), storm::exceptions::UnmetRequirementException, "The solver requirement " << req.getEnabledRequirementsAsString() << " has not been cleared.");
                             }
                         }
-                        
+
                         // Set up multipliers for transitions connecting timed and instant states
                         _TsToIsMultiplier = storm::solver::MultiplierFactory<ValueType>().create(env, _TsToIsTransitions);
                         _IsToTsMultiplier = storm::solver::MultiplierFactory<ValueType>().create(env, _IsToTsTransitions);
@@ -324,7 +333,7 @@ namespace storm {
                         _TsMultiplier->setOptimizationDirectionOverride(env.solver().multiplier().getOptimizationDirectionOverride().get());
                     }
                 }
-                
+
                 template <typename ValueType, typename ComponentType, LraViTransitionsType TransitionsType>
                 void LraViHelper<ValueType, ComponentType, TransitionsType>::setInputModelChoices(std::vector<uint64_t>& choices, std::vector<uint64_t> const& localMecChoices, bool setChoiceZeroToTimedStates, bool setChoiceZeroToInstantStates) const {
                     // Transform the local choices (within this mec) to choice indices for the input model
@@ -347,7 +356,7 @@ namespace storm {
                     }
                     STORM_LOG_ASSERT(localState == localMecChoices.size(), "Did not traverse all component states.");
                 }
-                
+
                 template <typename ValueType, typename ComponentType, LraViTransitionsType TransitionsType>
                 void LraViHelper<ValueType, ComponentType, TransitionsType>::performIterationStep(Environment const& env, storm::solver::OptimizationDirection const* dir, std::vector<uint64_t>* choices) {
                     STORM_LOG_ASSERT(!((nondetTs() || nondetIs()) && dir == nullptr), "No optimization direction provided for model with nondeterminism");
@@ -355,13 +364,13 @@ namespace storm {
                     if (!_TsMultiplier) {
                         prepareSolversAndMultipliers(env, dir);
                     }
-                    
+
                     // Compute new x values for the timed states
                     // Flip what is new and what is old
                     _Tsx1IsCurrent = !_Tsx1IsCurrent;
                     // At this point, xOld() points to what has been computed in the most recent call of performIterationStep (initially, this is the 0-vector).
                     // The result of this ongoing computation will be stored in xNew()
-                    
+
                     // Compute the values obtained by a single uniformization step between timed states only
                     if (nondetTs() && !gameNondetTs()) {
                         if (choices == nullptr) {
@@ -425,7 +434,7 @@ namespace storm {
                         _TsToIsMultiplier->multiply(env, _Isx, &xNew(), xNew());
                     }
                 }
-                
+
                 template <typename ValueType, typename ComponentType, LraViTransitionsType TransitionsType>
                 typename LraViHelper<ValueType, ComponentType, TransitionsType>::ConvergenceCheckResult LraViHelper<ValueType, ComponentType, TransitionsType>::checkConvergence(bool relative, ValueType precision) const {
                     STORM_LOG_ASSERT(_TsMultiplier, "tried to check for convergence without doing an iteration first.");
@@ -433,7 +442,7 @@ namespace storm {
                     // We need to 'revert' this scaling when computing the absolute precision.
                     // However, for relative precision, the scaling cancels out.
                     ValueType threshold = relative ? precision : ValueType(precision / _uniformizationRate);
-                    
+
                     ConvergenceCheckResult res = { true, storm::utility::one<ValueType>() };
                     // Now check whether the currently produced results are precise enough
                     STORM_LOG_ASSERT(threshold > storm::utility::zero<ValueType>(), "Did not expect a non-positive threshold.");
@@ -460,15 +469,15 @@ namespace storm {
                             break;
                         }
                     }
-                    
+
                     // Compute the average of the maximal and the minimal difference.
                     ValueType avgDiff = (maxDiff + minDiff) / (storm::utility::convertNumber<ValueType>(2.0));
-                    
+
                     // "Undo" the scaling of the values
                     res.currentValue = avgDiff * _uniformizationRate;
                     return res;
                 }
-                
+
                 template <typename ValueType, typename ComponentType, LraViTransitionsType TransitionsType>
                 void LraViHelper<ValueType, ComponentType, TransitionsType>::prepareNextIteration(Environment const& env) {
                     // To avoid large (and numerically unstable) x-values, we substract a reference value.
@@ -480,39 +489,39 @@ namespace storm {
                         _IsToTsMultiplier->multiply(env, xNew(), &_IsChoiceValues, _Isb);
                     }
                 }
-                
+
                 template <typename ValueType, typename ComponentType, LraViTransitionsType TransitionsType>
                 bool LraViHelper<ValueType, ComponentType, TransitionsType>::isTimedState(uint64_t const& inputModelStateIndex) const {
                     STORM_LOG_ASSERT(!_hasInstantStates || _timedStates != nullptr, "Model has instant states but no partition into timed and instant states is given.");
                     STORM_LOG_ASSERT(!_hasInstantStates || inputModelStateIndex < _timedStates->size(), "Unable to determine whether state " << inputModelStateIndex << " is timed.");
                     return !_hasInstantStates || _timedStates->get(inputModelStateIndex);
                 }
-                
+
                 template <typename ValueType, typename ComponentType, LraViTransitionsType TransitionsType>
                 std::vector<ValueType>& LraViHelper<ValueType, ComponentType, TransitionsType>::xNew() {
                     return _Tsx1IsCurrent ? _Tsx1 : _Tsx2;
                 }
-                
+
                 template <typename ValueType, typename ComponentType, LraViTransitionsType TransitionsType>
                 std::vector<ValueType> const& LraViHelper<ValueType, ComponentType, TransitionsType>::xNew() const {
                     return _Tsx1IsCurrent ? _Tsx1 : _Tsx2;
                 }
-                
+
                 template <typename ValueType, typename ComponentType, LraViTransitionsType TransitionsType>
                 std::vector<ValueType>& LraViHelper<ValueType, ComponentType, TransitionsType>::xOld() {
                     return _Tsx1IsCurrent ? _Tsx2 : _Tsx1;
                 }
-                
+
                 template <typename ValueType, typename ComponentType, LraViTransitionsType TransitionsType>
                 std::vector<ValueType> const& LraViHelper<ValueType, ComponentType, TransitionsType>::xOld() const {
                     return _Tsx1IsCurrent ? _Tsx2 : _Tsx1;
                 }
-                
+
                 template <typename ValueType, typename ComponentType, LraViTransitionsType TransitionsType>
                 bool LraViHelper<ValueType, ComponentType, TransitionsType>::nondetTs() const {
                     return TransitionsType == LraViTransitionsType::NondetTsNoIs || gameNondetTs();
                 }
-                
+
                 template <typename ValueType, typename ComponentType, LraViTransitionsType TransitionsType>
                 bool LraViHelper<ValueType, ComponentType, TransitionsType>::nondetIs() const {
                     return TransitionsType == LraViTransitionsType::DetTsNondetIs;
@@ -529,10 +538,10 @@ namespace storm {
                 template class LraViHelper<storm::RationalNumber, storm::storage::MaximalEndComponent, LraViTransitionsType::GameNondetTsNoIs>;
                 template class LraViHelper<double, storm::storage::MaximalEndComponent, LraViTransitionsType::DetTsNondetIs>;
                 template class LraViHelper<storm::RationalNumber, storm::storage::MaximalEndComponent, LraViTransitionsType::DetTsNondetIs>;
-                
+
                 template class LraViHelper<double, storm::storage::StronglyConnectedComponent, LraViTransitionsType::DetTsNoIs>;
                 template class LraViHelper<storm::RationalNumber, storm::storage::StronglyConnectedComponent, LraViTransitionsType::DetTsNoIs>;
-                
+
             }
         }
     }
