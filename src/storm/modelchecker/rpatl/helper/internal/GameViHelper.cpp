@@ -26,7 +26,6 @@ namespace storm {
                     // -> compute b vector from psiStates
                     // -> clip transitionmatrix and create multiplier
                     _multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, _transitionMatrix);
-                    _multiplier->setOptimizationDirectionOverride(_statesOfCoalition);
 
                     _x1IsCurrent = false;
                 }
