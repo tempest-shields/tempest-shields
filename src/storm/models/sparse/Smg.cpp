@@ -6,6 +6,7 @@
 #include "storm/adapters/RationalFunctionAdapter.h"
 
 #include "storm/models/sparse/StandardRewardModel.h"
+#include "storm/models/sparse/Mdp.h"
 #include "storm/exceptions/InvalidArgumentException.h"
 
 namespace storm {

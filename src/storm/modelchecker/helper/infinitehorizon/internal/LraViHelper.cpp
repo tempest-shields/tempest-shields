@@ -197,8 +197,6 @@ namespace storm {
                         if (storm::utility::resources::isTerminate()) {
                             break;
                         }
-
-
                         // If there will be a next iteration, we have to prepare it.
                         if(!gameNondetTs()) {
                             prepareNextIteration(env);

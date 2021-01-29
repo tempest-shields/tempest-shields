@@ -179,7 +179,7 @@ namespace storm {
             uint64_t selectedChoice;
 
             uint64_t currentRow = backwards ? gmmMatrix.nrows() - 1 : 0;
-            uint64_t currentRowGroup = backwards ? rowGroupIndices.size() - 1 : 0;
+            uint64_t currentRowGroup = backwards ? rowGroupIndices.size() - 2 : 0;
             auto row_group_it = backwards ? rowGroupIndices.end() - 2 : rowGroupIndices.begin();
             auto row_group_ite = backwards ? rowGroupIndices.begin() - 1 : rowGroupIndices.end() - 1;
             //if(choices) STORM_LOG_DEBUG(" ");

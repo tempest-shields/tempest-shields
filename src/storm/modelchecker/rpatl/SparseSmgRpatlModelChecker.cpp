@@ -10,11 +10,14 @@
 
 #include "storm/modelchecker/results/ExplicitQualitativeCheckResult.h"
 #include "storm/modelchecker/results/ExplicitQuantitativeCheckResult.h"
+#include "storm/modelchecker/results/ExplicitParetoCurveCheckResult.h"
 
+#include "storm/modelchecker/rpatl/helper/SparseSmgRpatlHelper.h"
+#include "storm/modelchecker/helper/infinitehorizon/SparseNondeterministicGameInfiniteHorizonHelper.h"
 #include "storm/modelchecker/helper/utility/SetInformationFromCheckTask.h"
 
 #include "storm/logic/FragmentSpecification.h"
-#include "storm/logic/Coalition.h"
+#include "storm/logic/PlayerCoalition.h"
 
 #include "storm/storage/BitVector.h"
 #include "storm/environment/solver/MultiplierEnvironment.h"
@@ -23,8 +26,9 @@
 
 #include "storm/settings/modules/GeneralSettings.h"
 
+#include "storm/exceptions/InvalidStateException.h"
 #include "storm/exceptions/InvalidPropertyException.h"
-#include "storm/exceptions/NotImplementedException.h"
+#include "storm/exceptions/InvalidArgumentException.h"
 
 namespace storm {
     namespace modelchecker {
@@ -38,7 +42,6 @@ namespace storm {
         template<typename SparseSmgModelType>
         bool SparseSmgRpatlModelChecker<SparseSmgModelType>::canHandleStatic(CheckTask<storm::logic::Formula, ValueType> const& checkTask, bool* requiresSingleInitialState) {
             storm::logic::Formula const& formula = checkTask.getFormula();
-
             return formula.isInFragment(storm::logic::rpatl());
         }
 
@@ -56,15 +59,34 @@ namespace storm {
 
         template<typename SparseSmgModelType>
         std::unique_ptr<CheckResult> SparseSmgRpatlModelChecker<SparseSmgModelType>::checkGameFormula(Environment const& env, CheckTask<storm::logic::GameFormula, ValueType> const& checkTask) {
+            Environment solverEnv = env;
+
             storm::logic::GameFormula const& gameFormula = checkTask.getFormula();
             storm::logic::Formula const& subFormula = gameFormula.getSubformula();
+
+            statesOfCoalition = this->getModel().computeStatesOfCoalition(gameFormula.getCoalition());
 
             if (subFormula.isRewardOperatorFormula()) {
                 return this->checkRewardOperatorFormula(solverEnv, checkTask.substituteFormula(subFormula.asRewardOperatorFormula()));
             } else if (subFormula.isLongRunAverageOperatorFormula()) {
                 return this->checkLongRunAverageOperatorFormula(solverEnv, checkTask.substituteFormula(subFormula.asLongRunAverageOperatorFormula()));
+            } else if (subFormula.isProbabilityOperatorFormula()) {
+                return this->checkProbabilityOperatorFormula(solverEnv, checkTask.substituteFormula(subFormula.asProbabilityOperatorFormula()));
             }
             STORM_LOG_THROW(false, storm::exceptions::NotImplementedException, "Cannot check this property (yet).");
+        }
+
+        template<typename ModelType>
+        std::unique_ptr<CheckResult> SparseSmgRpatlModelChecker<ModelType>::checkProbabilityOperatorFormula(Environment const& env, CheckTask<storm::logic::ProbabilityOperatorFormula, ValueType> const& checkTask) {
+            storm::logic::ProbabilityOperatorFormula const& stateFormula = checkTask.getFormula();
+            std::unique_ptr<CheckResult> result = this->computeProbabilities(env, checkTask.substituteFormula(stateFormula.getSubformula()));
+
+            if (checkTask.isBoundSet()) {
+                STORM_LOG_THROW(result->isQuantitative(), storm::exceptions::InvalidOperationException, "Unable to perform comparison operation on non-quantitative result.");
+                return result->asQuantitativeCheckResult<ValueType>().compareAgainstBound(checkTask.getBoundComparisonType(), checkTask.getBoundThreshold());
+            } else {
+                return result;
+            }
         }
 
         template<typename ModelType>
@@ -83,7 +105,14 @@ namespace storm {
             return result;
         }
 
-
+        template<typename ModelType>
+        std::unique_ptr<CheckResult> SparseSmgRpatlModelChecker<ModelType>::computeProbabilities(Environment const& env, CheckTask<storm::logic::Formula, ValueType> const& checkTask) {
+            storm::logic::Formula const& formula = checkTask.getFormula();
+            if (formula.isReachabilityProbabilityFormula()) {
+                return this->computeReachabilityProbabilities(env, checkTask.substituteFormula(formula.asReachabilityProbabilityFormula()));
+            }
+            STORM_LOG_THROW(false, storm::exceptions::InvalidArgumentException, "The given formula '" << formula << "' is invalid.");
+        }
 
         template<typename ModelType>
         std::unique_ptr<CheckResult> SparseSmgRpatlModelChecker<ModelType>::computeRewards(Environment const& env, storm::logic::RewardMeasureType rewardMeasureType, CheckTask<storm::logic::Formula, ValueType> const& checkTask) {
@@ -94,17 +123,39 @@ namespace storm {
             STORM_LOG_THROW(false, storm::exceptions::InvalidArgumentException, "The given formula '" << rewardFormula << "' cannot (yet) be handled.");
         }
 
+        template<typename ModelType>
+        std::unique_ptr<CheckResult> SparseSmgRpatlModelChecker<ModelType>::computeUntilProbabilities(Environment const& env, CheckTask<storm::logic::UntilFormula, ValueType> const& checkTask) {
+            // Currently we only support computation of reachability probabilities, i.e. the left subformula will always be 'true' (for now).
+            storm::logic::UntilFormula const& pathFormula = checkTask.getFormula();
+            STORM_LOG_THROW(checkTask.isOptimizationDirectionSet(), storm::exceptions::InvalidPropertyException, "Formula needs to specify whether minimal or maximal values are to be computed on nondeterministic model.");
+            std::unique_ptr<CheckResult> leftResultPointer = this->check(env, pathFormula.getLeftSubformula());
+            std::unique_ptr<CheckResult> rightResultPointer = this->check(env, pathFormula.getRightSubformula());
+            ExplicitQualitativeCheckResult const& leftResult = leftResultPointer->asExplicitQualitativeCheckResult();
+            ExplicitQualitativeCheckResult const& rightResult = rightResultPointer->asExplicitQualitativeCheckResult();
+            storm::solver::SolveGoal<ValueType> foo(this->getModel(), checkTask);
+
+            auto ret = storm::modelchecker::helper::SparseSmgRpatlHelper<ValueType>::computeUntilProbabilities(env, storm::solver::SolveGoal<ValueType>(this->getModel(), checkTask), this->getModel().getTransitionMatrix(), this->getModel().getBackwardTransitions(), leftResult.getTruthValuesVector(), rightResult.getTruthValuesVector(), checkTask.isQualitativeSet(), statesOfCoalition, checkTask.isProduceSchedulersSet(), checkTask.getHint());
+            std::unique_ptr<CheckResult> result(new ExplicitQuantitativeCheckResult<ValueType>(std::move(ret.values)));
+            if (checkTask.isProduceSchedulersSet() && ret.scheduler) {
+                result->asExplicitQuantitativeCheckResult<ValueType>().setScheduler(std::move(ret.scheduler));
+            }
+            return result;
+        }
+
         template<typename SparseSmgModelType>
         std::unique_ptr<CheckResult> SparseSmgRpatlModelChecker<SparseSmgModelType>::computeLongRunAverageProbabilities(Environment const& env, CheckTask<storm::logic::StateFormula, ValueType> const& checkTask) {
-            STORM_LOG_THROW(false, storm::exceptions::NotImplementedException, "Not implemented.");
+            STORM_LOG_THROW(false, storm::exceptions::NotImplementedException, "NYI");
         }
 
         template<typename SparseSmgModelType>
         std::unique_ptr<CheckResult> SparseSmgRpatlModelChecker<SparseSmgModelType>::computeLongRunAverageRewards(Environment const& env, storm::logic::RewardMeasureType rewardMeasureType, CheckTask<storm::logic::LongRunAverageRewardFormula, ValueType> const& checkTask) {
             auto rewardModel = storm::utility::createFilteredRewardModel(this->getModel(), checkTask);
-            storm::modelchecker::helper::SparseNondeterministicGameInfiniteHorizonHelper<ValueType> helper(this->getModel().getTransitionMatrix(), this->getModel().getPlayerActionIndices());
+            STORM_LOG_THROW(checkTask.isPlayerCoalitionSet(), storm::exceptions::InvalidPropertyException, "No player coalition was set.");
+            auto coalitionStates = this->getModel().computeStatesOfCoalition(checkTask.getPlayerCoalition());
+            std::cout << "Found " << coalitionStates.getNumberOfSetBits() << " states in coalition." << std::endl;
+            storm::modelchecker::helper::SparseNondeterministicGameInfiniteHorizonHelper<ValueType> helper(this->getModel().getTransitionMatrix(), statesOfCoalition);
             storm::modelchecker::helper::setInformationFromCheckTaskNondeterministic(helper, checkTask, this->getModel());
-			auto values = helper.computeLongRunAverageRewards(env, rewardModel.get());
+            auto values = helper.computeLongRunAverageRewards(env, rewardModel.get());
 
             std::unique_ptr<CheckResult> result(new ExplicitQuantitativeCheckResult<ValueType>(std::move(values)));
             if (checkTask.isProduceSchedulersSet()) {
