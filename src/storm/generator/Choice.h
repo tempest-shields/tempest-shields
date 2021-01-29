@@ -102,7 +102,7 @@ namespace storm {
             /*!
              * Returns whether there is an index for the player defined for this choice.
              */
-            bool hasPlayer() const;
+            bool hasPlayerIndex() const;
 
             /*!
              * Retrieves the players index associated with this choice

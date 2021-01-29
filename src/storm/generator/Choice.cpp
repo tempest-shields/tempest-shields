@@ -97,8 +97,8 @@ namespace storm {
         }
 
         template<typename ValueType, typename StateType>
-        bool Choice<ValueType, StateType>::hasPlayer() const {
-            return player.is_initialized();
+        bool Choice<ValueType, StateType>::hasPlayerIndex() const {
+            return playerIndex.is_initialized();
         }
 
         template<typename ValueType, typename StateType>
