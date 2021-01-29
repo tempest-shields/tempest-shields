@@ -60,9 +60,9 @@ namespace storm {
                 this->matrix.multiplyWithVectorForward(x, x, b);
             }
         }
-        
+
         template<typename ValueType>
-        void NativeMultiplier<ValueType>::multiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices) const {
+        void NativeMultiplier<ValueType>::multiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
             std::vector<ValueType>* target = &result;
             if (&x == &result) {
                 if (this->cachedVector) {
@@ -73,31 +73,31 @@ namespace storm {
                 target = this->cachedVector.get();
             }
             if (parallelize(env)) {
-                multAddReduceParallel(dir, rowGroupIndices, x, b, *target, choices);
+                multAddReduceParallel(dir, rowGroupIndices, x, b, *target, choices, dirOverride);
             } else {
-                multAddReduce(dir, rowGroupIndices, x, b, *target, choices);
+                multAddReduce(dir, rowGroupIndices, x, b, *target, choices, dirOverride);
             }
             if (&x == &result) {
                 std::swap(result, *this->cachedVector);
             }
         }
-        
+
         template<typename ValueType>
-        void NativeMultiplier<ValueType>::multiplyAndReduceGaussSeidel(Environment const& env, OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType>& x, std::vector<ValueType> const* b, std::vector<uint_fast64_t>* choices, bool backwards) const {
+        void NativeMultiplier<ValueType>::multiplyAndReduceGaussSeidel(Environment const& env, OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType>& x, std::vector<ValueType> const* b, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride, bool backwards) const {
             if (backwards) {
-                this->matrix.multiplyAndReduceBackward(dir, rowGroupIndices, x, b, x, choices);
+                this->matrix.multiplyAndReduceBackward(dir, rowGroupIndices, x, b, x, choices, dirOverride);
             } else {
-                this->matrix.multiplyAndReduceForward(dir, rowGroupIndices, x, b, x, choices);
+                this->matrix.multiplyAndReduceForward(dir, rowGroupIndices, x, b, x, choices, dirOverride);
             }
         }
-        
+
         template<typename ValueType>
         void NativeMultiplier<ValueType>::multiplyRow(uint64_t const& rowIndex, std::vector<ValueType> const& x, ValueType& value) const {
             for (auto const& entry : this->matrix.getRow(rowIndex)) {
                 value += entry.getValue() * x[entry.getColumn()];
             }
         }
-        
+
         template<typename ValueType>
         void NativeMultiplier<ValueType>::multiplyRow2(uint64_t const& rowIndex, std::vector<ValueType> const& x1, ValueType& val1, std::vector<ValueType> const& x2, ValueType& val2) const {
             for (auto const& entry : this->matrix.getRow(rowIndex)) {
@@ -110,12 +110,12 @@ namespace storm {
         void NativeMultiplier<ValueType>::multAdd(std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result) const {
             this->matrix.multiplyWithVector(x, result, b);
         }
-        
+
         template<typename ValueType>
-        void NativeMultiplier<ValueType>::multAddReduce(storm::solver::OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices) const {
-            this->matrix.multiplyAndReduce(dir, rowGroupIndices, x, b, result, choices);
+        void NativeMultiplier<ValueType>::multAddReduce(storm::solver::OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices, storm::storage::BitVector* dirOverride) const {
+            this->matrix.multiplyAndReduce(dir, rowGroupIndices, x, b, result, choices, dirOverride);
         }
-        
+
         template<typename ValueType>
         void NativeMultiplier<ValueType>::multAddParallel(std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result) const {
 #ifdef STORM_HAVE_INTELTBB
@@ -125,11 +125,11 @@ namespace storm {
             multAdd(x, b, result);
 #endif
         }
-                
+
         template<typename ValueType>
-        void NativeMultiplier<ValueType>::multAddReduceParallel(storm::solver::OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices) const {
+        void NativeMultiplier<ValueType>::multAddReduceParallel(storm::solver::OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices, storm::storage::BitVector* dirOverride) const {
 #ifdef STORM_HAVE_INTELTBB
-            this->matrix.multiplyAndReduceParallel(dir, rowGroupIndices, x, b, result, choices);
+            this->matrix.multiplyAndReduceParallel(dir, rowGroupIndices, x, b, result, choices, dirOverride);
 #else
             STORM_LOG_WARN("Storm was built without support for Intel TBB, defaulting to sequential version.");
             multAddReduce(dir, rowGroupIndices, x, b, result, choices);
