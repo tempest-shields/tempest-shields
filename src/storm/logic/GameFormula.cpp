@@ -23,7 +23,7 @@ namespace storm {
         PlayerCoalition const& GameFormula::getCoalition() const {
             return coalition;
         }
-        
+
         boost::any GameFormula::accept(FormulaVisitor const& visitor, boost::any const& data) const {
             return visitor.visit(*this, data);
         }
