@@ -34,7 +34,7 @@ namespace storm {
                 storm::storage::PlayerIndex getPlayerOfState(uint64_t stateIndex) const;
                 storm::storage::PlayerIndex getPlayerIndex(std::string const& playerName) const;
                 storm::storage::BitVector computeStatesOfCoalition(storm::logic::PlayerCoalition const& coalition) const;
-                
+
             private:
                 // Assigns the controlling player to each state.
                 // If a state has storm::storage::INVALID_PLAYER_INDEX, it shall be the case that the choice at that state is unique
