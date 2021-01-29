@@ -144,9 +144,9 @@ namespace storm {
 
             coalitionOperator = (qi::lit("<<")
                     > *(    (identifier[phoenix::push_back(qi::_a, qi::_1)]
-                        |    qi::int_[phoenix::push_back(qi::_b, qi::_1)]) % ','
+                        |    qi::int_[phoenix::push_back(qi::_a, qi::_1)]) % ','
                         )
-                    > qi::lit(">>"))[qi::_val = phoenix::bind(&FormulaParserGrammar::createCoalition, phoenix::ref(*this), qi::_a, qi::_b)];
+                    > qi::lit(">>"))[qi::_val = phoenix::bind(&FormulaParserGrammar::createCoalition, phoenix::ref(*this), qi::_a)];
             coalitionOperator.name("coalition operator");
 
             // only LRA for now, need to adapt this (beware of cyclic gameFormula pass!)
