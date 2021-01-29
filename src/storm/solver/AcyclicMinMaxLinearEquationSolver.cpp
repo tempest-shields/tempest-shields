@@ -83,9 +83,9 @@ namespace storm {
                     choicesPtr = &(this->schedulerChoices.get());
                 }
             }
-            
+
             // Since a topological ordering is guaranteed, we can solve the equations with a single matrix-vector Multiplication step.
-            this->multiplier->multiplyAndReduceGaussSeidel(env, dir, *xPtr, bPtr, choicesPtr, true);
+            this->multiplier->multiplyAndReduceGaussSeidel(env, dir, *xPtr, bPtr, choicesPtr);
 
             if (rowGroupOrdering) {
                 // Restore the correct input-order for the output vector
