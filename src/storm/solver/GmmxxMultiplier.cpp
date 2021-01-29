@@ -11,6 +11,7 @@
 
 #include "storm/utility/constants.h"
 #include "storm/exceptions/NotSupportedException.h"
+#include "storm/exceptions/InternalException.h"
 
 #include "storm/utility/macros.h"
 
@@ -87,7 +88,7 @@ namespace storm {
         }
 
         template<typename ValueType>
-        void GmmxxMultiplier<ValueType>::multiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices) const {
+        void GmmxxMultiplier<ValueType>::multiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
             initialize();
             std::vector<ValueType>* target = &result;
             if (&x == &result) {
@@ -99,9 +100,9 @@ namespace storm {
                 target = this->cachedVector.get();
             }
             if (parallelize(env)) {
-                multAddReduceParallel(dir, rowGroupIndices, x, b, *target, choices);
+                multAddReduceParallel(dir, rowGroupIndices, x, b, *target, choices, dirOverride);
             } else {
-                multAddReduceHelper(dir, rowGroupIndices, x, b, *target, choices, false);
+                multAddReduceHelper(dir, rowGroupIndices, x, b, *target, choices, dirOverride, false);
             }
             if (&x == &result) {
                 std::swap(result, *this->cachedVector);
@@ -109,9 +110,9 @@ namespace storm {
         }
 
         template<typename ValueType>
-        void GmmxxMultiplier<ValueType>::multiplyAndReduceGaussSeidel(Environment const& env, OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType>& x, std::vector<ValueType> const* b, std::vector<uint_fast64_t>* choices, bool backwards) const {
+        void GmmxxMultiplier<ValueType>::multiplyAndReduceGaussSeidel(Environment const& env, OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType>& x, std::vector<ValueType> const* b, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride, bool backwards) const {
             initialize();
-            multAddReduceHelper(dir, rowGroupIndices, x, b, x, choices, backwards);
+            multAddReduceHelper(dir, rowGroupIndices, x, b, x, choices, dirOverride, backwards);
         }
 
         template<typename ValueType>
@@ -134,25 +135,42 @@ namespace storm {
         }
 
         template<typename ValueType>
-        void GmmxxMultiplier<ValueType>::multAddReduceHelper(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices, bool backwards) const {
+        void GmmxxMultiplier<ValueType>::multAddReduceHelper(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices, storm::storage::BitVector* dirOverride, bool backwards) const {
+            bool isOverridden = (dirOverride && !dirOverride->empty()) ? true : false;
             if (dir == storm::OptimizationDirection::Minimize) {
-                if (backwards) {
-                    multAddReduceHelper<storm::utility::ElementLess<ValueType>, true>(rowGroupIndices, x, b, result, choices);
+                if(isOverridden) {
+                    if (backwards) {
+                        multAddReduceHelper<storm::utility::ElementLess<ValueType>, true, true>(rowGroupIndices, x, b, result, choices, dirOverride);
+                    } else {
+                        multAddReduceHelper<storm::utility::ElementLess<ValueType>, false, true>(rowGroupIndices, x, b, result, choices, dirOverride);
+                    }
                 } else {
-                    multAddReduceHelper<storm::utility::ElementLess<ValueType>, false>(rowGroupIndices, x, b, result, choices);
+                    if (backwards) {
+                        multAddReduceHelper<storm::utility::ElementLess<ValueType>, true, false>(rowGroupIndices, x, b, result, choices);
+                    } else {
+                        multAddReduceHelper<storm::utility::ElementLess<ValueType>, false, false>(rowGroupIndices, x, b, result, choices);
+                    }
                 }
             } else {
-                if (backwards) {
-                    multAddReduceHelper<storm::utility::ElementGreater<ValueType>, true>(rowGroupIndices, x, b, result, choices);
+                if(isOverridden) {
+                    if (backwards) {
+                        multAddReduceHelper<storm::utility::ElementGreater<ValueType>, true, true>(rowGroupIndices, x, b, result, choices, dirOverride);
+                    } else {
+                        multAddReduceHelper<storm::utility::ElementGreater<ValueType>, false, true>(rowGroupIndices, x, b, result, choices, dirOverride);
+                    }
                 } else {
-                    multAddReduceHelper<storm::utility::ElementGreater<ValueType>, false>(rowGroupIndices, x, b, result, choices);
+                    if (backwards) {
+                        multAddReduceHelper<storm::utility::ElementGreater<ValueType>, true, false>(rowGroupIndices, x, b, result, choices);
+                    } else {
+                        multAddReduceHelper<storm::utility::ElementGreater<ValueType>, false, false>(rowGroupIndices, x, b, result, choices);
+                    }
                 }
             }
         }
 
         template<typename ValueType>
-        template<typename Compare, bool backwards>
-        void GmmxxMultiplier<ValueType>::multAddReduceHelper(std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices) const {
+        template<typename Compare, bool backwards, bool directionOverridden>
+        void GmmxxMultiplier<ValueType>::multAddReduceHelper(std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices, storm::storage::BitVector* dirOverride) const {
             Compare compare;
             typedef std::vector<ValueType> VectorType;
             typedef gmm::csr_matrix<ValueType> MatrixType;
@@ -167,11 +185,6 @@ namespace storm {
             typename std::vector<uint64_t>::iterator choice_it;
             if (choices) {
                 choice_it = backwards ? choices->end() - 1 : choices->begin();
-            }
-
-            boost::optional<storm::storage::BitVector> optimizationDirectionOverride;
-            if(this->getOptimizationDirectionOverride().is_initialized()) {
-                optimizationDirectionOverride = this->getOptimizationDirectionOverride();
             }
 
             // Variables for correctly tracking choices (only update if new choice is strictly better).
@@ -228,12 +241,22 @@ namespace storm {
                         }
                         //std::cout << newValue << ", ";
                         //STORM_LOG_DEBUG(std::setprecision(3) << vect_sp(gmm::linalg_traits<MatrixType>::row(itr), x) << " + " << *add_it << "; ");
-                        if(this->isOverridden(currentRowGroup) ? compare(currentValue, newValue) : compare(newValue, currentValue)) {
-                            currentValue = newValue;
-                            if (choices) {
-                                selectedChoice = currentRow - *row_group_it;
+                        if(!directionOverridden) {
+                            if(compare(newValue, currentValue)) {
+                                currentValue = newValue;
+                                if (choices) {
+                                    selectedChoice = currentRow - *row_group_it;
+                                }
+                                choiceforprintout = currentRow - *row_group_it;
                             }
-                            choiceforprintout = currentRow - *row_group_it;
+                        } else {
+                            if(dirOverride->get(currentRowGroup) ? compare(currentValue, newValue) : compare(newValue, currentValue)) {
+                                currentValue = newValue;
+                                if (choices) {
+                                    selectedChoice = currentRow - *row_group_it;
+                                }
+                                choiceforprintout = currentRow - *row_group_it;
+                            }
                         }
                         // move row-based iterators to the next row
                         if (backwards) {
@@ -251,8 +274,14 @@ namespace storm {
                     // Finally write value to target vector.
                     *target_it = currentValue;
                     if(choices) {
-                        if(this->isOverridden(currentRowGroup) ? compare(oldSelectedChoiceValue, currentValue) : compare(currentValue, oldSelectedChoiceValue) ) {
-                            *choice_it = selectedChoice;
+                        if(!directionOverridden) {
+                            if(compare(currentValue, oldSelectedChoiceValue) ) {
+                                *choice_it = selectedChoice;
+                            }
+                        } else {
+                            if(dirOverride->get(currentRowGroup) ? compare(oldSelectedChoiceValue, currentValue) : compare(currentValue, oldSelectedChoiceValue) ) {
+                                *choice_it = selectedChoice;
+                            }
                         }
                     }
                 }
@@ -274,8 +303,8 @@ namespace storm {
         }
 
         template<>
-        template<typename Compare, bool backwards>
-        void GmmxxMultiplier<storm::RationalFunction>::multAddReduceHelper(std::vector<uint64_t> const& rowGroupIndices, std::vector<storm::RationalFunction> const& x, std::vector<storm::RationalFunction> const* b, std::vector<storm::RationalFunction>& result, std::vector<uint64_t>* choices) const {
+        template<typename Compare, bool backwards, bool directionOverridden>
+        void GmmxxMultiplier<storm::RationalFunction>::multAddReduceHelper(std::vector<uint64_t> const& rowGroupIndices, std::vector<storm::RationalFunction> const& x, std::vector<storm::RationalFunction> const* b, std::vector<storm::RationalFunction>& result, std::vector<uint64_t>* choices, storm::storage::BitVector* dirOverride) const {
             STORM_LOG_THROW(false, storm::exceptions::NotSupportedException, "Operation not supported for this data type.");
         }
 
@@ -301,7 +330,7 @@ namespace storm {
         template<typename ValueType, typename Compare>
         class TbbMultAddReduceFunctor {
         public:
-            TbbMultAddReduceFunctor(std::vector<uint64_t> const& rowGroupIndices, gmm::csr_matrix<ValueType> const& matrix, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices) : rowGroupIndices(rowGroupIndices), matrix(matrix), x(x), b(b), result(result), choices(choices) {
+            TbbMultAddReduceFunctor(std::vector<uint64_t> const& rowGroupIndices, gmm::csr_matrix<ValueType> const& matrix, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices, storm::storage::BitVector* dirOverride = nullptr) : rowGroupIndices(rowGroupIndices), matrix(matrix), x(x), b(b), result(result), choices(choices), dirOverride(dirOverride) {
                 // Intentionally left empty.
             }
 
@@ -320,6 +349,10 @@ namespace storm {
                 typename std::vector<uint64_t>::iterator choiceIt;
                 if (choices) {
                     choiceIt = choices->begin() + range.begin();
+                }
+                bool dirOverridden = false;
+                if(dirOverride && !dirOverride.get()->empty()) {
+                    dirOverridden = true;
                 }
 
                 auto resultIt = result.begin() + range.begin();
@@ -355,19 +388,35 @@ namespace storm {
                             ValueType newValue = b ? *bIt : storm::utility::zero<ValueType>();
                             newValue += vect_sp(gmm::linalg_traits<MatrixType>::row(itr), x);
 
-                            if (compare(newValue, currentValue)) {
-                                currentValue = newValue;
-                                if (choices) {
-                                    selectedChoice = currentRow - *groupIt;
+                            if(!dirOverridden) {
+                                if (compare(newValue, currentValue)) {
+                                    currentValue = newValue;
+                                    if (choices) {
+                                        selectedChoice = currentRow - *groupIt;
+                                    }
                                 }
+                            } else {
+                                if (dirOverride.get()->get(*groupIt) ? compare(currentValue, newValue) : compare(newValue, currentValue)) {
+                                    currentValue = newValue;
+                                    if (choices) {
+                                        selectedChoice = currentRow - *groupIt;
+                                    }
+                                }
+
                             }
                         }
                     }
 
                     // Finally write value to target vector.
                     *resultIt = currentValue;
-                    if (choices && compare(currentValue, oldSelectedChoiceValue)) {
-                        *choiceIt = selectedChoice;
+                    if(!dirOverridden) {
+                        if (choices && compare(currentValue, oldSelectedChoiceValue)) {
+                            *choiceIt = selectedChoice;
+                        }
+                    } else {
+                        if (choices && dirOverride.get()->get(*groupIt) ? compare(oldSelectedChoiceValue, currentValue) : compare(currentValue, oldSelectedChoiceValue)) {
+                            *choiceIt = selectedChoice;
+                        }
                     }
                 }
             }
@@ -380,25 +429,26 @@ namespace storm {
             std::vector<ValueType> const* b;
             std::vector<ValueType>& result;
             std::vector<uint64_t>* choices;
+            boost::optional<storm::storage::BitVector*> dirOverride = boost::none;
         };
 #endif
 
         template<typename ValueType>
-        void GmmxxMultiplier<ValueType>::multAddReduceParallel(storm::solver::OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices) const {
+        void GmmxxMultiplier<ValueType>::multAddReduceParallel(storm::solver::OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices, storm::storage::BitVector* dirOverride) const {
 #ifdef STORM_HAVE_INTELTBB
             if (dir == storm::OptimizationDirection::Minimize) {
-                tbb::parallel_for(tbb::blocked_range<unsigned long>(0, rowGroupIndices.size() - 1, 100), TbbMultAddReduceFunctor<ValueType, storm::utility::ElementLess<ValueType>>(rowGroupIndices, this->gmmMatrix, x, b, result, choices));
+                tbb::parallel_for(tbb::blocked_range<unsigned long>(0, rowGroupIndices.size() - 1, 100), TbbMultAddReduceFunctor<ValueType, storm::utility::ElementLess<ValueType>>(rowGroupIndices, this->gmmMatrix, x, b, result, choices, dirOverride));
             } else {
-                tbb::parallel_for(tbb::blocked_range<unsigned long>(0, rowGroupIndices.size() - 1, 100), TbbMultAddReduceFunctor<ValueType, storm::utility::ElementGreater<ValueType>>(rowGroupIndices, this->gmmMatrix, x, b, result, choices));
+                tbb::parallel_for(tbb::blocked_range<unsigned long>(0, rowGroupIndices.size() - 1, 100), TbbMultAddReduceFunctor<ValueType, storm::utility::ElementGreater<ValueType>>(rowGroupIndices, this->gmmMatrix, x, b, result, choices, dirOverride));
             }
 #else
             STORM_LOG_WARN("Storm was built without support for Intel TBB, defaulting to sequential version.");
-            multAddReduceHelper(dir, rowGroupIndices, x, b, result, choices);
+            multAddReduceHelper(dir, rowGroupIndices, x, b, result, choices, dirOverride);
 #endif
         }
 
         template<>
-        void GmmxxMultiplier<storm::RationalFunction>::multAddReduceParallel(storm::solver::OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<storm::RationalFunction> const& x, std::vector<storm::RationalFunction> const* b, std::vector<storm::RationalFunction>& result, std::vector<uint64_t>* choices) const {
+        void GmmxxMultiplier<storm::RationalFunction>::multAddReduceParallel(storm::solver::OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<storm::RationalFunction> const& x, std::vector<storm::RationalFunction> const* b, std::vector<storm::RationalFunction>& result, std::vector<uint64_t>* choices, storm::storage::BitVector* dirOverride) const {
             STORM_LOG_THROW(false, storm::exceptions::NotSupportedException, "This operation is not supported.");
         }
 
