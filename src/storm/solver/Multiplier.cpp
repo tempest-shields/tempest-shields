@@ -18,17 +18,17 @@
 
 namespace storm {
     namespace solver {
-        
+
         template<typename ValueType>
         Multiplier<ValueType>::Multiplier(storm::storage::SparseMatrix<ValueType> const& matrix) : matrix(matrix) {
             // Intentionally left empty.
         }
-    
+
         template<typename ValueType>
         void Multiplier<ValueType>::clearCache() const {
             cachedVector.reset();
         }
-        
+
         template<typename ValueType>
         void Multiplier<ValueType>::multiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices) const {
             multiplyAndReduce(env, dir, this->matrix.getRowGroupIndices(), x, b, result, choices);
@@ -38,7 +38,7 @@ namespace storm {
         void Multiplier<ValueType>::multiplyAndReduceGaussSeidel(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType>& x, std::vector<ValueType> const* b, std::vector<uint_fast64_t>* choices, bool backwards) const {
             multiplyAndReduceGaussSeidel(env, dir, this->matrix.getRowGroupIndices(), x, b, choices, backwards);
         }
-    
+
         template<typename ValueType>
         void Multiplier<ValueType>::repeatedMultiply(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> const* b, uint64_t n) const {
             storm::utility::ProgressMeasurement progress("multiplications");
@@ -53,7 +53,7 @@ namespace storm {
                 }
             }
         }
-    
+
         template<typename ValueType>
         void Multiplier<ValueType>::repeatedMultiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType>& x, std::vector<ValueType> const* b, uint64_t n) const {
             storm::utility::ProgressMeasurement progress("multiplications");
@@ -67,17 +67,33 @@ namespace storm {
                 }
             }
         }
-    
+
         template<typename ValueType>
         void Multiplier<ValueType>::multiplyRow2(uint64_t const& rowIndex, std::vector<ValueType> const& x1, ValueType& val1, std::vector<ValueType> const& x2, ValueType& val2) const {
             multiplyRow(rowIndex, x1, val1);
             multiplyRow(rowIndex, x2, val2);
         }
-        
+
+        template<typename ValueType>
+        void Multiplier<ValueType>::setOptimizationDirectionOverride(storm::storage::BitVector const& optDirOverride) {
+            optimizationDirectionOverride = optDirOverride;
+        }
+
+        template<typename ValueType>
+        boost::optional<storm::storage::BitVector> Multiplier<ValueType>::getOptimizationDirectionOverride() const {
+            return optimizationDirectionOverride;
+        }
+
+        template<typename ValueType>
+        bool Multiplier<ValueType>::isOverridden(uint_fast64_t const index) const {
+            if(!optimizationDirectionOverride.is_initialized()) return false;
+            return optimizationDirectionOverride.get().get(index);
+        }
+
         template<typename ValueType>
         std::unique_ptr<Multiplier<ValueType>> MultiplierFactory<ValueType>::create(Environment const& env, storm::storage::SparseMatrix<ValueType> const& matrix) {
             auto type = env.solver().multiplier().getType();
-            
+
             // Adjust the multiplier type if an eqsolver was specified but not a multiplier
             if (!env.solver().isLinearEquationSolverTypeSetFromDefaultValue() && env.solver().multiplier().isTypeSetFromDefault()) {
                 bool changed = false;
@@ -90,7 +106,7 @@ namespace storm {
                 }
                 STORM_LOG_INFO_COND(!changed, "Selecting '" + toString(type) + "' as the multiplier type to match the selected equation solver. If you want to override this, please explicitly specify a different multiplier type.");
             }
-            
+
             switch (type) {
                 case MultiplierType::Gmmxx:
                     return std::make_unique<GmmxxMultiplier<ValueType>>(matrix);
@@ -99,16 +115,16 @@ namespace storm {
             }
             STORM_LOG_THROW(false, storm::exceptions::IllegalArgumentException, "Unknown MultiplierType");
         }
-        
+
         template class Multiplier<double>;
         template class MultiplierFactory<double>;
-        
+
 #ifdef STORM_HAVE_CARL
         template class Multiplier<storm::RationalNumber>;
         template class MultiplierFactory<storm::RationalNumber>;
         template class Multiplier<storm::RationalFunction>;
         template class MultiplierFactory<storm::RationalFunction>;
 #endif
-        
+
     }
 }

@@ -37,7 +37,6 @@ namespace storm {
             storm::storage::PlayerIndex Smg<ValueType, RewardModelType>::getPlayerOfState(uint64_t stateIndex) const {
                 STORM_LOG_ASSERT(stateIndex < this->getNumberOfStates(), "Invalid state index: " << stateIndex << ".");
                 return statePlayerIndications[stateIndex];
-            }
 
             template <typename ValueType, typename RewardModelType>
             storm::storage::PlayerIndex Smg<ValueType, RewardModelType>::getPlayerIndex(std::string const& playerName) const {
@@ -62,7 +61,7 @@ namespace storm {
                 for (auto const& pi : coalitionAsIndexSet) {
                     coalitionAsBitVector.set(pi);
                 }
-                
+
                 // Now create the actual result
                 storm::storage::BitVector result(this->getNumberOfStates(), false);
                 for (uint64_t state = 0; state < this->getNumberOfStates(); ++state) {
@@ -71,7 +70,7 @@ namespace storm {
                         result.set(state, true);
                     }
                 }
-                
+
                 return result;
             }
 

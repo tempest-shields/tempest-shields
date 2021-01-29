@@ -25,9 +25,10 @@ namespace storm {
                     DetTsNoIs, /// deterministic choice at timed states, no instant states (as in DTMCs and CTMCs)
                     DetTsNondetIs, /// deterministic choice at timed states, nondeterministic choice at instant states (as in Markov Automata)
                     DetTsDetIs, /// deterministic choice at timed states, deterministic choice at instant states (as in Markov Automata without any nondeterminisim)
-                    NondetTsNoIs /// nondeterministic choice at timed states, no instant states (as in MDPs)
+                    NondetTsNoIs, /// nondeterministic choice at timed states, no instant states (as in MDPs)
+                    GameNondetTsNoIs // nondeterministic choices of different players at timed states, no instant states (as in SMGs)
                 };
-            
+
                 /*!
                  * Helper class that performs iterations of the value iteration method.
                  * The purpose of the template parameters ComponentType and TransitionsType are used to make this work for various model types.
@@ -127,7 +128,9 @@ namespace storm {
                     /// @return true iff there potentially is a nondeterministic choice at instant states. Returns false if there are no instant states.
                     bool nondetIs() const;
 
-                    
+                    /// @return true iff there potentially are nondeterministic choices for different players at timed states
+                    bool gameNondetTs() const;
+
                     void setComponent(ComponentType component);
                     
                     // We need to make sure that states/choices will be processed in ascending order

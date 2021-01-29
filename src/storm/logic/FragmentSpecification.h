@@ -6,9 +6,9 @@
 
 namespace storm {
     namespace logic {
-        
+
         class RewardAccumulation;
-        
+
         class FragmentSpecification {
         public:
             FragmentSpecification();
@@ -16,24 +16,24 @@ namespace storm {
             FragmentSpecification(FragmentSpecification&& other) = default;
             FragmentSpecification& operator=(FragmentSpecification const& other) = default;
             FragmentSpecification& operator=(FragmentSpecification&& other) = default;
-            
+
             FragmentSpecification copy() const;
-            
+
             bool areProbabilityOperatorsAllowed() const;
             FragmentSpecification& setProbabilityOperatorsAllowed(bool newValue);
-            
+
             bool areRewardOperatorsAllowed() const;
             FragmentSpecification& setRewardOperatorsAllowed(bool newValue);
-            
+
             bool areTimeOperatorsAllowed() const;
             FragmentSpecification& setTimeOperatorsAllowed(bool newValue);
 
             bool areLongRunAverageOperatorsAllowed() const;
             FragmentSpecification& setLongRunAverageOperatorsAllowed(bool newValue);
-            
+
             bool areMultiObjectiveFormulasAllowed() const;
             FragmentSpecification& setMultiObjectiveFormulasAllowed( bool newValue);
-            
+
             bool areQuantileFormulasAllowed() const;
             FragmentSpecification& setQuantileFormulasAllowed( bool newValue);
 
@@ -75,10 +75,10 @@ namespace storm {
 
             bool areReachabilityRewardFormulasAllowed() const;
             FragmentSpecification& setReachabilityRewardFormulasAllowed(bool newValue);
-            
+
             bool areLongRunAverageRewardFormulasAllowed() const;
             FragmentSpecification& setLongRunAverageRewardFormulasAllowed(bool newValue);
-            
+
             bool areTotalRewardFormulasAllowed() const;
             FragmentSpecification& setTotalRewardFormulasAllowed(bool newValue);
 
@@ -156,7 +156,7 @@ namespace storm {
 
             bool areGameFormulasAllowed() const;
             FragmentSpecification& setGameFormulasAllowed(bool newValue);
-            
+
             FragmentSpecification& setOperatorsAllowed(bool newValue);
             FragmentSpecification& setTimeAllowed(bool newValue);
             FragmentSpecification& setLongRunAverageProbabilitiesAllowed(bool newValue);
@@ -217,16 +217,16 @@ namespace storm {
             bool multiObjectiveFormulaAtTopLevelRequired;
             bool quantileFormulaAtTopLevelRequired;
             bool operatorsAtTopLevelOfMultiObjectiveFormulasRequired;
-            
+
             bool rewardAccumulation;
         };
-        
+
         // Propositional.
         FragmentSpecification propositional();
-        
+
         // Just reachability properties.
         FragmentSpecification reachability();
-        
+
         // Regular PCTL.
         FragmentSpecification pctl();
 
@@ -238,16 +238,16 @@ namespace storm {
 
         // PCTL + cumulative, instantaneous, reachability and long-run rewards.
         FragmentSpecification prctl();
-        
+
         // Regular CSL.
         FragmentSpecification csl();
-        
+
         // CSL + cumulative, instantaneous, reachability and long-run rewards.
         FragmentSpecification csrl();
-        
+
         // Multi-Objective formulas.
         FragmentSpecification multiObjective();
-        
+
         // Quantile formulas.
         FragmentSpecification quantiles();
 

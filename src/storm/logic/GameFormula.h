@@ -19,7 +19,7 @@ namespace storm {
             virtual bool isGameFormula() const override;
             virtual bool hasQualitativeResult() const override;
             virtual bool hasQuantitativeResult() const override;
-            
+
             virtual boost::any accept(FormulaVisitor const& visitor, boost::any const& data) const override;
 
             virtual std::ostream& writeToStream(std::ostream& out) const override;

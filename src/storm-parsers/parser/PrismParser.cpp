@@ -869,7 +869,7 @@ namespace storm {
             if (!this->secondRun) {
                 // Add a mapping from the new module name to its (future) index.
                 globalProgramInformation.moduleToIndexMap[newModuleName] = globalProgramInformation.modules.size();
-                
+
                 // Register all (renamed) variables for later use.
                 // We already checked before, whether the renaiming is valid.
                 for (auto const& variable : moduleToRename.getBooleanVariables()) {
@@ -921,7 +921,7 @@ namespace storm {
                 // Assert that the module name is already known and has the expected  index.
                 STORM_LOG_ASSERT(globalProgramInformation.moduleToIndexMap.count(newModuleName) > 0, "Module name '" << newModuleName << "' was not found.");
                 STORM_LOG_ASSERT(globalProgramInformation.moduleToIndexMap[newModuleName] == globalProgramInformation.modules.size(), "The index for module " << newModuleName << " does not match the index from the first parsing run.");
-                
+
                 // Create a mapping from identifiers to the expressions they need to be replaced with.
                 std::map<storm::expressions::Variable, storm::expressions::Expression> expressionRenaming;
                 for (auto const& namePair : renaming) {

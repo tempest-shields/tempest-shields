@@ -2,34 +2,37 @@
 
 #include <vector>
 #include <memory>
+#include <boost/optional.hpp>
+
+#include "storm/storage/BitVector.h"
 
 #include "storm/solver/OptimizationDirection.h"
 #include "storm/solver/MultiplicationStyle.h"
 
 namespace storm {
-    
+
     class Environment;
-    
+
     namespace storage {
         template<typename ValueType>
         class SparseMatrix;
     }
-    
+
     namespace solver {
-        
+
         template<typename ValueType>
         class Multiplier {
         public:
-            
+
             Multiplier(storm::storage::SparseMatrix<ValueType> const& matrix);
-            
+
             virtual ~Multiplier() = default;
-            
+
             /*
              * Clears the currently cached data of this multiplier in order to free some memory.
              */
             virtual void clearCache() const;
-            
+
             /*!
              * Performs a matrix-vector multiplication x' = A*x + b.
              *
@@ -41,7 +44,7 @@ namespace storm {
              * to the number of rows of A. Can be the same as the x vector.
              */
             virtual void multiply(Environment const& env, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result) const = 0;
-            
+
             /*!
              * Performs a matrix-vector multiplication in gauss-seidel style.
              *
@@ -52,7 +55,7 @@ namespace storm {
              * @param backwards if true, the iterations will be performed beginning from the last row and ending at the first row.
              */
             virtual void multiplyGaussSeidel(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> const* b, bool backwards = true) const = 0;
-            
+
             /*!
              * Performs a matrix-vector multiplication x' = A*x + b and then minimizes/maximizes over the row groups
              * so that the resulting vector has the size of number of row groups of A.
@@ -69,7 +72,7 @@ namespace storm {
              */
             void multiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices = nullptr) const;
             virtual void multiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices = nullptr) const = 0;
-            
+
             /*!
              * Performs a matrix-vector multiplication in gauss-seidel style and then minimizes/maximizes over the row groups
              * so that the resulting vector has the size of number of row groups of A.
@@ -87,7 +90,7 @@ namespace storm {
              */
             void multiplyAndReduceGaussSeidel(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType>& x, std::vector<ValueType> const* b, std::vector<uint_fast64_t>* choices = nullptr, bool backwards = true) const;
             virtual void multiplyAndReduceGaussSeidel(Environment const& env, OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType>& x, std::vector<ValueType> const* b, std::vector<uint_fast64_t>* choices = nullptr, bool backwards = true) const = 0;
-            
+
             /*!
              * Performs repeated matrix-vector multiplication, using x[0] = x and x[i + 1] = A*x[i] + b. After
              * performing the necessary multiplications, the result is written to the input vector x. Note that the
@@ -100,7 +103,7 @@ namespace storm {
              * @param n The number of times to perform the multiplication.
              */
             void repeatedMultiply(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> const* b, uint64_t n) const;
-            
+
             /*!
              * Performs repeated matrix-vector multiplication x' = A*x + b and then minimizes/maximizes over the row groups
              * so that the resulting vector has the size of number of row groups of A.
@@ -115,7 +118,7 @@ namespace storm {
              * @param n The number of times to perform the multiplication.
              */
             void repeatedMultiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType>& x, std::vector<ValueType> const* b, uint64_t n) const;
-  
+
             /*!
              * Multiplies the row with the given index with x and adds the result to the provided value
              * @param rowIndex The index of the considered row
@@ -123,7 +126,7 @@ namespace storm {
              * @param value The multiplication result is added to this value. It shall not reffer to a value in x or in the Matrix.
              */
             virtual void multiplyRow(uint64_t const& rowIndex, std::vector<ValueType> const& x, ValueType& value) const = 0;
-            
+
             /*!
              * Multiplies the row with the given index with x1 and x2 and adds the given offset o1 and o2, respectively
              * @param rowIndex The index of the considered row
@@ -133,12 +136,29 @@ namespace storm {
              * @param val2 The second multiplication result is added to this value. It shall not reffer to a value in x or in the Matrix.
              */
             virtual void multiplyRow2(uint64_t const& rowIndex, std::vector<ValueType> const& x1, ValueType& val1, std::vector<ValueType> const& x2, ValueType& val2) const;
-            
+
+            /*
+             *  TODO
+             */
+            void setOptimizationDirectionOverride(storm::storage::BitVector const& optimizationDirectionOverride);
+
+            /*
+             *  TODO
+             */
+            boost::optional<storm::storage::BitVector> getOptimizationDirectionOverride() const;
+
+            /*
+             *  TODO
+             */
+            bool isOverridden(uint_fast64_t const index) const;
+
         protected:
             mutable std::unique_ptr<std::vector<ValueType>> cachedVector;
             storm::storage::SparseMatrix<ValueType> const& matrix;
+
+            boost::optional<storm::storage::BitVector> optimizationDirectionOverride = boost::none;
         };
-        
+
         template<typename ValueType>
         class MultiplierFactory {
         public:
@@ -147,6 +167,6 @@ namespace storm {
 
             std::unique_ptr<Multiplier<ValueType>> create(Environment const& env, storm::storage::SparseMatrix<ValueType> const& matrix);
         };
-        
+
     }
 }
