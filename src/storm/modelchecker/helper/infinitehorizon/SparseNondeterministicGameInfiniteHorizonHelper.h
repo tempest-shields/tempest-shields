@@ -1,4 +1,5 @@
 #pragma once
+
 #include "storm/modelchecker/helper/infinitehorizon/SparseInfiniteHorizonHelper.h"
 
 namespace storm {
@@ -29,31 +30,37 @@ namespace storm {
                  */
                 SparseNondeterministicGameInfiniteHorizonHelper(storm::storage::SparseMatrix<ValueType> const& transitionMatrix, std::vector<std::pair<std::string, uint_fast64_t>> const& player);
 
-                /*!
-                 * TODO
+                /*! TODO
+                 * Computes the long run average value given the provided state and action based rewards
+                 * @param stateValuesGetter a function returning a value for a given state index
+                 * @param actionValuesGetter a function returning a value for a given (global) choice index
+                 * @return a value for each state
                  */
-                std::vector<ValueType> computeLongRunAverageValues(Environment const& env, ValueGetter const& stateRewardsGetter, ValueGetter const& actionRewardsGetter);
+                std::vector<ValueType> computeLongRunAverageValues(Environment const& env, ValueGetter const& stateValuesGetter,  ValueGetter const& actionValuesGetter) override;
 
                 /*!
                  * @pre before calling this, a computation call should have been performed during which scheduler production was enabled.
                  * @return the produced scheduler of the most recent call.
                  */
-                //std::vector<uint64_t> const& getProducedOptimalChoices() const;
+                std::vector<uint64_t> const& getProducedOptimalChoices() const;
 
                 /*!
                  * @pre before calling this, a computation call should have been performed during which scheduler production was enabled.
                  * @return the produced scheduler of the most recent call.
                  */
-                //std::vector<uint64_t>& getProducedOptimalChoices();
+                std::vector<uint64_t>& getProducedOptimalChoices();
 
                 /*!
                  * @pre before calling this, a computation call should have been performed during which scheduler production was enabled.
                  * @return a new scheduler containing optimal choices for each state that yield the long run average values of the most recent call.
                  */
-                //storm::storage::Scheduler<ValueType> extractScheduler() const;
+                storm::storage::Scheduler<ValueType> extractScheduler() const;
+
+                ValueType computeLraForComponent(Environment const& env, ValueGetter const& stateValuesGetter,  ValueGetter const& actionValuesGetter, storm::storage::MaximalEndComponent const& component);
+
+                ValueType computeLraVi(Environment const& env, ValueGetter const& stateValuesGetter, ValueGetter const& actionValuesGetter, storm::storage::MaximalEndComponent const& mec);
 
                 void createDecomposition();
-                ValueType computeLraForComponent(Environment const& env, ValueGetter const& stateValuesGetter,  ValueGetter const& actionValuesGetter, storm::storage::MaximalEndComponent const& component);
                 std::vector<ValueType> buildAndSolveSsp(Environment const& env, std::vector<ValueType> const& mecLraValues);
 
             private:
