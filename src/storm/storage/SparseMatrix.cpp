@@ -1753,17 +1753,25 @@ namespace storm {
 #endif
 
         template<typename ValueType>
-        void SparseMatrix<ValueType>::multiplyAndReduceForward(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices) const {
-            if (dir == OptimizationDirection::Minimize) {
-                multiplyAndReduceForward<storm::utility::ElementLess<ValueType>>(rowGroupIndices, vector, summand, result, choices);
+        void SparseMatrix<ValueType>::multiplyAndReduceForward(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
+            if(dirOverride && !dirOverride->empty()) {
+                if (dir == OptimizationDirection::Minimize) {
+                    multiplyAndReduceForward<storm::utility::ElementLess<ValueType>, true>(rowGroupIndices, vector, summand, result, choices, dirOverride);
+                } else {
+                    multiplyAndReduceForward<storm::utility::ElementGreater<ValueType>, true>(rowGroupIndices, vector, summand, result, choices, dirOverride);
+                }
             } else {
-                multiplyAndReduceForward<storm::utility::ElementGreater<ValueType>>(rowGroupIndices, vector, summand, result, choices);
+                if (dir == OptimizationDirection::Minimize) {
+                    multiplyAndReduceForward<storm::utility::ElementLess<ValueType>, false>(rowGroupIndices, vector, summand, result, choices);
+                } else {
+                    multiplyAndReduceForward<storm::utility::ElementGreater<ValueType>, false>(rowGroupIndices, vector, summand, result, choices);
+                }
             }
         }
 
         template<typename ValueType>
-        template<typename Compare>
-        void SparseMatrix<ValueType>::multiplyAndReduceForward(std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices) const {
+        template<typename Compare, bool dirOverridden>
+        void SparseMatrix<ValueType>::multiplyAndReduceForward(std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
             Compare compare;
             auto elementIt = this->begin();
             auto rowGroupIt = rowGroupIndices.begin();
@@ -1782,7 +1790,8 @@ namespace storm {
             uint64_t selectedChoice;
 
             uint64_t currentRow = 0;
-            for (auto resultIt = result.begin(), resultIte = result.end(); resultIt != resultIte; ++resultIt, ++choiceIt, ++rowGroupIt) {
+            uint64_t currentRowGroup = 0;
+            for (auto resultIt = result.begin(), resultIte = result.end(); resultIt != resultIte; ++resultIt, ++choiceIt, ++rowGroupIt, ++currentRowGroup) {
                 ValueType currentValue = storm::utility::zero<ValueType>();
 
                 // Only multiply and reduce if there is at least one row in the group.
@@ -1816,10 +1825,19 @@ namespace storm {
                             oldSelectedChoiceValue = newValue;
                         }
 
-                        if (compare(newValue, currentValue)) {
-                            currentValue = newValue;
-                            if (choices) {
-                                selectedChoice = currentRow - *rowGroupIt;
+                        if(dirOverridden) {
+                            if (dirOverride->get(currentRowGroup) ? compare(currentValue, newValue) : compare(newValue, currentValue)) {
+                                currentValue = newValue;
+                                if (choices) {
+                                    selectedChoice = currentRow - *rowGroupIt;
+                                }
+                            }
+                        } else {
+                            if (compare(newValue, currentValue)) {
+                                currentValue = newValue;
+                                if (choices) {
+                                    selectedChoice = currentRow - *rowGroupIt;
+                                }
                             }
                         }
                         if (summand) {
@@ -1829,8 +1847,14 @@ namespace storm {
 
                     // Finally write value to target vector.
                     *resultIt = currentValue;
-                    if (choices && compare(currentValue, oldSelectedChoiceValue)) {
-                        *choiceIt = selectedChoice;
+                    if(dirOverridden) {
+                        if (choices && dirOverride->get(currentRowGroup) ? compare(oldSelectedChoiceValue, currentValue) : compare(currentValue, oldSelectedChoiceValue)) {
+                            *choiceIt = selectedChoice;
+                        }
+                    } else {
+                        if (choices && compare(currentValue, oldSelectedChoiceValue)) {
+                            *choiceIt = selectedChoice;
+                        }
                     }
                 }
             }
@@ -1838,23 +1862,31 @@ namespace storm {
 
 #ifdef STORM_HAVE_CARL
         template<>
-        void SparseMatrix<storm::RationalFunction>::multiplyAndReduceForward(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<storm::RationalFunction> const& vector, std::vector<storm::RationalFunction> const* b, std::vector<storm::RationalFunction>& result, std::vector<uint_fast64_t>* choices) const {
+        void SparseMatrix<storm::RationalFunction>::multiplyAndReduceForward(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<storm::RationalFunction> const& vector, std::vector<storm::RationalFunction> const* b, std::vector<storm::RationalFunction>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
             STORM_LOG_THROW(false, storm::exceptions::NotSupportedException, "This operation is not supported.");
         }
 #endif
 
         template<typename ValueType>
-        void SparseMatrix<ValueType>::multiplyAndReduceBackward(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices) const {
-            if (dir == storm::OptimizationDirection::Minimize) {
-                multiplyAndReduceBackward<storm::utility::ElementLess<ValueType>>(rowGroupIndices, vector, summand, result, choices);
+        void SparseMatrix<ValueType>::multiplyAndReduceBackward(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
+            if(dirOverride && !dirOverride->empty()) {
+                if (dir == storm::OptimizationDirection::Minimize) {
+                    multiplyAndReduceBackward<storm::utility::ElementLess<ValueType>, true>(rowGroupIndices, vector, summand, result, choices, dirOverride);
+                } else {
+                    multiplyAndReduceBackward<storm::utility::ElementGreater<ValueType>, true>(rowGroupIndices, vector, summand, result, choices, dirOverride);
+                }
             } else {
-                multiplyAndReduceBackward<storm::utility::ElementGreater<ValueType>>(rowGroupIndices, vector, summand, result, choices);
+                if (dir == storm::OptimizationDirection::Minimize) {
+                    multiplyAndReduceBackward<storm::utility::ElementLess<ValueType>, false>(rowGroupIndices, vector, summand, result, choices);
+                } else {
+                    multiplyAndReduceBackward<storm::utility::ElementGreater<ValueType>, false>(rowGroupIndices, vector, summand, result, choices);
+                }
             }
         }
 
         template<typename ValueType>
-        template<typename Compare>
-        void SparseMatrix<ValueType>::multiplyAndReduceBackward(std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices) const {
+        template<typename Compare, bool directionOverridden>
+        void SparseMatrix<ValueType>::multiplyAndReduceBackward(std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
             Compare compare;
             auto elementIt = this->end() - 1;
             auto rowGroupIt = rowGroupIndices.end() - 2;
@@ -1873,7 +1905,8 @@ namespace storm {
             uint64_t selectedChoice;
 
             uint64_t currentRow = this->getRowCount() - 1;
-            for (auto resultIt = result.end() - 1, resultIte = result.begin() - 1; resultIt != resultIte; --resultIt, --choiceIt, --rowGroupIt) {
+            uint64_t currentRowGroup = this->getRowGroupCount() - 2;
+            for (auto resultIt = result.end() - 1, resultIte = result.begin() - 1; resultIt != resultIte; --resultIt, --choiceIt, --rowGroupIt, --currentRowGroup) {
                 ValueType currentValue = storm::utility::zero<ValueType>();
 
                 // Only multiply and reduce if there is at least one row in the group.
@@ -1905,18 +1938,33 @@ namespace storm {
                             oldSelectedChoiceValue = newValue;
                         }
 
-                        if (compare(newValue, currentValue)) {
-                            currentValue = newValue;
-                            if (choices) {
-                                selectedChoice = currentRow - *rowGroupIt;
+                        if(directionOverridden) {
+                            if (dirOverride->get(currentRowGroup) ? compare(currentValue, newValue) : compare(newValue, currentValue)) {
+                                currentValue = newValue;
+                                if (choices) {
+                                    selectedChoice = currentRow - *rowGroupIt;
+                                }
+                            }
+                        } else {
+                            if (compare(newValue, currentValue)) {
+                                currentValue = newValue;
+                                if (choices) {
+                                    selectedChoice = currentRow - *rowGroupIt;
+                                }
                             }
                         }
                     }
 
                     // Finally write value to target vector.
                     *resultIt = currentValue;
-                    if (choices && compare(currentValue, oldSelectedChoiceValue)) {
-                        *choiceIt = selectedChoice;
+                    if(directionOverridden) {
+                        if (choices && dirOverride->get(currentRowGroup) ? compare(oldSelectedChoiceValue, currentValue) : compare(currentValue, oldSelectedChoiceValue)) {
+                            *choiceIt = selectedChoice;
+                        }
+                    } else {
+                        if (choices && compare(currentValue, oldSelectedChoiceValue)) {
+                            *choiceIt = selectedChoice;
+                        }
                     }
                 }
             }
@@ -1924,20 +1972,20 @@ namespace storm {
 
 #ifdef STORM_HAVE_CARL
         template<>
-        void SparseMatrix<storm::RationalFunction>::multiplyAndReduceBackward(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<storm::RationalFunction> const& vector, std::vector<storm::RationalFunction> const* b, std::vector<storm::RationalFunction>& result, std::vector<uint_fast64_t>* choices) const {
+        void SparseMatrix<storm::RationalFunction>::multiplyAndReduceBackward(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<storm::RationalFunction> const& vector, std::vector<storm::RationalFunction> const* b, std::vector<storm::RationalFunction>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
             STORM_LOG_THROW(false, storm::exceptions::NotSupportedException, "This operation is not supported.");
         }
 #endif
 
 #ifdef STORM_HAVE_INTELTBB
-        template <typename ValueType, typename Compare>
+        template <typename ValueType, typename Compare, bool directionOverridden>
         class TbbMultAddReduceFunctor {
         public:
             typedef typename storm::storage::SparseMatrix<ValueType>::index_type index_type;
             typedef typename storm::storage::SparseMatrix<ValueType>::value_type value_type;
             typedef typename storm::storage::SparseMatrix<ValueType>::const_iterator const_iterator;
 
-            TbbMultAddReduceFunctor(std::vector<uint64_t> const& rowGroupIndices, std::vector<MatrixEntry<index_type, value_type>> const& columnsAndEntries, std::vector<uint64_t> const& rowIndications, std::vector<ValueType> const& x, std::vector<ValueType>& result, std::vector<value_type> const* summand, std::vector<uint_fast64_t>* choices) : rowGroupIndices(rowGroupIndices), columnsAndEntries(columnsAndEntries), rowIndications(rowIndications), x(x), result(result), summand(summand), choices(choices) {
+            TbbMultAddReduceFunctor(std::vector<uint64_t> const& rowGroupIndices, std::vector<MatrixEntry<index_type, value_type>> const& columnsAndEntries, std::vector<uint64_t> const& rowIndications, std::vector<ValueType> const& x, std::vector<ValueType>& result, std::vector<value_type> const* summand, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride = nullptr) : rowGroupIndices(rowGroupIndices), columnsAndEntries(columnsAndEntries), rowIndications(rowIndications), x(x), result(result), summand(summand), choices(choices), dirOverride(dirOverride) {
                 // Intentionally left empty.
             }
 
@@ -1964,7 +2012,8 @@ namespace storm {
                 uint64_t selectedChoice;
 
                 uint64_t currentRow = *groupIt;
-                for (; groupIt != groupIte; ++groupIt, ++resultIt, ++choiceIt) {
+                uint64_t currentRowGroup = *groupIt;
+                for (; groupIt != groupIte; ++groupIt, ++resultIt, ++choiceIt, ++currentRowGroup) {
                     ValueType currentValue = storm::utility::zero<ValueType>();
 
                     // Only multiply and reduce if there is at least one row in the group.
@@ -1998,18 +2047,33 @@ namespace storm {
                                 oldSelectedChoiceValue = newValue;
                             }
 
-                            if (compare(newValue, currentValue)) {
-                                currentValue = newValue;
-                                if (choices) {
-                                    selectedChoice = currentRow - *groupIt;
+                            if(directionOverridden) {
+                                if (dirOverride.get()->get(currentRowGroup) ? compare(currentValue, newValue) : compare(newValue, currentValue)) {
+                                    currentValue = newValue;
+                                    if (choices) {
+                                        selectedChoice = currentRow - *groupIt;
+                                    }
+                                }
+                            } else {
+                                if (compare(newValue, currentValue)) {
+                                    currentValue = newValue;
+                                    if (choices) {
+                                        selectedChoice = currentRow - *groupIt;
+                                    }
                                 }
                             }
                         }
 
                         // Finally write value to target vector.
                         *resultIt = currentValue;
-                        if (choices && compare(currentValue, oldSelectedChoiceValue)) {
-                            *choiceIt = selectedChoice;
+                        if(directionOverridden) {
+                            if (choices && dirOverride.get()->get(currentRowGroup) ? compare(oldSelectedChoiceValue, currentValue) : compare(currentValue, oldSelectedChoiceValue)) {
+                                *choiceIt = selectedChoice;
+                            }
+                        } else {
+                            if (choices && compare(currentValue, oldSelectedChoiceValue)) {
+                                *choiceIt = selectedChoice;
+                            }
                         }
                     }
                 }
@@ -2024,27 +2088,36 @@ namespace storm {
             std::vector<ValueType>& result;
             std::vector<value_type> const* summand;
             std::vector<uint_fast64_t>* choices;
+            boost::optional<storm::storage::BitVector*> dirOverride = boost::none;
         };
 
         template<typename ValueType>
-        void SparseMatrix<ValueType>::multiplyAndReduceParallel(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices) const {
-            if (dir == storm::OptimizationDirection::Minimize) {
-                tbb::parallel_for(tbb::blocked_range<index_type>(0, rowGroupIndices.size() - 1, 100), TbbMultAddReduceFunctor<ValueType, storm::utility::ElementLess<ValueType>>(rowGroupIndices, columnsAndValues, rowIndications, vector, result, summand, choices));
+        void SparseMatrix<ValueType>::multiplyAndReduceParallel(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
+            if(dirOverride && !dirOverride->empty()) {
+                if (dir == storm::OptimizationDirection::Minimize) {
+                    tbb::parallel_for(tbb::blocked_range<index_type>(0, rowGroupIndices.size() - 1, 100), TbbMultAddReduceFunctor<ValueType, storm::utility::ElementLess<ValueType>, true>(rowGroupIndices, columnsAndValues, rowIndications, vector, result, summand, choices, dirOverride));
+                } else {
+                    tbb::parallel_for(tbb::blocked_range<index_type>(0, rowGroupIndices.size() - 1, 100), TbbMultAddReduceFunctor<ValueType, storm::utility::ElementGreater<ValueType>, true>(rowGroupIndices, columnsAndValues, rowIndications, vector, result, summand, choices, dirOverride));
+                }
             } else {
-                tbb::parallel_for(tbb::blocked_range<index_type>(0, rowGroupIndices.size() - 1, 100), TbbMultAddReduceFunctor<ValueType, storm::utility::ElementGreater<ValueType>>(rowGroupIndices, columnsAndValues, rowIndications, vector, result, summand, choices));
+                if (dir == storm::OptimizationDirection::Minimize) {
+                    tbb::parallel_for(tbb::blocked_range<index_type>(0, rowGroupIndices.size() - 1, 100), TbbMultAddReduceFunctor<ValueType, storm::utility::ElementLess<ValueType>, false>(rowGroupIndices, columnsAndValues, rowIndications, vector, result, summand, choices));
+                } else {
+                    tbb::parallel_for(tbb::blocked_range<index_type>(0, rowGroupIndices.size() - 1, 100), TbbMultAddReduceFunctor<ValueType, storm::utility::ElementGreater<ValueType>, false>(rowGroupIndices, columnsAndValues, rowIndications, vector, result, summand, choices));
+                }
             }
         }
 
 #ifdef STORM_HAVE_CARL
         template<>
-        void SparseMatrix<storm::RationalFunction>::multiplyAndReduceParallel(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<storm::RationalFunction> const& vector, std::vector<storm::RationalFunction> const* summand, std::vector<storm::RationalFunction>& result, std::vector<uint_fast64_t>* choices) const {
+        void SparseMatrix<storm::RationalFunction>::multiplyAndReduceParallel(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<storm::RationalFunction> const& vector, std::vector<storm::RationalFunction> const* summand, std::vector<storm::RationalFunction>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
             STORM_LOG_THROW(false, storm::exceptions::NotSupportedException, "This operation is not supported.");
         }
 #endif
 #endif
 
         template<typename ValueType>
-        void SparseMatrix<ValueType>::multiplyAndReduce(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices) const {
+        void SparseMatrix<ValueType>::multiplyAndReduce(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
 
             // If the vector and the result are aliases, we need and temporary vector.
             std::vector<ValueType>* target;

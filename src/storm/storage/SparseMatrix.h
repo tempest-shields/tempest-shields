@@ -907,19 +907,19 @@ namespace storm {
              * the 'new' choice has a value strictly better (wrt. to the optimization direction) value.
              * @return The resulting vector the content of the given result vector.
              */
-            void multiplyAndReduce(storm::solver::OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices) const;
-            
-            void multiplyAndReduceForward(storm::solver::OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices) const;
-            template<typename Compare>
-            void multiplyAndReduceForward(std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices) const;
-            
-            void multiplyAndReduceBackward(storm::solver::OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices) const;
-            template<typename Compare>
-            void multiplyAndReduceBackward(std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices) const;
+            void multiplyAndReduce(storm::solver::OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride = nullptr) const;
+
+            void multiplyAndReduceForward(storm::solver::OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride = nullptr) const;
+            template<typename Compare, bool directionOverridden>
+            void multiplyAndReduceForward(std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride = nullptr) const;
+
+            void multiplyAndReduceBackward(storm::solver::OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride = nullptr) const;
+            template<typename Compare, bool directionOverridden>
+            void multiplyAndReduceBackward(std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride = nullptr) const;
 #ifdef STORM_HAVE_INTELTBB
-            void multiplyAndReduceParallel(storm::solver::OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices) const;
-            template<typename Compare>
-            void multiplyAndReduceParallel(std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices) const;
+            void multiplyAndReduceParallel(storm::solver::OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride = nullptr) const;
+            template<typename Compare, bool directionOverridden>
+            void multiplyAndReduceParallel(std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride = nullptr) const;
 #endif
 
             /*!

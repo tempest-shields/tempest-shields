@@ -332,9 +332,6 @@ namespace storm {
                         _TsToIsMultiplier = storm::solver::MultiplierFactory<ValueType>().create(env, _TsToIsTransitions);
                         _IsToTsMultiplier = storm::solver::MultiplierFactory<ValueType>().create(env, _IsToTsTransitions);
                     }
-                    if(env.solver().multiplier().getOptimizationDirectionOverride().is_initialized()) {
-                        _TsMultiplier->setOptimizationDirectionOverride(env.solver().multiplier().getOptimizationDirectionOverride().get());
-                    }
                 }
 
                 template <typename ValueType, typename ComponentType, LraViTransitionsType TransitionsType>

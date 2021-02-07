@@ -415,11 +415,6 @@ namespace storm {
                 this->multiplierA = storm::solver::MultiplierFactory<ValueType>().create(env, *this->A);
             }
 
-            // TODO cleanup
-            if(env.solver().multiplier().getOptimizationDirectionOverride().is_initialized()) {
-                multiplierA->setOptimizationDirectionOverride(env.solver().multiplier().getOptimizationDirectionOverride().get());
-            }
-
             if (!auxiliaryRowGroupVector) {
                 auxiliaryRowGroupVector = std::make_unique<std::vector<ValueType>>(this->A->getRowGroupCount());
             }
