@@ -13,13 +13,17 @@ namespace storm {
             return _playerIds;
         }
 
-        std::ostream& operator<<(std::ostream& stream, PlayerCoalition const& coalition) {
-            //bool firstItem = true;
-            //for (auto const& id : coalition._playerIds) {
-            //    //if(firstItem) { firstItem = false; } else { stream << ","; }
-            //    stream << id;
-            //}
-            return stream;
+        std::ostream& operator<<(std::ostream& out, PlayerCoalition const& coalition) {
+            bool firstItem = true;
+            for (auto const& player : coalition._playerIds) {
+                if(firstItem) { firstItem = false; } else { out << ","; }
+                if (player.type() == typeid(std::string)) {
+                    out << boost::get<std::string>(player);
+                } else {
+                    out << boost::get<storm::storage::PlayerIndex>(player);
+                }
+            }
+            return out;
         }
     }
 }
