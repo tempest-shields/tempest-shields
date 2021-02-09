@@ -23,13 +23,46 @@ namespace storm {
 
                 // Initialize the solution vector.
                 std::vector<ValueType> x = std::vector<ValueType>(transitionMatrix.getRowGroupCount() - psiStates.getNumberOfSetBits(), storm::utility::zero<ValueType>());
-                std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(~psiStates, psiStates);
+
+                STORM_LOG_DEBUG("phiStates are " << phiStates);
+                STORM_LOG_DEBUG("psiStates are " << psiStates);
+                STORM_LOG_DEBUG("~psiStates are " <<~psiStates);
+
+                // states are those states which are phiStates and not PsiStates
+                // so that we can not only leave out the PsiStates in the matrix, but also leave out those which are not in the phiStates
+                storm::storage::BitVector states(phiStates.size());
+                for(int counter = 0; counter < states.size(); counter++)
+                {
+                    if(phiStates.get(counter) && !psiStates.get(counter))
+                    {
+                        states.set(counter);
+                    }
+                }
+
+                STORM_LOG_DEBUG("states are " << states);
+
+                // TRY to change b to the new states
+                // TODO: only states in the phiStates can be chosen as initial states, e.g. the output is for initial states = 0, 1, 4
+                std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(states, psiStates);
+/*                std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(~psiStates, psiStates);
+                for(int counter = 0; counter < states.size(); counter++)
+                {
+                    if(!phiStates.get(counter))
+                    {
+                        b.at(counter) = 0;
+                    }
+                }*/
+                //std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(~psiStates, psiStates);
+
+                //STORM_LOG_DEBUG("\n" << b);
 
                 // Reduce matrix to ~Prob1 states-
                 //STORM_LOG_DEBUG("\n" << transitionMatrix);
-                storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, ~psiStates, ~psiStates, false);
-                //STORM_LOG_DEBUG("\n" << submatrix);
+                //storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, ~psiStates, ~psiStates, false);
 
+                // Reduce TRY to use only the states from phi which satisfy the left side and psi which satisfy the right side
+                storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, states, states, false);
+                //STORM_LOG_DEBUG("\n" << submatrix);
 
                 //STORM_LOG_DEBUG("x = " << storm::utility::vector::toString(x));
                 //STORM_LOG_DEBUG("b = " << storm::utility::vector::toString(b));
@@ -59,6 +92,8 @@ namespace storm {
                 }
 
                 viHelper.performValueIteration(env, x, b, goal.direction());
+
+                // TODO: here is the debug output for all states, should I fill up the vector again with 0 for the states i left out?
 
                 STORM_LOG_DEBUG(storm::utility::vector::toString(x));
                 if (produceScheduler) {
