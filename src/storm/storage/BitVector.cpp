@@ -1026,6 +1026,31 @@ namespace storm {
             }
         }
 
+        void BitVector::setRelevantStates(BitVector bitVector1, BitVector bitVector2)
+        {
+            for(int counter = 0; counter < this->size(); counter++)
+            {
+                if(bitVector1.get(counter) && bitVector2.get(counter))
+                {
+                    this->set(counter);
+                }
+            }
+        }
+
+        void BitVector::setClippedStatesOfCoalition(BitVector psiStates, BitVector statesOfCoalition)
+        {
+            auto clippedStatesCounter = 0;
+            for(uint i = 0; i < psiStates.size(); i++) {
+                std::cout << i << " : " << psiStates.get(i) << "  -> " << statesOfCoalition[i] << std::endl;
+                if(!psiStates.get(i)) {
+                    this->set(clippedStatesCounter, statesOfCoalition[i]);
+                    clippedStatesCounter++;
+                }
+            }
+        }
+
+
+
 
         void BitVector::truncateLastBucket() {
             if ((bitCount & mod64mask) != 0) {

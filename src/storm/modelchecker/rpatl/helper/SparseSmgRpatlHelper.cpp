@@ -30,20 +30,20 @@ namespace storm {
 
                 // states are those states which are phiStates and not PsiStates
                 // so that we can not only leave out the PsiStates in the matrix, but also leave out those which are not in the phiStates
-                storm::storage::BitVector states(phiStates.size());
-                for(int counter = 0; counter < states.size(); counter++)
+                storm::storage::BitVector relevantStates(phiStates.size());
+                relevantStates.setRelevantStates(phiStates, ~psiStates);
+
+/*                for(int counter = 0; counter < states.size(); counter++)
                 {
                     if(phiStates.get(counter) && !psiStates.get(counter))
                     {
                         states.set(counter);
                     }
-                }
+                }*/
 
-                STORM_LOG_DEBUG("states are " << states);
+                STORM_LOG_DEBUG("relevant states are " << relevantStates);
 
-                // TRY to change b to the new states
-                // TODO: only states in the phiStates can be chosen as initial states, e.g. the output is for initial states = 0, 1, 4
-                std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(states, psiStates);
+                std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(relevantStates, psiStates);
 /*                std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(~psiStates, psiStates);
                 for(int counter = 0; counter < states.size(); counter++)
                 {
@@ -61,7 +61,7 @@ namespace storm {
                 //storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, ~psiStates, ~psiStates, false);
 
                 // Reduce TRY to use only the states from phi which satisfy the left side and psi which satisfy the right side
-                storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, states, states, false);
+                storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, relevantStates, relevantStates, false);
                 //STORM_LOG_DEBUG("\n" << submatrix);
 
                 //STORM_LOG_DEBUG("x = " << storm::utility::vector::toString(x));
@@ -72,15 +72,17 @@ namespace storm {
                 //STORM_LOG_DEBUG(statesOfCoalition);
                 //STORM_LOG_DEBUG(clippedStatesOfCoalition);
 
-                // TODO move this to BitVector-class
-                auto clippedStatesCounter = 0;
+/*                auto clippedStatesCounter = 0;
                 for(uint i = 0; i < psiStates.size(); i++) {
                     std::cout << i << " : " << psiStates.get(i) << "  -> " << statesOfCoalition[i] << std::endl;
                     if(!psiStates.get(i)) {
                         clippedStatesOfCoalition.set(clippedStatesCounter, statesOfCoalition[i]);
                         clippedStatesCounter++;
                     }
-                }
+                }*/
+
+                clippedStatesOfCoalition.setClippedStatesOfCoalition(psiStates, statesOfCoalition);
+
                 //STORM_LOG_DEBUG(clippedStatesOfCoalition);
                 clippedStatesOfCoalition.complement();
                 //STORM_LOG_DEBUG(clippedStatesOfCoalition);
@@ -93,7 +95,8 @@ namespace storm {
 
                 viHelper.performValueIteration(env, x, b, goal.direction());
 
-                // TODO: here is the debug output for all states, should I fill up the vector again with 0 for the states i left out?
+                // TODO: here is the debug output for all states, should I fill up the vector again with 0 for the states i left out
+                //  e.g. phi states are [ 2 3 ], the probability output is for the first state (state 2) but the initial sate is 0
 
                 STORM_LOG_DEBUG(storm::utility::vector::toString(x));
                 if (produceScheduler) {
