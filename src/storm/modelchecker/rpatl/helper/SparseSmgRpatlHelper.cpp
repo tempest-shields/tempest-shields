@@ -43,22 +43,14 @@ namespace storm {
                 //STORM_LOG_DEBUG("b = " << storm::utility::vector::toString(b));
 
                 storm::storage::BitVector clippedStatesOfCoalition(statesOfCoalition.size() - psiStates.getNumberOfSetBits());
+
                 //STORM_LOG_DEBUG(psiStates);
                 //STORM_LOG_DEBUG(statesOfCoalition);
                 //STORM_LOG_DEBUG(clippedStatesOfCoalition);
 
-/*                auto clippedStatesCounter = 0;
-                for(uint i = 0; i < psiStates.size(); i++) {
-                    std::cout << i << " : " << psiStates.get(i) << "  -> " << statesOfCoalition[i] << std::endl;
-                    if(!psiStates.get(i)) {
-                        clippedStatesOfCoalition.set(clippedStatesCounter, statesOfCoalition[i]);
-                        clippedStatesCounter++;
-                    }
-                }*/
-
                 clippedStatesOfCoalition.setClippedStatesOfCoalition(psiStates, statesOfCoalition);
 
-                STORM_LOG_DEBUG(clippedStatesOfCoalition);
+                //STORM_LOG_DEBUG(clippedStatesOfCoalition);
                 clippedStatesOfCoalition.complement();
                 //STORM_LOG_DEBUG(clippedStatesOfCoalition);
 
