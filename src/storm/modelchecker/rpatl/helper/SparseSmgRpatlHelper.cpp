@@ -29,7 +29,7 @@ namespace storm {
 
                 std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(relevantStates, psiStates);
 
-                // Reduce matrix to only relevant States
+                // Reduce the matrix to relevant states
                 storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, relevantStates, relevantStates, false);
 
                 storm::storage::BitVector clippedStatesOfCoalition(statesOfCoalition.size() - psiStates.getNumberOfSetBits());
