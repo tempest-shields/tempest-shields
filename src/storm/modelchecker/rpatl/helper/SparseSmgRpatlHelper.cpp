@@ -24,43 +24,23 @@ namespace storm {
                 // Initialize the solution vector.
                 std::vector<ValueType> x = std::vector<ValueType>(transitionMatrix.getRowGroupCount() - psiStates.getNumberOfSetBits(), storm::utility::zero<ValueType>());
 
-                STORM_LOG_DEBUG("phiStates are " << phiStates);
-                STORM_LOG_DEBUG("psiStates are " << psiStates);
-                STORM_LOG_DEBUG("~psiStates are " <<~psiStates);
+                //STORM_LOG_DEBUG("phiStates: " << phiStates);
+                //STORM_LOG_DEBUG("psiStates: " << psiStates);
+                //STORM_LOG_DEBUG("~psiStates: " <<~psiStates);
 
                 // states are those states which are phiStates and not PsiStates
                 // so that we can not only leave out the PsiStates in the matrix, but also leave out those which are not in the phiStates
                 storm::storage::BitVector relevantStates(phiStates.size());
+
+                // TODO: AND for Bitvectors already exists, try to use this instead:
+                //  first: copy one Bitvector to relevantStates, second: logical AND with the other one.
                 relevantStates.setRelevantStates(phiStates, ~psiStates);
 
-/*                for(int counter = 0; counter < states.size(); counter++)
-                {
-                    if(phiStates.get(counter) && !psiStates.get(counter))
-                    {
-                        states.set(counter);
-                    }
-                }*/
-
-                STORM_LOG_DEBUG("relevant states are " << relevantStates);
+                STORM_LOG_DEBUG("relevant states: " << relevantStates);
 
                 std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(relevantStates, psiStates);
-/*                std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(~psiStates, psiStates);
-                for(int counter = 0; counter < states.size(); counter++)
-                {
-                    if(!phiStates.get(counter))
-                    {
-                        b.at(counter) = 0;
-                    }
-                }*/
-                //std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(~psiStates, psiStates);
 
-                //STORM_LOG_DEBUG("\n" << b);
-
-                // Reduce matrix to ~Prob1 states-
-                //STORM_LOG_DEBUG("\n" << transitionMatrix);
-                //storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, ~psiStates, ~psiStates, false);
-
-                // Reduce TRY to use only the states from phi which satisfy the left side and psi which satisfy the right side
+                // use only the states from phi which satisfy the left side and psi which satisfy the right side
                 storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, relevantStates, relevantStates, false);
                 //STORM_LOG_DEBUG("\n" << submatrix);
 
@@ -83,7 +63,7 @@ namespace storm {
 
                 clippedStatesOfCoalition.setClippedStatesOfCoalition(psiStates, statesOfCoalition);
 
-                //STORM_LOG_DEBUG(clippedStatesOfCoalition);
+                STORM_LOG_DEBUG(clippedStatesOfCoalition);
                 clippedStatesOfCoalition.complement();
                 //STORM_LOG_DEBUG(clippedStatesOfCoalition);
 
