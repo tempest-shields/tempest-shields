@@ -28,13 +28,8 @@ namespace storm {
                 //STORM_LOG_DEBUG("psiStates: " << psiStates);
                 //STORM_LOG_DEBUG("~psiStates: " <<~psiStates);
 
-                // states are those states which are phiStates and not PsiStates
-                // so that we can not only leave out the PsiStates in the matrix, but also leave out those which are not in the phiStates
-                storm::storage::BitVector relevantStates(phiStates.size());
-
-                // TODO: AND for Bitvectors already exists, try to use this instead:
-                //  first: copy one Bitvector to relevantStates, second: logical AND with the other one.
-                relevantStates.setRelevantStates(phiStates, ~psiStates);
+                // relevant states are those states which are phiStates and not PsiStates
+                storm::storage::BitVector relevantStates = phiStates & ~psiStates;
 
                 STORM_LOG_DEBUG("relevant states: " << relevantStates);
 

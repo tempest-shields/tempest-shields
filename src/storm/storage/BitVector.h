@@ -537,14 +537,6 @@ namespace storm {
             bool compareAndSwap(uint_fast64_t start1, uint_fast64_t start2, uint_fast64_t length);
 
             /*!
-             * Compare two bitvectors and set the bits which are set in both of them.
-             *
-             * @param bitVector1 First Source for comparison.
-             * @param bitVector2 Second Source for comparison.
-             */
-            void setRelevantStates(BitVector bitVector1, BitVector bitVector2);
-
-            /*!
              * Set clipped states of coalition for all states which are not in the winning region.
              *
              * @param psiStates Bitvector of states which are in the winning region.
