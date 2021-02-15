@@ -136,18 +136,18 @@ namespace storm {
                 template <typename ValueType>
                 void GameViHelper<ValueType>::fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector relevantStates, storm::storage::BitVector psiStates)
                 {
-                    std::vector<ValueType> filled_vector = std::vector<ValueType>(relevantStates.size(), storm::utility::zero<ValueType>());
-                    uint bit_index = 0;
-                    for(uint i = 0; i < filled_vector.size(); i++) {
+                    std::vector<ValueType> filledVector = std::vector<ValueType>(relevantStates.size(), storm::utility::zero<ValueType>());
+                    uint bitIndex = 0;
+                    for(uint i = 0; i < filledVector.size(); i++) {
                         if (relevantStates.get(i)) {
-                            filled_vector.at(i) = result.at(bit_index);
-                            bit_index++;
+                            filledVector.at(i) = result.at(bitIndex);
+                            bitIndex++;
                         }
                         else if (psiStates.get(i)) {
-                            filled_vector.at(i) = 1;
+                            filledVector.at(i) = 1;
                         }
                     }
-                    result = filled_vector;
+                    result = filledVector;
                 }
 
                 template <typename ValueType>
