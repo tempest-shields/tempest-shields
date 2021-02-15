@@ -24,35 +24,17 @@ namespace storm {
                 // Initialize the solution vector.
                 std::vector<ValueType> x = std::vector<ValueType>(transitionMatrix.getRowGroupCount() - psiStates.getNumberOfSetBits(), storm::utility::zero<ValueType>());
 
-                //STORM_LOG_DEBUG("phiStates: " << phiStates);
-                //STORM_LOG_DEBUG("psiStates: " << psiStates);
-                //STORM_LOG_DEBUG("~psiStates: " <<~psiStates);
-
-                // relevant states are those states which are phiStates and not PsiStates
+                // Relevant states are those states which are phiStates and not PsiStates.
                 storm::storage::BitVector relevantStates = phiStates & ~psiStates;
-
-                STORM_LOG_DEBUG("relevant states: " << relevantStates);
 
                 std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(relevantStates, psiStates);
 
-                // use only the states from phi which satisfy the left side and psi which satisfy the right side
+                // Reduce matrix to only relevant States
                 storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, relevantStates, relevantStates, false);
-                //STORM_LOG_DEBUG("\n" << submatrix);
-
-                //STORM_LOG_DEBUG("x = " << storm::utility::vector::toString(x));
-                //STORM_LOG_DEBUG("b = " << storm::utility::vector::toString(b));
 
                 storm::storage::BitVector clippedStatesOfCoalition(statesOfCoalition.size() - psiStates.getNumberOfSetBits());
-
-                //STORM_LOG_DEBUG(psiStates);
-                //STORM_LOG_DEBUG(statesOfCoalition);
-                //STORM_LOG_DEBUG(clippedStatesOfCoalition);
-
                 clippedStatesOfCoalition.setClippedStatesOfCoalition(psiStates, statesOfCoalition);
-
-                //STORM_LOG_DEBUG(clippedStatesOfCoalition);
                 clippedStatesOfCoalition.complement();
-                //STORM_LOG_DEBUG(clippedStatesOfCoalition);
 
                 storm::modelchecker::helper::internal::GameViHelper<ValueType> viHelper(submatrix, clippedStatesOfCoalition);
                 std::unique_ptr<storm::storage::Scheduler<ValueType>> scheduler;
@@ -61,27 +43,21 @@ namespace storm {
                 }
 
                 viHelper.performValueIteration(env, x, b, goal.direction());
-                //STORM_LOG_DEBUG(storm::utility::vector::toString(x));
                 viHelper.fillResultVector(x, relevantStates, psiStates);
-                STORM_LOG_DEBUG(storm::utility::vector::toString(x));
 
                 if (produceScheduler) {
                     scheduler = std::make_unique<storm::storage::Scheduler<ValueType>>(expandScheduler(viHelper.extractScheduler(), psiStates));
-                    STORM_LOG_DEBUG("IsPartial?" << scheduler->isPartialScheduler());
                 }
                 return MDPSparseModelCheckingHelperReturnType<ValueType>(std::move(x), std::move(scheduler));
             }
 
             template<typename ValueType>
             storm::storage::Scheduler<ValueType> SparseSmgRpatlHelper<ValueType>::expandScheduler(storm::storage::Scheduler<ValueType> scheduler, storm::storage::BitVector psiStates) {
-                //STORM_LOG_DEBUG(psiStates.size());
                 for(uint i = 0; i < 2; i++) {
-                    //STORM_LOG_DEBUG(scheduler.getChoice(i));
                 }
                 storm::storage::Scheduler<ValueType> completeScheduler(psiStates.size());
                 uint_fast64_t maybeStatesCounter = 0;
                 for(uint stateCounter = 0; stateCounter < psiStates.size(); stateCounter++) {
-                    //STORM_LOG_DEBUG(stateCounter << " : " << psiStates.get(stateCounter));
                     if(psiStates.get(stateCounter)) {
                         completeScheduler.setChoice(0, stateCounter);
                     } else {
