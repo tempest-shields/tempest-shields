@@ -94,11 +94,10 @@ namespace storm {
                 }
 
                 viHelper.performValueIteration(env, x, b, goal.direction());
-
-                // TODO: here is the debug output for all states, should I fill up the vector again with 0 for the states i left out
-                //  e.g. phi states are [ 2 3 ], the probability output is for the first state (state 2) but the initial sate is 0
-
+                //STORM_LOG_DEBUG(storm::utility::vector::toString(x));
+                viHelper.fillResultVector(x, relevantStates, psiStates);
                 STORM_LOG_DEBUG(storm::utility::vector::toString(x));
+
                 if (produceScheduler) {
                     scheduler = std::make_unique<storm::storage::Scheduler<ValueType>>(expandScheduler(viHelper.extractScheduler(), psiStates));
                     STORM_LOG_DEBUG("IsPartial?" << scheduler->isPartialScheduler());

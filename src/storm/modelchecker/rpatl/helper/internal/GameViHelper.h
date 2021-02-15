@@ -25,6 +25,11 @@ namespace storm {
 
                     void performValueIteration(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir);
 
+                    /*!
+                     * Fills the result vector to the original size with ones for being psiStates, zeros for being not phiStates
+                     */
+                    void fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector relevantStates, storm::storage::BitVector psiStates);
+
                     /*h
                      * Sets whether an optimal scheduler shall be constructed during the computation
                      */
