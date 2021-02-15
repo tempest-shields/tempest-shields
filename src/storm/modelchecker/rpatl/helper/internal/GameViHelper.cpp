@@ -82,11 +82,11 @@ namespace storm {
                         //STORM_LOG_DEBUG("xOld = " << storm::utility::vector::toString(xOld()));
                         //STORM_LOG_DEBUG("b = " << storm::utility::vector::toString(_b));
                         //STORM_LOG_DEBUG("xNew = " << storm::utility::vector::toString(xNew()));
-                        _multiplier->multiplyAndReduce(env, dir, xOld(), &_b, xNew());
+                        _multiplier->multiplyAndReduce(env, dir, xOld(), &_b, xNew(), nullptr, &_statesOfCoalition);
                         //std::cin.get();
                     } else {
                         // Also keep track of the choices made.
-                        _multiplier->multiplyAndReduce(env, dir, xOld(), &_b, xNew(), choices);
+                        _multiplier->multiplyAndReduce(env, dir, xOld(), &_b, xNew(), choices, &_statesOfCoalition);
                     }
 
                     // compare applyPointwise
