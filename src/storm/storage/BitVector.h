@@ -542,7 +542,7 @@ namespace storm {
              * @param psiStates Bitvector of states which are in the winning region.
              * @param statesOfCoalition Bitvector of states which belong to the coalition.
              */
-            void setClippedStatesOfCoalition(BitVector psiStates, BitVector statesOfCoalition);
+            void setClippedStatesOfCoalition(BitVector relevantStates, BitVector statesOfCoalition);
 
             friend std::ostream& operator<<(std::ostream& out, BitVector const& bitVector);
 

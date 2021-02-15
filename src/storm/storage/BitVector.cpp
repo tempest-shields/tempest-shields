@@ -1026,12 +1026,11 @@ namespace storm {
             }
         }
 
-        void BitVector::setClippedStatesOfCoalition(BitVector psiStates, BitVector statesOfCoalition)
+        void BitVector::setClippedStatesOfCoalition(BitVector relevantStates, BitVector statesOfCoalition)
         {
             auto clippedStatesCounter = 0;
-            for(uint i = 0; i < psiStates.size(); i++) {
-                std::cout << i << " : " << psiStates.get(i) << "  -> " << statesOfCoalition[i] << std::endl;
-                if(!psiStates.get(i)) {
+            for(uint i = 0; i < relevantStates.size(); i++) {
+                if(relevantStates.get(i)) {
                     this->set(clippedStatesCounter, statesOfCoalition[i]);
                     clippedStatesCounter++;
                 }
