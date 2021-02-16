@@ -58,8 +58,10 @@ namespace storm {
                 storm::storage::Scheduler<ValueType> completeScheduler(psiStates.size());
                 uint_fast64_t maybeStatesCounter = 0;
                 for(uint stateCounter = 0; stateCounter < psiStates.size(); stateCounter++) {
+                    // psiStates already fulfill formulae so we can set an arbitrary action
                     if(psiStates.get(stateCounter)) {
                         completeScheduler.setChoice(0, stateCounter);
+                    // ~phiStates do not fulfill formulae so we can set an arbitrary action
                     } else if(notPhiStates.get(stateCounter)) {
                         completeScheduler.setChoice(0, stateCounter);
                     } else {
