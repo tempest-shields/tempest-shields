@@ -140,11 +140,26 @@ namespace storm {
             gameFormula = (qi::lit("<<") > playerCoalition > qi::lit(">>") > operatorFormula)[qi::_val = phoenix::bind(&FormulaParserGrammar::createGameFormula, phoenix::ref(*this), qi::_1, qi::_2)];
             gameFormula.name("game formula");
 
+            shieldExpression = (qi::lit("<") > shieldingType > qi::lit(",") > shieldComparison > qi::lit(">"))[qi::_val = phoenix::bind(&FormulaParserGrammar::createShieldExpression, phoenix::ref(*this), qi::_1, qi::_2)];
+
+            shieldExpression.name("shield expression");
+
+            shieldingType = (qi::lit("PreSafety")[qi::_val = storm::logic::ShieldingType::PreSafety]   |
+                             qi::lit("PostSafety")[qi::_val = storm::logic::ShieldingType::PostSafety] |
+                             qi::lit("Optimal")[qi::_val = storm::logic::ShieldingType::Optimal]);
+            shieldingType.name("shielding type");
+
+            shieldComparison = ((qi::lit("lambda")[qi::_a = storm::logic::ShieldComparison::Relative] |
+                                 qi::lit("gamma")[qi::_a = storm::logic::ShieldComparison::Absolute]) > qi::lit("=") > qi::double_)[qi::_val = phoenix::bind(&FormulaParserGrammar::createShieldComparisonStruct, phoenix::ref(*this), qi::_a, qi::_1)];
+            shieldComparison.name("shield comparison type");
+
             stateFormula = (orStateFormula | multiFormula | quantileFormula | gameFormula);
             stateFormula.name("state formula");
 
             formulaName = qi::lit("\"") >> identifier >> qi::lit("\"") >> qi::lit(":");
             formulaName.name("formula name");
+
+
 
             constantDefinition = (qi::lit("const") > -(qi::lit("int")[qi::_a = ConstantDataType::Integer] | qi::lit("bool")[qi::_a = ConstantDataType::Bool] | qi::lit("double")[qi::_a = ConstantDataType::Rational]) >> identifier >> -(qi::lit("=") > expressionParser))[phoenix::bind(&FormulaParserGrammar::addConstant, phoenix::ref(*this), qi::_1, qi::_a, qi::_2)];
             constantDefinition.name("constant definition");
@@ -152,7 +167,7 @@ namespace storm {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Woverloaded-shift-op-parentheses"
 
-            filterProperty = (-formulaName >> qi::lit("filter") > qi::lit("(") > filterType_ > qi::lit(",") > stateFormula > qi::lit(",") > stateFormula > qi::lit(")"))[qi::_val = phoenix::bind(&FormulaParserGrammar::createProperty, phoenix::ref(*this), qi::_1, qi::_2, qi::_3, qi::_4)] | (-formulaName >> stateFormula)[qi::_val = phoenix::bind(&FormulaParserGrammar::createPropertyWithDefaultFilterTypeAndStates, phoenix::ref(*this), qi::_1, qi::_2)];
+            filterProperty = (-formulaName >> qi::lit("filter") > qi::lit("(") > filterType_ > qi::lit(",") > stateFormula > qi::lit(",") > stateFormula > qi::lit(")"))[qi::_val = phoenix::bind(&FormulaParserGrammar::createProperty, phoenix::ref(*this), qi::_1, qi::_2, qi::_3, qi::_4)] | (-formulaName >> stateFormula)[qi::_val = phoenix::bind(&FormulaParserGrammar::createPropertyWithDefaultFilterTypeAndStates, phoenix::ref(*this), qi::_1, qi::_2)] | (-formulaName >> shieldExpression >> stateFormula)[qi::_val = phoenix::bind(&FormulaParserGrammar::createShieldingProperty, phoenix::ref(*this), qi::_1, qi::_3, qi::_2)];
             filterProperty.name("filter property");
 
 #pragma clang diagnostic pop
@@ -487,6 +502,23 @@ namespace storm {
                 return storm::jani::Property(propertyName.get(), formula, this->getUndefinedConstants(formula));
             } else {
                 return storm::jani::Property(std::to_string(propertyCount), formula, this->getUndefinedConstants(formula));
+            }
+        }
+
+        std::pair<storm::logic::ShieldComparison, double> FormulaParserGrammar::createShieldComparisonStruct(storm::logic::ShieldComparison comparisonType, double value) {
+            return std::make_pair(comparisonType, value);
+        }
+
+        storm::logic::ShieldExpression FormulaParserGrammar::createShieldExpression(storm::logic::ShieldingType type, std::pair<storm::logic::ShieldComparison, double> comparisonStruct) {
+            return storm::logic::ShieldExpression(type, comparisonStruct.first, comparisonStruct.second);
+        }
+
+        storm::jani::Property FormulaParserGrammar::createShieldingProperty(boost::optional<std::string> const& propertyName, std::shared_ptr<storm::logic::Formula const> const& formula, storm::logic::ShieldExpression shieldExpression) {
+            ++propertyCount;
+            if (propertyName) {
+                return storm::jani::Property(propertyName.get(), formula, this->getUndefinedConstants(formula), shieldExpression);
+            } else {
+                return storm::jani::Property(std::to_string(propertyCount), formula, this->getUndefinedConstants(formula), shieldExpression);
             }
         }
 
