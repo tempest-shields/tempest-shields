@@ -110,6 +110,8 @@ namespace storm {
             storm::logic::Formula const& formula = checkTask.getFormula();
             if (formula.isReachabilityProbabilityFormula()) {
                 return this->computeReachabilityProbabilities(env, checkTask.substituteFormula(formula.asReachabilityProbabilityFormula()));
+            } else if (formula.isUntilFormula()) {
+                return this->computeUntilProbabilities(env, checkTask.substituteFormula(formula.asUntilFormula()));
             }
             STORM_LOG_THROW(false, storm::exceptions::InvalidArgumentException, "The given formula '" << formula << "' is invalid.");
         }

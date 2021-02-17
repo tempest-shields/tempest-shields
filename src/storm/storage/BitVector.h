@@ -536,6 +536,14 @@ namespace storm {
              */
             bool compareAndSwap(uint_fast64_t start1, uint_fast64_t start2, uint_fast64_t length);
 
+            /*!
+             * Set clipped states of coalition for all states which are not in the winning region.
+             *
+             * @param psiStates Bitvector of states which are in the winning region.
+             * @param statesOfCoalition Bitvector of states which belong to the coalition.
+             */
+            void setClippedStatesOfCoalition(BitVector relevantStates, BitVector statesOfCoalition);
+
             friend std::ostream& operator<<(std::ostream& out, BitVector const& bitVector);
 
             void store(std::ostream&) const;

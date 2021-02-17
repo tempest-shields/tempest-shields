@@ -82,11 +82,11 @@ namespace storm {
                         //STORM_LOG_DEBUG("xOld = " << storm::utility::vector::toString(xOld()));
                         //STORM_LOG_DEBUG("b = " << storm::utility::vector::toString(_b));
                         //STORM_LOG_DEBUG("xNew = " << storm::utility::vector::toString(xNew()));
-                        _multiplier->multiplyAndReduce(env, dir, xOld(), &_b, xNew());
+                        _multiplier->multiplyAndReduce(env, dir, xOld(), &_b, xNew(), nullptr, &_statesOfCoalition);
                         //std::cin.get();
                     } else {
                         // Also keep track of the choices made.
-                        _multiplier->multiplyAndReduce(env, dir, xOld(), &_b, xNew(), choices);
+                        _multiplier->multiplyAndReduce(env, dir, xOld(), &_b, xNew(), choices, &_statesOfCoalition);
                     }
 
                     // compare applyPointwise
@@ -131,6 +131,23 @@ namespace storm {
                     }
                     // TODO needs checking
                     return true;
+                }
+
+                template <typename ValueType>
+                void GameViHelper<ValueType>::fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector relevantStates, storm::storage::BitVector psiStates)
+                {
+                    std::vector<ValueType> filledVector = std::vector<ValueType>(relevantStates.size(), storm::utility::zero<ValueType>());
+                    uint bitIndex = 0;
+                    for(uint i = 0; i < filledVector.size(); i++) {
+                        if (relevantStates.get(i)) {
+                            filledVector.at(i) = result.at(bitIndex);
+                            bitIndex++;
+                        }
+                        else if (psiStates.get(i)) {
+                            filledVector.at(i) = 1;
+                        }
+                    }
+                    result = filledVector;
                 }
 
                 template <typename ValueType>
