@@ -149,8 +149,11 @@ namespace storm {
                              qi::lit("Optimal")[qi::_val = storm::logic::ShieldingType::Optimal]);
             shieldingType.name("shielding type");
 
+            multiplicativeFactor = qi::double_[qi::_pass = (qi::_1 >= 0) & (qi::_1 <= 1.0), qi::_val = qi::_1 ];
+            multiplicativeFactor.name("multiplicative factor between 0 and 1");
+
             shieldComparison = ((qi::lit("lambda")[qi::_a = storm::logic::ShieldComparison::Relative] |
-                                 qi::lit("gamma")[qi::_a = storm::logic::ShieldComparison::Absolute]) > qi::lit("=") > qi::double_)[qi::_val = phoenix::bind(&FormulaParserGrammar::createShieldComparisonStruct, phoenix::ref(*this), qi::_a, qi::_1)];
+                                 qi::lit("gamma")[qi::_a = storm::logic::ShieldComparison::Absolute]) > qi::lit("=") > multiplicativeFactor)[qi::_val = phoenix::bind(&FormulaParserGrammar::createShieldComparisonStruct, phoenix::ref(*this), qi::_a, qi::_1)];
             shieldComparison.name("shield comparison type");
 
             stateFormula = (orStateFormula | multiFormula | quantileFormula | gameFormula);
