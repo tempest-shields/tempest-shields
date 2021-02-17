@@ -112,6 +112,8 @@ namespace storm {
                 return this->computeReachabilityProbabilities(env, checkTask.substituteFormula(formula.asReachabilityProbabilityFormula()));
             } else if (formula.isUntilFormula()) {
                 return this->computeUntilProbabilities(env, checkTask.substituteFormula(formula.asUntilFormula()));
+            } else if (formula.isGloballyFormula()) {
+                return this->computeGloballyProbabilities(env, checkTask.substituteFormula(formula.asGloballyFormula()));
             }
             STORM_LOG_THROW(false, storm::exceptions::InvalidArgumentException, "The given formula '" << formula << "' is invalid.");
         }
@@ -144,7 +146,21 @@ namespace storm {
             return result;
         }
 
-        template<typename SparseSmgModelType>
+        template<typename ModelType>
+        std::unique_ptr<CheckResult> SparseSmgRpatlModelChecker<ModelType>::computeGloballyProbabilities(Environment const& env, CheckTask<storm::logic::GloballyFormula, ValueType> const& checkTask) {
+            storm::logic::GloballyFormula const& pathFormula = checkTask.getFormula();
+            std::unique_ptr<CheckResult> subResultPointer = this->check(env, pathFormula.getSubformula());
+            ExplicitQualitativeCheckResult const& subResult = subResultPointer->asExplicitQualitativeCheckResult();
+
+            auto ret = storm::modelchecker::helper::SparseSmgRpatlHelper<ValueType>::computeGloballyProbabilities(env, storm::solver::SolveGoal<ValueType>(this->getModel(), checkTask), this->getModel().getTransitionMatrix(), this->getModel().getBackwardTransitions(), subResult.getTruthValuesVector(), checkTask.isQualitativeSet(), statesOfCoalition, checkTask.isProduceSchedulersSet(), checkTask.getHint());
+            std::unique_ptr<CheckResult> result(new ExplicitQuantitativeCheckResult<ValueType>(std::move(ret.values)));
+            if (checkTask.isProduceSchedulersSet() && ret.scheduler) {
+                result->asExplicitQuantitativeCheckResult<ValueType>().setScheduler(std::move(ret.scheduler));
+            }
+            return result;
+        }
+
+            template<typename SparseSmgModelType>
         std::unique_ptr<CheckResult> SparseSmgRpatlModelChecker<SparseSmgModelType>::computeLongRunAverageProbabilities(Environment const& env, CheckTask<storm::logic::StateFormula, ValueType> const& checkTask) {
             STORM_LOG_THROW(false, storm::exceptions::NotImplementedException, "NYI");
         }

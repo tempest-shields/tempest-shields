@@ -71,6 +71,22 @@ namespace storm {
                 return completeScheduler;
             }
 
+            template<typename ValueType>
+            MDPSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeGloballyProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint) {
+                // TODO: the inputs are copied from until, check which of them are used
+                //  - there is no leftsubformula, so there is no phiStates (as Input)
+                //  - what about this "hint"?
+
+                // TODO: SparseMdpPrctlHelper uses "useMecBasedTechnique" - should I pay attention to that?
+
+                goal.oneMinus();
+                auto result = computeUntilProbabilities(env, std::move(goal), transitionMatrix, backwardTransitions, storm::storage::BitVector(transitionMatrix.getRowGroupCount(), true), psiStates, qualitative, statesOfCoalition, produceScheduler, hint);
+                for (auto& element : result.values) {
+                    element = storm::utility::one<ValueType>() - element;
+                }
+                return result;
+            }
+
             template class SparseSmgRpatlHelper<double>;
 #ifdef STORM_HAVE_CARL
             template class SparseSmgRpatlHelper<storm::RationalNumber>;
