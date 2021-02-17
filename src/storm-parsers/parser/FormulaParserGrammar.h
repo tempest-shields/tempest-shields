@@ -205,7 +205,7 @@ namespace storm {
             qi::rule<Iterator, std::shared_ptr<storm::logic::Formula const>(), Skipper> quantileFormula;
             qi::rule<Iterator, std::shared_ptr<storm::logic::Formula const>(), Skipper> gameFormula;
 
-            qi::rule<Iterator, storm::logic::ShieldExpression, Skipper> shieldExpression;
+            qi::rule<Iterator, std::shared_ptr<storm::logic::ShieldExpression const>(), Skipper> shieldExpression;
             qi::rule<Iterator, storm::logic::ShieldingType, Skipper> shieldingType;
             qi::rule<Iterator, double, Skipper> multiplicativeFactor;
             qi::rule<Iterator, std::pair<storm::logic::ShieldComparison, double>, qi::locals<storm::logic::ShieldComparison>, Skipper> shieldComparison;
@@ -217,7 +217,7 @@ namespace storm {
             std::shared_ptr<storm::logic::Formula const> createGameFormula(storm::logic::PlayerCoalition const& coalition, std::shared_ptr<storm::logic::Formula const> const& subformula) const;
 
             std::pair<storm::logic::ShieldComparison, double> createShieldComparisonStruct(storm::logic::ShieldComparison comparisonType, double value);
-            storm::logic::ShieldExpression createShieldExpression(storm::logic::ShieldingType type, std::pair<storm::logic::ShieldComparison, double> comparisonStruct);
+            std::shared_ptr<storm::logic::ShieldExpression const> createShieldExpression(storm::logic::ShieldingType type, std::pair<storm::logic::ShieldComparison, double> comparisonStruct);
 
             bool areConstantDefinitionsAllowed() const;
             void addConstant(std::string const& name, ConstantDataType type, boost::optional<storm::expressions::Expression> const& expression);
@@ -254,7 +254,7 @@ namespace storm {
             std::set<storm::expressions::Variable> getUndefinedConstants(std::shared_ptr<storm::logic::Formula const> const& formula) const;
             storm::jani::Property createProperty(boost::optional<std::string> const& propertyName, storm::modelchecker::FilterType const& filterType, std::shared_ptr<storm::logic::Formula const> const& formula, std::shared_ptr<storm::logic::Formula const> const& states);
             storm::jani::Property createPropertyWithDefaultFilterTypeAndStates(boost::optional<std::string> const& propertyName, std::shared_ptr<storm::logic::Formula const> const& formula);
-            storm::jani::Property createShieldingProperty(boost::optional<std::string> const& propertyName, std::shared_ptr<storm::logic::Formula const> const& formula, storm::logic::ShieldExpression);
+            storm::jani::Property createShieldingProperty(boost::optional<std::string> const& propertyName, std::shared_ptr<storm::logic::Formula const> const& formula, std::shared_ptr<storm::logic::ShieldExpression const> const& shieldingExpression);
 
             // An error handler function.
             phoenix::function<SpiritErrorHandler> handler;

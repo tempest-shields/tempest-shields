@@ -512,11 +512,11 @@ namespace storm {
             return std::make_pair(comparisonType, value);
         }
 
-        storm::logic::ShieldExpression FormulaParserGrammar::createShieldExpression(storm::logic::ShieldingType type, std::pair<storm::logic::ShieldComparison, double> comparisonStruct) {
-            return storm::logic::ShieldExpression(type, comparisonStruct.first, comparisonStruct.second);
+        std::shared_ptr<storm::logic::ShieldExpression const> FormulaParserGrammar::createShieldExpression(storm::logic::ShieldingType type, std::pair<storm::logic::ShieldComparison, double> comparisonStruct) {
+            return std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(type, comparisonStruct.first, comparisonStruct.second));
         }
 
-        storm::jani::Property FormulaParserGrammar::createShieldingProperty(boost::optional<std::string> const& propertyName, std::shared_ptr<storm::logic::Formula const> const& formula, storm::logic::ShieldExpression shieldExpression) {
+        storm::jani::Property FormulaParserGrammar::createShieldingProperty(boost::optional<std::string> const& propertyName, std::shared_ptr<storm::logic::Formula const> const& formula, std::shared_ptr<storm::logic::ShieldExpression const> const& shieldExpression) {
             ++propertyCount;
             if (propertyName) {
                 return storm::jani::Property(propertyName.get(), formula, this->getUndefinedConstants(formula), shieldExpression);
