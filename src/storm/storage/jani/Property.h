@@ -102,26 +102,19 @@ namespace storm {
              * @param name the name
              * @param formula the formula representation
              * @param undefinedConstants the undefined constants used in the property
+             * @param shieldingExpression An optional expression for a shield to be created
              * @param comment An optional comment
              */
-            Property(std::string const& name, std::shared_ptr<storm::logic::Formula const> const& formula, std::set<storm::expressions::Variable> const& undefinedConstants, std::string const& comment = "");
+            Property(std::string const& name, std::shared_ptr<storm::logic::Formula const> const& formula, std::set<storm::expressions::Variable> const& undefinedConstants, std::shared_ptr<storm::logic::ShieldExpression const> const& shieldExpression = nullptr, std::string const& comment = "");
 
             /**
              * Constructs the property
              * @param name the name
              * @param formula the formula representation
+             * @param shieldingExpression An optional expression for a shield to be created
              * @param comment An optional comment
              */
-            Property(std::string const& name, FilterExpression const& fe, std::set<storm::expressions::Variable> const& undefinedConstants, std::string const& comment = "");
-
-            /**
-             * Constructs the property
-             * @param name the name
-             * @param formula the formula representation
-             * @param shieldExpression the shielding expression
-             * @param comment An optional comment
-             */
-            Property(std::string const& name, std::shared_ptr<storm::logic::Formula const> const& formula, std::set<storm::expressions::Variable> const& undefinedConstants, storm::logic::ShieldExpression shieldExpression, std::string const& comment = "");
+            Property(std::string const& name, FilterExpression const& fe, std::set<storm::expressions::Variable> const& undefinedConstants, std::shared_ptr<storm::logic::ShieldExpression const> const& shieldExpression = nullptr, std::string const& comment = "");
 
             /**
              * Get the provided name
@@ -154,6 +147,7 @@ namespace storm {
             std::shared_ptr<storm::logic::Formula const> getRawFormula() const;
 
             bool isShieldingProperty() const;
+            std::shared_ptr<storm::logic::ShieldExpression const> getShieldingExpression() const;
 
         private:
             std::string name;
@@ -162,7 +156,7 @@ namespace storm {
             std::set<storm::expressions::Variable> undefinedConstants;
 
             // TODO might need refactoring, this cannot be expressed by JANI yet, so this is totally wrong here.
-            boost::optional<storm::logic::ShieldExpression> shieldingExpression;
+            boost::optional<std::shared_ptr<storm::logic::ShieldExpression const>> shieldingExpression;
         };
 
 

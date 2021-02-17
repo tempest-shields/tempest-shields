@@ -37,19 +37,19 @@ namespace storm {
                         reducedPropertyNames.insert(property.getName());
                     }
                 }
-                
+
                 if (reducedPropertyNames.size() < propertyNameSet.size()) {
                     std::set<std::string> missingProperties;
                     std::set_difference(propertyNameSet.begin(), propertyNameSet.end(), reducedPropertyNames.begin(), reducedPropertyNames.end(), std::inserter(missingProperties, missingProperties.begin()));
                     STORM_LOG_WARN("Filtering unknown properties " << boost::join(missingProperties, ", ") << ".");
                 }
-                
+
                 return result;
             } else {
                 return properties;
             }
         }
-        
+
         std::vector<std::shared_ptr<storm::logic::Formula const>> extractFormulasFromProperties(std::vector<storm::jani::Property> const& properties) {
             std::vector<std::shared_ptr<storm::logic::Formula const>> formulas;
             for (auto const& prop : properties) {
@@ -57,7 +57,7 @@ namespace storm {
             }
             return formulas;
         }
-        
+
         storm::jani::Property createMultiObjectiveProperty(std::vector<storm::jani::Property> const& properties) {
             std::set<storm::expressions::Variable> undefConstants;
             std::string name = "";
@@ -67,9 +67,10 @@ namespace storm {
                 name += prop.getName();
                 comment += prop.getComment();
                 STORM_LOG_WARN_COND(prop.getFilter().isDefault(), "Non-default property filter of property " + prop.getName() + " will be dropped during conversion to multi-objective property.");
+                STORM_LOG_WARN_COND(!prop.isShieldingProperty(), "Shielding of multi-objective property is not possible yet. Dropping expression: '" + prop.getShieldingExpression()->toString() + "'.");
             }
             auto multiFormula = std::make_shared<storm::logic::MultiObjectiveFormula>(extractFormulasFromProperties(properties));
-            return storm::jani::Property(name, multiFormula, undefConstants, comment);
+            return storm::jani::Property(name, multiFormula, undefConstants, nullptr, comment);
         }
     }
 }

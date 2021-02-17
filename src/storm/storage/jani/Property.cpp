@@ -7,19 +7,18 @@ namespace storm {
             return os << "Obtain " << toString(fe.getFilterType()) << " of the '" << *fe.getStatesFormula() << "'-states with values described by '" << *fe.getFormula() << "'";
         }
 
-        Property::Property(std::string const& name, std::shared_ptr<storm::logic::Formula const> const& formula, std::set<storm::expressions::Variable> const& undefinedConstants, std::string const& comment)
-        : name(name), comment(comment), filterExpression(FilterExpression(formula)), undefinedConstants(undefinedConstants) {
-            // Intentionally left empty.
-        }
-
-        Property::Property(std::string const& name, FilterExpression const& fe, std::set<storm::expressions::Variable> const& undefinedConstants, std::string const& comment)
-        : name(name), comment(comment), filterExpression(fe), undefinedConstants(undefinedConstants) {
-            // Intentionally left empty.
-        }
-
-        Property::Property(std::string const& name, std::shared_ptr<storm::logic::Formula const> const& formula, std::set<storm::expressions::Variable> const& undefinedConstants, storm::logic::ShieldExpression shieldExpression, std::string const& comment)
+        Property::Property(std::string const& name, std::shared_ptr<storm::logic::Formula const> const& formula, std::set<storm::expressions::Variable> const& undefinedConstants, std::shared_ptr<storm::logic::ShieldExpression const> const& shieldingExpression, std::string const& comment)
         : name(name), comment(comment), filterExpression(FilterExpression(formula)), undefinedConstants(undefinedConstants), shieldingExpression(shieldingExpression) {
+            std::cout << "In Property ctor: " << *(this->shieldingExpression.get()) << std::endl;
+            std::cout << "In Property ctor: " << *(shieldingExpression.get()) << std::endl;
             // Intentionally left empty.
+        }
+
+        Property::Property(std::string const& name, FilterExpression const& fe, std::set<storm::expressions::Variable> const& undefinedConstants, std::shared_ptr<storm::logic::ShieldExpression const> const& shieldingExpression, std::string const& comment)
+        : name(name), comment(comment), filterExpression(fe), undefinedConstants(undefinedConstants), shieldingExpression(shieldingExpression) {
+            // Intentionally left empty.
+            std::cout << "In Property ctor with filterExpression: " << *(this->shieldingExpression.get()) << std::endl;
+            std::cout << "In Property ctor with filterExpression: " << *(shieldingExpression.get()) << std::endl;
         }
 
         std::string const& Property::getName() const {
@@ -60,7 +59,7 @@ namespace storm {
                     remainingUndefinedConstants.insert(constant);
                 }
             }
-            return Property(name, filterExpression.substitute(substitution), remainingUndefinedConstants, comment);
+            return Property(name, filterExpression.substitute(substitution), remainingUndefinedConstants, getShieldingExpression(), comment);
         }
 
         Property Property::substitute(std::function<storm::expressions::Expression(storm::expressions::Expression const&)> const& substitutionFunction) const {
@@ -68,19 +67,19 @@ namespace storm {
             for (auto const& constant : undefinedConstants) {
                 substitutionFunction(constant.getExpression()).getBaseExpression().gatherVariables(remainingUndefinedConstants);
             }
-            return Property(name, filterExpression.substitute(substitutionFunction), remainingUndefinedConstants, comment);
+            return Property(name, filterExpression.substitute(substitutionFunction), remainingUndefinedConstants, getShieldingExpression(), comment);
         }
 
         Property Property::substituteLabels(std::map<std::string, std::string> const& substitution) const {
-            return Property(name, filterExpression.substituteLabels(substitution), undefinedConstants, comment);
+            return Property(name, filterExpression.substituteLabels(substitution), undefinedConstants, getShieldingExpression(), comment);
         }
 
         Property Property::substituteRewardModelNames(std::map<std::string, std::string> const& rewardModelNameSubstitution) const {
-            return Property(name, filterExpression.substituteRewardModelNames(rewardModelNameSubstitution), undefinedConstants, comment);
+            return Property(name, filterExpression.substituteRewardModelNames(rewardModelNameSubstitution), undefinedConstants, getShieldingExpression(), comment);
         }
 
         Property Property::clone() const {
-            return Property(name, filterExpression.clone(), undefinedConstants, comment);
+            return Property(name, filterExpression.clone(), undefinedConstants, getShieldingExpression(), comment);
         }
 
         FilterExpression const& Property::getFilter() const {
@@ -93,6 +92,12 @@ namespace storm {
 
         bool Property::isShieldingProperty() const {
             return shieldingExpression.is_initialized();
+        }
+
+        std::shared_ptr<storm::logic::ShieldExpression const> Property::getShieldingExpression() const {
+            //STORM_LOG_ASSERT(isShieldingProperty(), "This property does not have an associated shielding expression.");
+            if(!isShieldingProperty()) return nullptr;
+            return shieldingExpression.get();
         }
 
         std::set<storm::expressions::Variable> const& Property::getUndefinedConstants() const {
