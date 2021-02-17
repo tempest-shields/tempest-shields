@@ -45,8 +45,12 @@ namespace storm {
             }
         }
 
+        std::string ShieldExpression::toString() const {
+            return "<" + typeToString() + ", " + comparisonToString() + "=" + std::to_string(value) + ">";
+        }
+
         std::ostream& operator<<(std::ostream& out, ShieldExpression const& shieldExpression) {
-            out << "<" << shieldExpression.typeToString() << ", " << shieldExpression.comparisonToString() << "=" << std::to_string(shieldExpression.value) << ">";
+            out << shieldExpression.toString();
             return out;
         }
     }

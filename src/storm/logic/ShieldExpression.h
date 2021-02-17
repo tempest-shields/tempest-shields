@@ -28,7 +28,7 @@ namespace storm {
 
             std::string typeToString() const;
             std::string comparisonToString() const;
-
+            std::string toString() const;
             friend std::ostream& operator<<(std::ostream& stream, ShieldExpression const& shieldExpression);
 
         private:
