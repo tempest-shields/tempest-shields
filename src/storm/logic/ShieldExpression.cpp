@@ -1,5 +1,7 @@
 #include "storm/logic/ShieldExpression.h"
 
+#include <iostream>
+
 namespace storm {
     namespace logic {
         ShieldExpression::ShieldExpression() {}
@@ -26,6 +28,26 @@ namespace storm {
 
         double ShieldExpression::getValue() const {
             return value;
+        }
+
+        std::string ShieldExpression::typeToString() const {
+            switch(type) {
+                case storm::logic::ShieldingType::PostSafety: return "PostSafety";
+                case storm::logic::ShieldingType::PreSafety:  return "PreSafety";
+                case storm::logic::ShieldingType::Optimal:    return "Optimal";
+            }
+        }
+
+        std::string ShieldExpression::comparisonToString() const {
+            switch(comparison) {
+                case storm::logic::ShieldComparison::Absolute: return "gamma";
+                case storm::logic::ShieldComparison::Relative: return "lambda";
+            }
+        }
+
+        std::ostream& operator<<(std::ostream& out, ShieldExpression const& shieldExpression) {
+            out << "<" << shieldExpression.typeToString() << ", " << shieldExpression.comparisonToString() << "=" << std::to_string(shieldExpression.value) << ">";
+            return out;
         }
     }
 }

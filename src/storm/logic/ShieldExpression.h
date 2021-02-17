@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 namespace storm {
     namespace logic {
@@ -24,6 +25,11 @@ namespace storm {
             bool isOptiomalShield() const;
 
             double getValue() const;
+
+            std::string typeToString() const;
+            std::string comparisonToString() const;
+
+            friend std::ostream& operator<<(std::ostream& stream, ShieldExpression const& shieldExpression);
 
         private:
             ShieldingType type;
