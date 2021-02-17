@@ -53,11 +53,10 @@ namespace storm {
 
             template<typename ValueType>
             storm::storage::Scheduler<ValueType> SparseSmgRpatlHelper<ValueType>::expandScheduler(storm::storage::Scheduler<ValueType> scheduler, storm::storage::BitVector psiStates, storm::storage::BitVector notPhiStates) {
-                for(uint i = 0; i < 2; i++) {
-                }
                 storm::storage::Scheduler<ValueType> completeScheduler(psiStates.size());
                 uint_fast64_t maybeStatesCounter = 0;
-                for(uint stateCounter = 0; stateCounter < psiStates.size(); stateCounter++) {
+                uint schedulerSize = psiStates.size();
+                for(uint stateCounter = 0; stateCounter < schedulerSize; stateCounter++) {
                     // psiStates already fulfill formulae so we can set an arbitrary action
                     if(psiStates.get(stateCounter)) {
                         completeScheduler.setChoice(0, stateCounter);
