@@ -73,14 +73,15 @@ namespace storm {
 
             template<typename ValueType>
             MDPSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeGloballyProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint) {
-                // TODO: the inputs are copied from until, check which of them are used
-                //  - there is no leftsubformula, so there is no phiStates (as Input)
-                //  - what about this "hint"?
-
-                // TODO: SparseMdpPrctlHelper uses "useMecBasedTechnique" - should I pay attention to that?
-
-                goal.oneMinus();
-                auto result = computeUntilProbabilities(env, std::move(goal), transitionMatrix, backwardTransitions, storm::storage::BitVector(transitionMatrix.getRowGroupCount(), true), psiStates, qualitative, statesOfCoalition, produceScheduler, hint);
+                // the idea is to implement the definition of globally as in the formula:
+                // G phi = not(F(not phi)) = not(true U (not phi))
+                // so the phiStates are flipped, then the true U part is calculated, at the end the result is flipped again
+                storm::storage::BitVector notPsiStates = ~psiStates;
+                //goal.oneMinus();
+                statesOfCoalition.complement();
+                //STORM_LOG_DEBUG(storm::storage::BitVector(transitionMatrix.getRowGroupCount(), true));
+                //STORM_LOG_DEBUG(psiStates);
+                auto result = computeUntilProbabilities(env, std::move(goal), transitionMatrix, backwardTransitions, storm::storage::BitVector(transitionMatrix.getRowGroupCount(), true), notPsiStates, qualitative, statesOfCoalition, produceScheduler, hint);
                 for (auto& element : result.values) {
                     element = storm::utility::one<ValueType>() - element;
                 }
