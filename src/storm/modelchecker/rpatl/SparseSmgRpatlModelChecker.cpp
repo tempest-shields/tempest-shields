@@ -24,6 +24,8 @@
 
 #include "storm/models/sparse/StandardRewardModel.h"
 
+#include "storm/shields/shield-handling.h"
+
 #include "storm/settings/modules/GeneralSettings.h"
 
 #include "storm/exceptions/InvalidStateException.h"
@@ -63,6 +65,10 @@ namespace storm {
 
             storm::logic::GameFormula const& gameFormula = checkTask.getFormula();
             storm::logic::Formula const& subFormula = gameFormula.getSubformula();
+
+            if(checkTask.isShieldingTask()) {
+                std::cout << "Creating Shield for " << checkTask.getShieldingExpression() << std::endl;
+            }
 
             statesOfCoalition = this->getModel().computeStatesOfCoalition(gameFormula.getCoalition());
 
@@ -142,8 +148,13 @@ namespace storm {
             ExplicitQualitativeCheckResult const& rightResult = rightResultPointer->asExplicitQualitativeCheckResult();
 
             auto ret = storm::modelchecker::helper::SparseSmgRpatlHelper<ValueType>::computeUntilProbabilities(env, storm::solver::SolveGoal<ValueType>(this->getModel(), checkTask), this->getModel().getTransitionMatrix(), this->getModel().getBackwardTransitions(), leftResult.getTruthValuesVector(), rightResult.getTruthValuesVector(), checkTask.isQualitativeSet(), statesOfCoalition, checkTask.isProduceSchedulersSet(), checkTask.getHint());
+            for(auto const& x : ret.values) {
+                STORM_LOG_DEBUG("v: " << x);
+            }
             std::unique_ptr<CheckResult> result(new ExplicitQuantitativeCheckResult<ValueType>(std::move(ret.values)));
-            if (checkTask.isProduceSchedulersSet() && ret.scheduler) {
+            if(checkTask.isShieldingTask()) {
+                result->asExplicitQuantitativeCheckResult<ValueType>().setScheduler(std::make_unique<storm::storage::Scheduler<ValueType>>(tempest::shields::createShield<ValueType>(this->getModel().getTransitionMatrix().getRowGroupIndices(), {}, checkTask.getShieldingExpression(), statesOfCoalition)));
+            } else if (checkTask.isProduceSchedulersSet() && ret.scheduler) {
                 result->asExplicitQuantitativeCheckResult<ValueType>().setScheduler(std::move(ret.scheduler));
             }
             return result;
@@ -203,9 +214,12 @@ namespace storm {
             auto values = helper.computeLongRunAverageRewards(env, rewardModel.get());
 
             std::unique_ptr<CheckResult> result(new ExplicitQuantitativeCheckResult<ValueType>(std::move(values)));
-            if (checkTask.isProduceSchedulersSet()) {
+            if(checkTask.isShieldingTask()) {
+                result->asExplicitQuantitativeCheckResult<ValueType>().setScheduler(std::make_unique<storm::storage::Scheduler<ValueType>>(tempest::shields::createShield<ValueType>(this->getModel().getTransitionMatrix().getRowGroupIndices(), {}, checkTask.getShieldingExpression(), coalitionStates)));
+            } else if (checkTask.isProduceSchedulersSet()) {
                 result->asExplicitQuantitativeCheckResult<ValueType>().setScheduler(std::make_unique<storm::storage::Scheduler<ValueType>>(helper.extractScheduler()));
             }
+
             return result;
         }
 
