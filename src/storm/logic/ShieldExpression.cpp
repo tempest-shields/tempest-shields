@@ -22,7 +22,7 @@ namespace storm {
             return type == storm::logic::ShieldingType::PostSafety;
         }
 
-        bool ShieldExpression::isOptiomalShield() const {
+        bool ShieldExpression::isOptimalShield() const {
             return type == storm::logic::ShieldingType::Optimal;
         }
 
