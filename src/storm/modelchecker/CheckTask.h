@@ -337,9 +337,6 @@ namespace storm {
             // If set to true, the model checker may decide to only compute the values for the initial states.
             bool onlyInitialStatesRelevant;
 
-            // If set to true, we will create the appropriate shield.
-            bool shieldingTask = false;
-
             // The according ShieldExpression.
             boost::optional<std::shared_ptr<storm::logic::ShieldExpression const>> shieldingExpression;
 
