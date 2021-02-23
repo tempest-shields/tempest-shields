@@ -838,7 +838,7 @@ namespace storm {
 
         void printModelCheckingProperty(storm::jani::Property const& property) {
             if(property.isShieldingProperty()) {
-                STORM_PRINT(std::endl << "Creating " << *(property.getShieldingExpression()) << " for ...");
+                STORM_PRINT(std::endl << "Creating a " << *(property.getShieldingExpression()) << " for:");
             }
             STORM_PRINT(std::endl << "Model checking property \"" << property.getName() << "\": " << *property.getRawFormula() << " ..." << std::endl);
         }
@@ -1002,12 +1002,10 @@ namespace storm {
             auto const& ioSettings = storm::settings::getModule<storm::settings::modules::IOSettings>();
             auto verificationCallback = [&sparseModel,&ioSettings,&mpi] (std::shared_ptr<storm::logic::Formula const> const& formula, std::shared_ptr<storm::logic::Formula const> const& states, std::shared_ptr<storm::logic::ShieldExpression const> const& shieldingExpression) {
                                             bool filterForInitialStates = states->isInitialFormula();
-                                            std::cout << "verificationCallback shieldingExpression: " << *shieldingExpression << " ";
                                             auto task = storm::api::createTask<ValueType>(formula, filterForInitialStates);
                                             if(shieldingExpression) {
                                                 task.setShieldingExpression(shieldingExpression);
                                             }
-                                            std::cout << "isShieldingTask ? " << task.isShieldingTask() << std::endl;
                                             if (ioSettings.isExportSchedulerSet()) {
                                                 task.setProduceSchedulers(true);
                                             }

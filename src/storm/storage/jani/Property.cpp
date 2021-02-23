@@ -9,16 +9,12 @@ namespace storm {
 
         Property::Property(std::string const& name, std::shared_ptr<storm::logic::Formula const> const& formula, std::set<storm::expressions::Variable> const& undefinedConstants, std::shared_ptr<storm::logic::ShieldExpression const> const& shieldingExpression, std::string const& comment)
         : name(name), comment(comment), filterExpression(FilterExpression(formula)), undefinedConstants(undefinedConstants), shieldingExpression(shieldingExpression) {
-            std::cout << "In Property ctor: " << *(this->shieldingExpression.get()) << std::endl;
-            std::cout << "In Property ctor: " << *(shieldingExpression.get()) << std::endl;
             // Intentionally left empty.
         }
 
         Property::Property(std::string const& name, FilterExpression const& fe, std::set<storm::expressions::Variable> const& undefinedConstants, std::shared_ptr<storm::logic::ShieldExpression const> const& shieldingExpression, std::string const& comment)
         : name(name), comment(comment), filterExpression(fe), undefinedConstants(undefinedConstants), shieldingExpression(shieldingExpression) {
             // Intentionally left empty.
-            std::cout << "In Property ctor with filterExpression: " << *(this->shieldingExpression.get()) << std::endl;
-            std::cout << "In Property ctor with filterExpression: " << *(shieldingExpression.get()) << std::endl;
         }
 
         std::string const& Property::getName() const {
