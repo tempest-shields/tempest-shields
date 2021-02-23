@@ -55,6 +55,7 @@ namespace storm {
             CheckTask<NewFormulaType, ValueType> substituteFormula(NewFormulaType const& newFormula) const {
                 CheckTask<NewFormulaType, ValueType> result(newFormula, this->optimizationDirection, this->playerCoalition, this->rewardModel, this->onlyInitialStatesRelevant, this->bound, this->qualitative, this->produceSchedulers, this->hint);
                 result.updateOperatorInformation();
+                if(isShieldingTask()) result.setShieldingExpression(getShieldingExpression());
                 return result;
             }
 
