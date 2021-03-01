@@ -151,6 +151,31 @@ namespace storm {
                 }
 
                 template <typename ValueType>
+                void GameViHelper<ValueType>::performNextIteration(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir) {
+                    prepareSolversAndMultipliersReachability(env);
+                    ValueType precision = storm::utility::convertNumber<ValueType>(env.solver().game().getPrecision());
+                    uint64_t maxIter = env.solver().game().getMaximalNumberOfIterations();
+                    _b = b;
+
+                    _x1.assign(_transitionMatrix.getRowGroupCount(), storm::utility::zero<ValueType>());
+                    _x2 = _x1;
+
+                    if (this->isProduceSchedulerSet()) {
+                        if (!this->_producedOptimalChoices.is_initialized()) {
+                            this->_producedOptimalChoices.emplace();
+                        }
+                        this->_producedOptimalChoices->resize(this->_transitionMatrix.getRowGroupCount());
+                    }
+
+                    if (isProduceSchedulerSet()) {
+                        performIterationStep(env, dir, &_producedOptimalChoices.get());
+                    } else
+                        performIterationStep(env, dir);
+
+                    x = xNew();
+                }
+
+                        template <typename ValueType>
                 void GameViHelper<ValueType>::setProduceScheduler(bool value) {
                     _produceScheduler = value;
                 }
