@@ -838,7 +838,7 @@ namespace storm {
 
         void printModelCheckingProperty(storm::jani::Property const& property) {
             if(property.isShieldingProperty()) {
-                STORM_PRINT(std::endl << "Creating a " << *(property.getShieldingExpression()) << " for:");
+                STORM_PRINT(std::endl << "Creating a " << property.getShieldingExpression()->typeToString() << " shield for:");
             }
             STORM_PRINT(std::endl << "Model checking property \"" << property.getName() << "\": " << *property.getRawFormula() << " ..." << std::endl);
         }
