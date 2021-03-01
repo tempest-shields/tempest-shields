@@ -72,15 +72,12 @@ namespace storm {
             }
 
             template<typename ValueType>
-            MDPSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeGloballyProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint) {
+            MDPSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::v(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint) {
                 // the idea is to implement the definition of globally as in the formula:
-                // G phi = not(F(not phi)) = not(true U (not phi))
-                // so the phiStates are flipped, then the true U part is calculated, at the end the result is flipped again
+                // G phi = not(F(not psi)) = not(true U (not psi))
+                // so the psiStates are flipped, then the true U part is calculated, at the end the result is flipped again
                 storm::storage::BitVector notPsiStates = ~psiStates;
-                //goal.oneMinus();
                 statesOfCoalition.complement();
-                //STORM_LOG_DEBUG(storm::storage::BitVector(transitionMatrix.getRowGroupCount(), true));
-                //STORM_LOG_DEBUG(psiStates);
                 auto result = computeUntilProbabilities(env, std::move(goal), transitionMatrix, backwardTransitions, storm::storage::BitVector(transitionMatrix.getRowGroupCount(), true), notPsiStates, qualitative, statesOfCoalition, produceScheduler, hint);
                 for (auto& element : result.values) {
                     element = storm::utility::one<ValueType>() - element;
