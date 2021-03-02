@@ -87,15 +87,8 @@ namespace storm {
 
             template<typename ValueType>
             MDPSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeNextProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint) {
-
-                auto solverEnv = env;
-                solverEnv.solver().minMax().setMethod(storm::solver::MinMaxMethod::ValueIteration, false);
-
-                // Initialize the solution vector.
                 std::vector<ValueType> x = std::vector<ValueType>(transitionMatrix.getRowGroupCount(), storm::utility::zero<ValueType>());
-
-                auto allStates = storm::storage::BitVector(transitionMatrix.getRowGroupCount(), true);
-
+                storm::storage::BitVector allStates = storm::storage::BitVector(transitionMatrix.getRowGroupCount(), true);
                 std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(allStates, psiStates);
 
                 storm::storage::BitVector clippedStatesOfCoalition(transitionMatrix.getRowGroupCount());
@@ -105,14 +98,10 @@ namespace storm {
                 storm::modelchecker::helper::internal::GameViHelper<ValueType> viHelper(transitionMatrix, clippedStatesOfCoalition);
                 std::unique_ptr<storm::storage::Scheduler<ValueType>> scheduler;
                 if (produceScheduler) {
-                    viHelper.setProduceScheduler(true);
+                    STORM_LOG_WARN("Next formula does not expect that produceScheduler is set to true.");
                 }
 
                 viHelper.performNextIteration(env, x, b, goal.direction());
-
-                if (produceScheduler) {
-                    scheduler = std::make_unique<storm::storage::Scheduler<ValueType>>(expandScheduler(viHelper.extractScheduler(), psiStates, ~allStates));
-                }
                 return MDPSparseModelCheckingHelperReturnType<ValueType>(std::move(x), std::move(scheduler));
             }
 
