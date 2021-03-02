@@ -66,6 +66,7 @@ namespace storm {
             rpatl.setProbabilityOperatorsAllowed(true);
             rpatl.setReachabilityProbabilityFormulasAllowed(true);
             rpatl.setUntilFormulasAllowed(true);
+            rpatl.setGloballyFormulasAllowed(true);
 
             return rpatl;
         }
