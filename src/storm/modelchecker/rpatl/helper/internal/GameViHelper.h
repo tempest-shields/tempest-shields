@@ -42,6 +42,7 @@ namespace storm {
 
                     storm::storage::Scheduler<ValueType> extractScheduler() const;
 
+                    void getChoiceValues(Environment const& env, std::vector<ValueType> const& x, std::vector<ValueType>& choiceValues);
                 private:
                     void performIterationStep(Environment const& env, storm::solver::OptimizationDirection const dir, std::vector<uint64_t>* choices = nullptr);
 

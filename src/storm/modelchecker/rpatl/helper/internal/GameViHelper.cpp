@@ -134,8 +134,7 @@ namespace storm {
                 }
 
                 template <typename ValueType>
-                void GameViHelper<ValueType>::fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector relevantStates, storm::storage::BitVector psiStates)
-                {
+                void GameViHelper<ValueType>::fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector relevantStates, storm::storage::BitVector psiStates) {
                     std::vector<ValueType> filledVector = std::vector<ValueType>(relevantStates.size(), storm::utility::zero<ValueType>());
                     uint bitIndex = 0;
                     for(uint i = 0; i < filledVector.size(); i++) {
@@ -182,6 +181,11 @@ namespace storm {
                         scheduler.setChoice(optimalChoices[state], state);
                     }
                     return scheduler;
+                }
+
+                template <typename ValueType>
+                void GameViHelper<ValueType>::getChoiceValues(Environment const& env, std::vector<ValueType> const& x, std::vector<ValueType>& choiceValues) {
+                    _multiplier->multiply(env, x, &_b, choiceValues);
                 }
 
                 template <typename ValueType>

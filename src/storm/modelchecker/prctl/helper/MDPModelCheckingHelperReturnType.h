@@ -29,9 +29,6 @@ namespace storm {
                 // The values computed for the states.
                 std::vector<ValueType> values;
 
-                // The values computed for the available choices.
-                std::vector<ValueType> choiceValues;
-
                 // A scheduler, if it was computed.
                 std::unique_ptr<storm::storage::Scheduler<ValueType>> scheduler;
             };

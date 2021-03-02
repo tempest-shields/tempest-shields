@@ -14,7 +14,7 @@ namespace storm {
         namespace helper {
 
             template<typename ValueType>
-            MDPSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeUntilProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& phiStates, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint) {
+            SMGSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeUntilProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& phiStates, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint) {
                 // TODO add Kwiatkowska original reference
                 // TODO FIX solver min max mess
 
@@ -28,6 +28,7 @@ namespace storm {
                 storm::storage::BitVector relevantStates = phiStates & ~psiStates;
 
                 std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(relevantStates, psiStates);
+                std::vector<ValueType> constrainedChoiceValues = std::vector<ValueType>(b.size(), storm::utility::zero<ValueType>());
 
                 // Reduce the matrix to relevant states
                 storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, relevantStates, relevantStates, false);
@@ -43,12 +44,15 @@ namespace storm {
                 }
 
                 viHelper.performValueIteration(env, x, b, goal.direction());
+                if(true) {
+                    viHelper.getChoiceValues(env, x, constrainedChoiceValues);
+                }
                 viHelper.fillResultVector(x, relevantStates, psiStates);
 
                 if (produceScheduler) {
                     scheduler = std::make_unique<storm::storage::Scheduler<ValueType>>(expandScheduler(viHelper.extractScheduler(), psiStates, ~phiStates));
                 }
-                return MDPSparseModelCheckingHelperReturnType<ValueType>(std::move(x), std::move(scheduler));
+                return SMGSparseModelCheckingHelperReturnType<ValueType>(std::move(x), relevantStates, std::move(scheduler), std::move(constrainedChoiceValues));
             }
 
             template<typename ValueType>
