@@ -151,16 +151,6 @@ namespace storm {
                 }
 
                 template <typename ValueType>
-                void GameViHelper<ValueType>::performNextIteration(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir) {
-                    prepareSolversAndMultipliersReachability(env);
-                    _b = b;
-                    _x1.assign(_transitionMatrix.getRowGroupCount(), storm::utility::zero<ValueType>());
-                    _x2 = _x1;
-                    performIterationStep(env, dir);
-                    x = xNew();
-                }
-
-                        template <typename ValueType>
                 void GameViHelper<ValueType>::setProduceScheduler(bool value) {
                     _produceScheduler = value;
                 }

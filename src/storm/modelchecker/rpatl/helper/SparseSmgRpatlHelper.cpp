@@ -87,22 +87,26 @@ namespace storm {
 
             template<typename ValueType>
             MDPSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeNextProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint) {
+                // create vector x for result, bitvector allStates with a true for each state and a vector b for the probability to get to state psi
                 std::vector<ValueType> x = std::vector<ValueType>(transitionMatrix.getRowGroupCount(), storm::utility::zero<ValueType>());
                 storm::storage::BitVector allStates = storm::storage::BitVector(transitionMatrix.getRowGroupCount(), true);
                 std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(allStates, psiStates);
 
+                // coalition handling for all states
                 storm::storage::BitVector clippedStatesOfCoalition(transitionMatrix.getRowGroupCount());
                 clippedStatesOfCoalition.setClippedStatesOfCoalition(allStates, statesOfCoalition);
                 clippedStatesOfCoalition.complement();
 
-                storm::modelchecker::helper::internal::GameViHelper<ValueType> viHelper(transitionMatrix, clippedStatesOfCoalition);
-                std::unique_ptr<storm::storage::Scheduler<ValueType>> scheduler;
                 if (produceScheduler) {
                     STORM_LOG_WARN("Next formula does not expect that produceScheduler is set to true.");
                 }
 
-                viHelper.performNextIteration(env, x, b, goal.direction());
-                return MDPSparseModelCheckingHelperReturnType<ValueType>(std::move(x), std::move(scheduler));
+                // create multiplier and execute the calculation for 1 step
+                auto multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, transitionMatrix);
+                multiplier->multiplyAndReduce(env, goal.direction(), x, &b, x, nullptr, &statesOfCoalition);
+
+                //STORM_LOG_DEBUG("x = " << storm::utility::vector::toString(x));
+                return MDPSparseModelCheckingHelperReturnType<ValueType>(std::move(x));
             }
 
             template class SparseSmgRpatlHelper<double>;

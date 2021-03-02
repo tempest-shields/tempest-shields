@@ -30,8 +30,6 @@ namespace storm {
                      */
                     void fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector relevantStates, storm::storage::BitVector psiStates);
 
-                    void performNextIteration(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir);
-
                     /*h
                      * Sets whether an optimal scheduler shall be constructed during the computation
                      */
