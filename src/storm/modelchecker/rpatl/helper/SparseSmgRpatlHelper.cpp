@@ -85,6 +85,27 @@ namespace storm {
                 return result;
             }
 
+            template<typename ValueType>
+            MDPSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeNextProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint) {
+                // create vector x for result, bitvector allStates with a true for each state and a vector b for the probability to get to state psi
+                std::vector<ValueType> x = std::vector<ValueType>(transitionMatrix.getRowGroupCount(), storm::utility::zero<ValueType>());
+                storm::storage::BitVector allStates = storm::storage::BitVector(transitionMatrix.getRowGroupCount(), true);
+                std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(allStates, psiStates);
+
+                statesOfCoalition.complement();
+
+                if (produceScheduler) {
+                    STORM_LOG_WARN("Next formula does not expect that produceScheduler is set to true.");
+                }
+
+                // create multiplier and execute the calculation for 1 step
+                auto multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, transitionMatrix);
+                multiplier->multiplyAndReduce(env, goal.direction(), x, &b, x, nullptr, &statesOfCoalition);
+
+                STORM_LOG_DEBUG("x = " << storm::utility::vector::toString(x));
+                return MDPSparseModelCheckingHelperReturnType<ValueType>(std::move(x));
+            }
+
             template class SparseSmgRpatlHelper<double>;
 #ifdef STORM_HAVE_CARL
             template class SparseSmgRpatlHelper<storm::RationalNumber>;

@@ -41,6 +41,7 @@ namespace storm {
                     bool isProduceSchedulerSet() const;
 
                     storm::storage::Scheduler<ValueType> extractScheduler() const;
+
                 private:
                     void performIterationStep(Environment const& env, storm::solver::OptimizationDirection const dir, std::vector<uint64_t>* choices = nullptr);
 
