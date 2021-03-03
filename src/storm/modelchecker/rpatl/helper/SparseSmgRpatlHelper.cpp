@@ -92,10 +92,7 @@ namespace storm {
                 storm::storage::BitVector allStates = storm::storage::BitVector(transitionMatrix.getRowGroupCount(), true);
                 std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(allStates, psiStates);
 
-                // coalition handling for all states
-                storm::storage::BitVector clippedStatesOfCoalition(transitionMatrix.getRowGroupCount());
-                clippedStatesOfCoalition.setClippedStatesOfCoalition(allStates, statesOfCoalition);
-                clippedStatesOfCoalition.complement();
+                statesOfCoalition.complement();
 
                 if (produceScheduler) {
                     STORM_LOG_WARN("Next formula does not expect that produceScheduler is set to true.");
@@ -105,7 +102,7 @@ namespace storm {
                 auto multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, transitionMatrix);
                 multiplier->multiplyAndReduce(env, goal.direction(), x, &b, x, nullptr, &statesOfCoalition);
 
-                //STORM_LOG_DEBUG("x = " << storm::utility::vector::toString(x));
+                STORM_LOG_DEBUG("x = " << storm::utility::vector::toString(x));
                 return MDPSparseModelCheckingHelperReturnType<ValueType>(std::move(x));
             }
 
