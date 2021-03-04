@@ -57,6 +57,16 @@ namespace storm {
             return inherited.getSpecification().areBooleanLiteralFormulasAllowed();
         }
 
+        boost::any FragmentChecker::visit(BoundedGloballyFormula const& f, boost::any const& data) const {
+            InheritedInformation const& inherited = boost::any_cast<InheritedInformation const&>(data);
+            bool result = inherited.getSpecification().areGloballyFormulasAllowed();
+            if (!inherited.getSpecification().areNestedPathFormulasAllowed()) {
+                result = result && !f.getSubformula().isPathFormula();
+            }
+            result && boost::any_cast<bool>(f.getSubformula().accept(*this, data));
+            return result;
+        }
+
         boost::any FragmentChecker::visit(BoundedUntilFormula const& f, boost::any const& data) const {
             InheritedInformation const& inherited = boost::any_cast<InheritedInformation const&>(data);
             bool result = inherited.getSpecification().areBoundedUntilFormulasAllowed();
