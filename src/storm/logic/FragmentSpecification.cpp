@@ -68,6 +68,7 @@ namespace storm {
             rpatl.setUntilFormulasAllowed(true);
             rpatl.setGloballyFormulasAllowed(true);
             rpatl.setNextFormulasAllowed(true);
+            rpatl.setBoundedGloballyFormulasAllowed(true);
 
             return rpatl;
         }
@@ -313,6 +314,15 @@ namespace storm {
 
         FragmentSpecification& FragmentSpecification::setBoundedUntilFormulasAllowed(bool newValue) {
             this->boundedUntilFormula = newValue;
+            return *this;
+        }
+
+        bool FragmentSpecification::areBoundedGloballyFormulasAllowed() const {
+            return boundedGloballyFormula;
+        }
+
+        FragmentSpecification& FragmentSpecification::setBoundedGloballyFormulasAllowed(bool newValue) {
+            this->boundedGloballyFormula = newValue;
             return *this;
         }
 
