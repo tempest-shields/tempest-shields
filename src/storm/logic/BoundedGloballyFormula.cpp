@@ -3,6 +3,7 @@
 
 namespace storm {
     namespace logic {
+        // TODO: add 'k' as input to formula, maybe as TimeBound?
         BoundedGloballyFormula::BoundedGloballyFormula(std::shared_ptr<Formula const> const& subformula) : UnaryPathFormula(subformula) {
             // Intentionally left empty.
         }
@@ -21,6 +22,7 @@ namespace storm {
 
         std::ostream& BoundedGloballyFormula::writeToStream(std::ostream& out) const {
             out << "G < ";
+            // TODO: write "{<, <=} k"
             this->getSubformula().writeToStream(out);
             return out;
         }

@@ -1,5 +1,5 @@
-#ifndef STORM_BOUNDEDGLOBALLYFORMULA_H
-#define STORM_BOUNDEDGLOBALLYFORMULA_H
+#ifndef STORM_LOGIC_BOUNDEDGLOBALLYFORMULA_H
+#define STORM_LOGIC_BOUNDEDGLOBALLYFORMULA_H
 
 #include "storm/logic/UnaryPathFormula.h"
 
@@ -17,9 +17,10 @@ namespace storm {
             virtual bool isProbabilityPathFormula() const override;
 
             virtual boost::any accept(FormulaVisitor const &visitor, boost::any const &data) const override;
+
             virtual std::ostream &writeToStream(std::ostream &out) const override;
         };
     }
 }
 
-#endif //STORM_BOUNDEDGLOBALLYFORMULA_H
+#endif /* STORM_LOGIC_BOUNDEDGLOBALLYFORMULA_H */
