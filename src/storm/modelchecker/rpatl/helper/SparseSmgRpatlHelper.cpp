@@ -7,7 +7,7 @@
 #include "storm/utility/vector.h"
 
 #include "storm/modelchecker/rpatl/helper/internal/GameViHelper.h"
-
+#include "storm/modelchecker/rpatl/helper/internal/BoundedGloballyGameViHelper.h"
 
 namespace storm {
     namespace modelchecker {
@@ -104,6 +104,44 @@ namespace storm {
 
                 STORM_LOG_DEBUG("x = " << storm::utility::vector::toString(x));
                 return MDPSparseModelCheckingHelperReturnType<ValueType>(std::move(x));
+            }
+
+            template<typename ValueType>
+            MDPSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeBoundedGloballyProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint) {
+                auto solverEnv = env;
+                solverEnv.solver().minMax().setMethod(storm::solver::MinMaxMethod::ValueIteration, false);
+
+                // Initialize the solution vector.
+                std::vector<ValueType> x = std::vector<ValueType>(transitionMatrix.getRowGroupCount() - psiStates.getNumberOfSetBits(), storm::utility::zero<ValueType>());
+
+                // Relevant states are safe states - the psiStates.
+                storm::storage::BitVector relevantStates = psiStates;
+
+                std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(psiStates, psiStates);
+
+                // Reduce the matrix to relevant states
+                storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, psiStates, psiStates, false);
+
+                storm::storage::BitVector clippedStatesOfCoalition(psiStates.getNumberOfSetBits());
+                clippedStatesOfCoalition.setClippedStatesOfCoalition(psiStates, statesOfCoalition);
+                clippedStatesOfCoalition.complement();
+
+                // here is the bounded globally game vi helper used
+                storm::modelchecker::helper::internal::BoundedGloballyGameViHelper<ValueType> viHelper(submatrix, clippedStatesOfCoalition);
+                std::unique_ptr<storm::storage::Scheduler<ValueType>> scheduler;
+                if (produceScheduler) {
+                    viHelper.setProduceScheduler(true);
+                }
+
+                viHelper.performValueIteration(env, x, b, goal.direction());
+                viHelper.fillResultVector(x, psiStates);
+
+                // TODO: i am not sure about that ~psiStates are correct - but I think (~psiStates are unsafe like the ~phiStates before)
+                //  maybe I should create another method for this case
+                if (produceScheduler) {
+                    scheduler = std::make_unique<storm::storage::Scheduler<ValueType>>(expandScheduler(viHelper.extractScheduler(), psiStates, ~psiStates));
+                }
+                return MDPSparseModelCheckingHelperReturnType<ValueType>(std::move(x), std::move(scheduler));
             }
 
             template class SparseSmgRpatlHelper<double>;
