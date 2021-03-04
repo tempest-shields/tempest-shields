@@ -24,6 +24,10 @@ namespace storm {
         boost::any FormulaInformationVisitor::visit(BooleanLiteralFormula const&, boost::any const&) const {
             return FormulaInformation();
         }
+
+        boost::any FormulaInformationVisitor::visit(BoundedGloballyFormula const& f, boost::any const& data) const {
+            return f.getSubformula().accept(*this, data);
+        }
         
         boost::any FormulaInformationVisitor::visit(BoundedUntilFormula const& f, boost::any const& data) const {
             FormulaInformation result;
