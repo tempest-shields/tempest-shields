@@ -79,6 +79,10 @@ namespace storm {
             return false;
         }
 
+        bool Formula::isBoundedGloballyFormula() const {
+            return false;
+        }
+
         bool Formula::isGloballyFormula() const {
             return false;
         }
