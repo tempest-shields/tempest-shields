@@ -173,7 +173,10 @@ namespace storm {
             
             NextFormula& asNextFormula();
             NextFormula const& asNextFormula() const;
-            
+
+            BoundedGloballyFormula& asBoundedGloballyFormula();
+            BoundedGloballyFormula const& asBoundedGloballyFormula() const;
+
             LongRunAverageOperatorFormula& asLongRunAverageOperatorFormula();
             LongRunAverageOperatorFormula const& asLongRunAverageOperatorFormula() const;
 
