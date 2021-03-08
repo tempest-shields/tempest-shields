@@ -60,7 +60,7 @@ namespace storm {
             storm::utility::openFile(filename, inputFileStream);
             
             std::vector<storm::jani::Property> properties;
-            
+
             // Now try to parse the contents of the file.
             try {
                 std::string fileContent((std::istreambuf_iterator<char>(inputFileStream)), (std::istreambuf_iterator<char>()));
@@ -70,7 +70,7 @@ namespace storm {
                 storm::utility::closeFile(inputFileStream);
                 throw e;
             }
-            
+
             // Close the stream in case everything went smoothly and return result.
             storm::utility::closeFile(inputFileStream);
             return properties;

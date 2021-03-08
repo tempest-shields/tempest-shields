@@ -22,6 +22,7 @@ namespace storm {
             virtual boost::any visit(AtomicLabelFormula const& f, boost::any const& data) const override;
             virtual boost::any visit(BinaryBooleanStateFormula const& f, boost::any const& data) const override;
             virtual boost::any visit(BooleanLiteralFormula const& f, boost::any const& data) const override;
+            virtual boost::any visit(BoundedGloballyFormula const& f, boost::any const& data) const override;
             virtual boost::any visit(BoundedUntilFormula const& f, boost::any const& data) const override;
             virtual boost::any visit(ConditionalFormula const& f, boost::any const& data) const override;
             virtual boost::any visit(CumulativeRewardFormula const& f, boost::any const& data) const override;

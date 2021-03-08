@@ -30,6 +30,24 @@ namespace storm {
             return true;
         }
 
+        boost::any LiftableTransitionRewardsVisitor::visit(BoundedGloballyFormula const& f, boost::any const& data) const {
+            for (unsigned i = 0; i < f.getDimension(); ++i) {
+                if (f.getTimeBoundReference(i).isRewardBound() && rewardModelHasTransitionRewards(f.getTimeBoundReference(i).getRewardName())) {
+                    return false;
+                }
+            }
+
+            bool result = true;
+            if (f.hasMultiDimensionalSubformulas()) {
+                for (unsigned i = 0; i < f.getDimension(); ++i) {
+                    result = result && boost::any_cast<bool>(f.getSubformula(i).accept(*this, data));
+                }
+            } else {
+                result = result && boost::any_cast<bool>(f.getSubformula().accept(*this, data));
+            }
+            return result;
+        }
+
         boost::any LiftableTransitionRewardsVisitor::visit(BoundedUntilFormula const& f, boost::any const& data) const {
             for (unsigned i = 0; i < f.getDimension(); ++i) {
                 if (f.getTimeBoundReference(i).isRewardBound() && rewardModelHasTransitionRewards(f.getTimeBoundReference(i).getRewardName())) {

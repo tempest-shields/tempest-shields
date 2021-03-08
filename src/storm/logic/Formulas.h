@@ -5,6 +5,7 @@
 #include "storm/logic/BinaryPathFormula.h"
 #include "storm/logic/BinaryStateFormula.h"
 #include "storm/logic/BooleanLiteralFormula.h"
+#include "storm/logic/BoundedGloballyFormula.h"
 #include "storm/logic/BoundedUntilFormula.h"
 #include "storm/logic/CumulativeRewardFormula.h"
 #include "storm/logic/EventuallyFormula.h"

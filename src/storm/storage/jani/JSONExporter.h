@@ -52,6 +52,7 @@ namespace storm {
             virtual boost::any visit(storm::logic::AtomicLabelFormula const& f, boost::any const& data) const;
             virtual boost::any visit(storm::logic::BinaryBooleanStateFormula const& f, boost::any const& data) const;
             virtual boost::any visit(storm::logic::BooleanLiteralFormula const& f, boost::any const& data) const;
+            virtual boost::any visit(storm::logic::BoundedGloballyFormula const& f, boost::any const& data) const;
             virtual boost::any visit(storm::logic::BoundedUntilFormula const& f, boost::any const& data) const;
             virtual boost::any visit(storm::logic::ConditionalFormula const& f, boost::any const& data) const;
             virtual boost::any visit(storm::logic::CumulativeRewardFormula const& f, boost::any const& data) const;

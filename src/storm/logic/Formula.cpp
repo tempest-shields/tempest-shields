@@ -377,7 +377,6 @@ namespace storm {
             return dynamic_cast<NextFormula const&>(*this);
         }
 
-        // TODO: find out why these casts are not valid
         BoundedGloballyFormula& Formula::asBoundedGloballyFormula() {
             return dynamic_cast<BoundedGloballyFormula&>(*this);
         }
