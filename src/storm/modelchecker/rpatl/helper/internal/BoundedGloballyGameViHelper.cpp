@@ -13,7 +13,7 @@ namespace storm {
             namespace internal {
 
                 template <typename ValueType>
-                BoundedGloballyGameViHelper<ValueType>::GameViHelper(storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::BitVector statesOfCoalition) : _transitionMatrix(transitionMatrix), _statesOfCoalition(statesOfCoalition) {
+                BoundedGloballyGameViHelper<ValueType>::BoundedGloballyGameViHelper(storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::BitVector statesOfCoalition) : _transitionMatrix(transitionMatrix), _statesOfCoalition(statesOfCoalition) {
                 }
 
                 template <typename ValueType>
@@ -23,12 +23,9 @@ namespace storm {
                 }
 
                 template <typename ValueType>
-                void BoundedGloballyGameViHelper<ValueType>::performValueIteration(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir) {
+                void BoundedGloballyGameViHelper<ValueType>::performValueIteration(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir, uint64_t upperBound) {
                     prepareSolversAndMultipliersReachability(env);
-                    // TODO: parse k from the formula
-                    uint64_t k = 3;
                     _b = b;
-
                     _x1.assign(_transitionMatrix.getRowGroupCount(), storm::utility::zero<ValueType>());
                     _x2 = _x1;
 
@@ -40,22 +37,22 @@ namespace storm {
                     }
 
                     uint64_t iter = 0;
-                    std::vector<ValueType> result = x;
-                    while (iter < k) {
+                    while (iter < upperBound) {
                         ++iter;
+
                         performIterationStep(env, dir);
 
-                        if (storm::utility::resources::isTerminate()) {
+/*                        if (storm::utility::resources::isTerminate()) {
                             break;
-                        }
+                        }*/
                     }
+
                     x = xNew();
 
-                    // TODO: do we have to do that by using boundedGlobally?
-                    if (isProduceSchedulerSet()) {
+/*                    if (isProduceSchedulerSet()) {
                         // We will be doing one more iteration step and track scheduler choices this time.
                         performIterationStep(env, dir, &_producedOptimalChoices.get());
-                    }
+                    }*/
                 }
 
                 template <typename ValueType>
@@ -68,12 +65,7 @@ namespace storm {
                     // multiplyandreducegaussseidel
                     // Ax + b
                     if (choices == nullptr) {
-                        //STORM_LOG_DEBUG("\n" << _transitionMatrix);
-                        //STORM_LOG_DEBUG("xOld = " << storm::utility::vector::toString(xOld()));
-                        //STORM_LOG_DEBUG("b = " << storm::utility::vector::toString(_b));
-                        //STORM_LOG_DEBUG("xNew = " << storm::utility::vector::toString(xNew()));
                         _multiplier->multiplyAndReduce(env, dir, xOld(), &_b, xNew(), nullptr, &_statesOfCoalition);
-                        //std::cin.get();
                     } else {
                         // Also keep track of the choices made.
                         _multiplier->multiplyAndReduce(env, dir, xOld(), &_b, xNew(), choices, &_statesOfCoalition);
@@ -94,7 +86,7 @@ namespace storm {
                 template <typename ValueType>
                 void BoundedGloballyGameViHelper<ValueType>::fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector psiStates)
                 {
-                    std::vector<ValueType> filledVector = std::vector<ValueType>(relevantStates.size(), storm::utility::zero<ValueType>());
+                    std::vector<ValueType> filledVector = std::vector<ValueType>(psiStates.size(), storm::utility::zero<ValueType>());
                     uint bitIndex = 0;
                     for(uint i = 0; i < filledVector.size(); i++) {
                         if (psiStates.get(i)) {

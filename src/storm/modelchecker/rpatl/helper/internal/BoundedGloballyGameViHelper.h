@@ -23,8 +23,7 @@ namespace storm {
 
                     void prepareSolversAndMultipliersReachability(const Environment& env);
 
-                    // TODO: add 'k' as input of the method - maybe the type TimeBound from the formula
-                    void performValueIteration(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir);
+                    void performValueIteration(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir, uint64_t upperBound);
 
                     /*!
                      * Fills the result vector to the original size with ones for being psiStates, zeros for being not phiStates
