@@ -36,9 +36,7 @@ namespace storm {
                         this->_producedOptimalChoices->resize(this->_transitionMatrix.getRowGroupCount());
                     }
 
-                    uint64_t iter = 0;
-                    while (iter < upperBound) {
-                        ++iter;
+                    for (uint64_t iter = 0; iter < upperBound; iter++) {
 
                         performIterationStep(env, dir);
 

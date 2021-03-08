@@ -120,7 +120,7 @@ namespace storm {
                 std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(relevantStates, relevantStates);
 
                 // Reduce the matrix to relevant states
-                storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, relevantStates, relevantStates, true);
+                storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, relevantStates, relevantStates, false);
 
                 storm::storage::BitVector clippedStatesOfCoalition(relevantStates.getNumberOfSetBits());
                 clippedStatesOfCoalition.setClippedStatesOfCoalition(relevantStates, statesOfCoalition);
@@ -133,7 +133,7 @@ namespace storm {
                     viHelper.setProduceScheduler(true);
                 }
 
-                // TODO: the lower bounds are not used at the moment
+                // TODO: the lower bounds are not used
                 if(lowerBound != 0)
                 {
                     STORM_LOG_WARN("The use of lower bounds is not implemented for bounded globally formulas.");
