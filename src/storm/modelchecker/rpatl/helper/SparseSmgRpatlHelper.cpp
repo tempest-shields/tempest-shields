@@ -107,7 +107,7 @@ namespace storm {
             }
 
             template<typename ValueType>
-            MDPSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeBoundedGloballyProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint) {
+            MDPSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeBoundedGloballyProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint,uint64_t lowerBound, uint64_t upperBound) {
                 auto solverEnv = env;
                 solverEnv.solver().minMax().setMethod(storm::solver::MinMaxMethod::ValueIteration, false);
 
@@ -117,30 +117,48 @@ namespace storm {
                 // Relevant states are safe states - the psiStates.
                 storm::storage::BitVector relevantStates = psiStates;
 
-                std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(psiStates, psiStates);
+                std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(relevantStates, relevantStates);
 
                 // Reduce the matrix to relevant states
-                storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, psiStates, psiStates, false);
+                storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, relevantStates, relevantStates, true);
 
-                storm::storage::BitVector clippedStatesOfCoalition(psiStates.getNumberOfSetBits());
-                clippedStatesOfCoalition.setClippedStatesOfCoalition(psiStates, statesOfCoalition);
+                storm::storage::BitVector clippedStatesOfCoalition(relevantStates.getNumberOfSetBits());
+                clippedStatesOfCoalition.setClippedStatesOfCoalition(relevantStates, statesOfCoalition);
                 clippedStatesOfCoalition.complement();
 
-                // here is the bounded globally game vi helper used
+                // Use the bounded globally game vi helper
                 storm::modelchecker::helper::internal::BoundedGloballyGameViHelper<ValueType> viHelper(submatrix, clippedStatesOfCoalition);
                 std::unique_ptr<storm::storage::Scheduler<ValueType>> scheduler;
                 if (produceScheduler) {
                     viHelper.setProduceScheduler(true);
                 }
 
-                viHelper.performValueIteration(env, x, b, goal.direction());
-                viHelper.fillResultVector(x, psiStates);
+                // TODO: the lower bounds are not used at the moment
+                if(lowerBound != 0)
+                {
+                    STORM_LOG_WARN("The use of lower bounds is not implemented for bounded globally formulas.");
+                }
+
+                STORM_LOG_DEBUG("upperBound = " << upperBound);
+
+                // in case of 'G<1' or 'G<=0' the states with are initially 'safe' are filled with ones
+                if(upperBound == 0)
+                {
+                    x = std::vector<ValueType>(relevantStates.size(), storm::utility::one<ValueType>());
+                } else {
+                    viHelper.performValueIteration(env, x, b, goal.direction(), upperBound);
+                }
+
+                viHelper.fillResultVector(x, relevantStates);
 
                 // TODO: i am not sure about that ~psiStates are correct - but I think (~psiStates are unsafe like the ~phiStates before)
                 //  maybe I should create another method for this case
                 if (produceScheduler) {
-                    scheduler = std::make_unique<storm::storage::Scheduler<ValueType>>(expandScheduler(viHelper.extractScheduler(), psiStates, ~psiStates));
+                    scheduler = std::make_unique<storm::storage::Scheduler<ValueType>>(expandScheduler(viHelper.extractScheduler(), relevantStates, ~relevantStates));
                 }
+
+                STORM_LOG_DEBUG("x = " << x);
+
                 return MDPSparseModelCheckingHelperReturnType<ValueType>(std::move(x), std::move(scheduler));
             }
 
