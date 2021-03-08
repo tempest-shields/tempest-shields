@@ -182,12 +182,10 @@ namespace storm {
             std::unique_ptr<CheckResult> subResultPointer = this->check(env, pathFormula.getSubformula());
             ExplicitQualitativeCheckResult const& subResult = subResultPointer->asExplicitQualitativeCheckResult();
 
-            auto ret = storm::modelchecker::helper::SparseSmgRpatlHelper<ValueType>::computeBoundedGloballyProbabilities(env, storm::solver::SolveGoal<ValueType>(this->getModel(), checkTask), this->getModel().getTransitionMatrix(), this->getModel().getBackwardTransitions(), subResult.getTruthValuesVector(), checkTask.isQualitativeSet(), statesOfCoalition, checkTask.isProduceSchedulersSet(), checkTask.getHint());
+            auto ret = storm::modelchecker::helper::SparseSmgRpatlHelper<ValueType>::computeBoundedGloballyProbabilities(env, storm::solver::SolveGoal<ValueType>(this->getModel(), checkTask), this->getModel().getTransitionMatrix(), this->getModel().getBackwardTransitions(), subResult.getTruthValuesVector(), checkTask.isQualitativeSet(), statesOfCoalition, checkTask.isProduceSchedulersSet(), checkTask.getHint(), pathFormula.getNonStrictLowerBound<uint64_t>(), pathFormula.getNonStrictUpperBound<uint64_t>());
             std::unique_ptr<CheckResult> result(new ExplicitQuantitativeCheckResult<ValueType>(std::move(ret.values)));
             return result;
         }
-
-
 
         template<typename SparseSmgModelType>
         std::unique_ptr<CheckResult> SparseSmgRpatlModelChecker<SparseSmgModelType>::computeLongRunAverageProbabilities(Environment const& env, CheckTask<storm::logic::StateFormula, ValueType> const& checkTask) {
