@@ -25,9 +25,8 @@ namespace storm {
                 }
 
                 template <typename ValueType>
-                void BoundedGloballyGameViHelper<ValueType>::performValueIteration(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir, uint64_t upperBound) {
+                void BoundedGloballyGameViHelper<ValueType>::performValueIteration(Environment const& env, std::vector<ValueType>& x, storm::solver::OptimizationDirection const dir, uint64_t upperBound) {
                     prepareSolversAndMultipliers(env);
-                    _b = b;
 /*
                     _x1.assign(_transitionMatrix.getRowGroupCount(), storm::utility::zero<ValueType>());
 */
@@ -77,10 +76,10 @@ namespace storm {
                     // multiplyandreducegaussseidel
                     // Ax + b
                     if (choices == nullptr) {
-                        _multiplier->multiplyAndReduce(env, dir, _x1, &_b, _x1, nullptr, &_statesOfCoalition);
+                        _multiplier->multiplyAndReduce(env, dir, _x1, nullptr, _x1, nullptr, &_statesOfCoalition);
                     } else {
                         // Also keep track of the choices made.
-                        _multiplier->multiplyAndReduce(env, dir, _x1, &_b, _x1, choices, &_statesOfCoalition);
+                        _multiplier->multiplyAndReduce(env, dir, _x1, nullptr, _x1, choices, &_statesOfCoalition);
                     }
 
 /*                    // compare applyPointwise

@@ -23,7 +23,7 @@ namespace storm {
 
                     void prepareSolversAndMultipliers(const Environment& env);
 
-                    void performValueIteration(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir, uint64_t upperBound);
+                    void performValueIteration(Environment const& env, std::vector<ValueType>& x, storm::solver::OptimizationDirection const dir, uint64_t upperBound);
 
                     /*!
                      * Fills the result vector to the original size with ones for being psiStates, zeros for being not phiStates
@@ -66,7 +66,7 @@ namespace storm {
 
                     storm::storage::SparseMatrix<ValueType> _transitionMatrix;
                     storm::storage::BitVector _statesOfCoalition;
-                    std::vector<ValueType> _x1, _x2, _b;
+                    std::vector<ValueType> _x1, _x2;
                     std::unique_ptr<storm::solver::Multiplier<ValueType>> _multiplier;
 
                     bool _produceScheduler = false;
