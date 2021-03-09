@@ -333,6 +333,7 @@ namespace storm {
                     upperBounds.push_back(std::get<1>(timeBound));
                     timeBoundReferences.emplace_back(*std::get<2>(timeBound));
                 }
+                STORM_LOG_ASSERT(lowerBounds.size() == 0, "Lower bounds are not implemented for globally formulas.");
                 return std::shared_ptr<storm::logic::Formula const>(new storm::logic::BoundedGloballyFormula(subformula, lowerBounds, upperBounds, timeBoundReferences));
             } else {
                 return std::shared_ptr<storm::logic::Formula const>(new storm::logic::GloballyFormula(subformula));
