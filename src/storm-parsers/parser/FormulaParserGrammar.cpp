@@ -329,7 +329,7 @@ namespace storm {
                 std::vector<boost::optional<storm::logic::TimeBound>> lowerBounds, upperBounds;
                 std::vector<storm::logic::TimeBoundReference> timeBoundReferences;
                 for (auto const& timeBound : timeBounds.get()) {
-                    STORM_LOG_ASSERT(!std::get<0>(timeBound), "Lower bounds are not implemented for globally formulas.");
+                    STORM_LOG_ASSERT(!std::get<0>(timeBound), "Cannot use lower time bounds (or intervals) in globally formulas.");
                     lowerBounds.push_back(std::get<0>(timeBound));
                     upperBounds.push_back(std::get<1>(timeBound));
                     timeBoundReferences.emplace_back(*std::get<2>(timeBound));
