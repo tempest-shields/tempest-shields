@@ -111,14 +111,15 @@ namespace storm {
                 auto solverEnv = env;
                 solverEnv.solver().minMax().setMethod(storm::solver::MinMaxMethod::ValueIteration, false);
 
-                // Initialize the solution vector.
-                std::vector<ValueType> x = std::vector<ValueType>(transitionMatrix.getRowGroupCount() - psiStates.getNumberOfSetBits(), storm::utility::zero<ValueType>());
-
                 // Relevant states are safe states - the psiStates.
                 storm::storage::BitVector relevantStates = psiStates;
 
-                std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(relevantStates, relevantStates);
+                // Initialize the solution vector.
+                //std::vector<ValueType> x = std::vector<ValueType>(transitionMatrix.getRowGroupCount() - psiStates.getNumberOfSetBits(), storm::utility::zero<ValueType>());
+                std::vector<ValueType> x = std::vector<ValueType>(relevantStates.getNumberOfSetBits(), storm::utility::one<ValueType>());
 
+                //std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(relevantStates, relevantStates);
+                std::vector<ValueType> b = std::vector<ValueType>(relevantStates.getNumberOfSetBits(), storm::utility::zero<ValueType>());
                 // Reduce the matrix to relevant states
                 storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, relevantStates, relevantStates, false);
 
@@ -142,10 +143,12 @@ namespace storm {
                 STORM_LOG_DEBUG("upperBound = " << upperBound);
 
                 // in case of 'G<1' or 'G<=0' the states with are initially 'safe' are filled with ones
-                if(upperBound == 0)
+                if(upperBound > 0)
                 {
-                    x = std::vector<ValueType>(relevantStates.size(), storm::utility::one<ValueType>());
-                } else {
+/*                    x = std::vector<ValueType>(relevantStates.size(), storm::utility::one<ValueType>());
+                } else {*/
+                    STORM_LOG_DEBUG("b = " << b);
+                    STORM_LOG_DEBUG("x = " << x);
                     viHelper.performValueIteration(env, x, b, goal.direction(), upperBound);
                 }
 

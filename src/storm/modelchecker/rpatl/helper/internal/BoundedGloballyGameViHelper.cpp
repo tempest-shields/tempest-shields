@@ -19,15 +19,24 @@ namespace storm {
                 template <typename ValueType>
                 void BoundedGloballyGameViHelper<ValueType>::prepareSolversAndMultipliersReachability(const Environment& env) {
                     _multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, _transitionMatrix);
+/*
                     _x1IsCurrent = false;
+*/
                 }
 
                 template <typename ValueType>
                 void BoundedGloballyGameViHelper<ValueType>::performValueIteration(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir, uint64_t upperBound) {
                     prepareSolversAndMultipliersReachability(env);
                     _b = b;
+/*
                     _x1.assign(_transitionMatrix.getRowGroupCount(), storm::utility::zero<ValueType>());
+*/
+                    _x1 = x;
                     _x2 = _x1;
+
+/*                    STORM_LOG_DEBUG("_b = " << _b);
+                    STORM_LOG_DEBUG("_x1 = " << _x1);
+                    STORM_LOG_DEBUG("_x2 = " << _x2);*/
 
                     if (this->isProduceSchedulerSet()) {
                         if (!this->_producedOptimalChoices.is_initialized()) {
@@ -37,15 +46,20 @@ namespace storm {
                     }
 
                     for (uint64_t iter = 0; iter < upperBound; iter++) {
-
                         performIterationStep(env, dir);
+/*                        STORM_LOG_DEBUG("After iteration " << iter << ":");
+                        STORM_LOG_DEBUG("_x1 = " << _x1);
+                        STORM_LOG_DEBUG("_x2 = " << _x2);*/
 
 /*                        if (storm::utility::resources::isTerminate()) {
                             break;
                         }*/
                     }
 
+/*
                     x = xNew();
+*/
+                    x = _x1;
 
 /*                    if (isProduceSchedulerSet()) {
                         // We will be doing one more iteration step and track scheduler choices this time.
@@ -58,18 +72,18 @@ namespace storm {
                     if (!_multiplier) {
                         prepareSolversAndMultipliersReachability(env);
                     }
-                    _x1IsCurrent = !_x1IsCurrent;
+/*                    _x1IsCurrent = !_x1IsCurrent;*/
 
                     // multiplyandreducegaussseidel
                     // Ax + b
                     if (choices == nullptr) {
-                        _multiplier->multiplyAndReduce(env, dir, xOld(), &_b, xNew(), nullptr, &_statesOfCoalition);
+                        _multiplier->multiplyAndReduce(env, dir, _x1, &_b, _x1, nullptr, &_statesOfCoalition);
                     } else {
                         // Also keep track of the choices made.
-                        _multiplier->multiplyAndReduce(env, dir, xOld(), &_b, xNew(), choices, &_statesOfCoalition);
+                        _multiplier->multiplyAndReduce(env, dir, _x1, &_b, _x1, choices, &_statesOfCoalition);
                     }
 
-                    // compare applyPointwise
+/*                    // compare applyPointwise
                     storm::utility::vector::applyPointwise<ValueType, ValueType, ValueType>(xOld(), xNew(), xNew(), [&dir] (ValueType const& a, ValueType const& b) -> ValueType {
                         if(storm::solver::maximize(dir)) {
                             if(a > b) return a;
@@ -78,7 +92,7 @@ namespace storm {
                             if(a > b) return a;
                             else return b;
                         }
-                    });
+                    });*/
                 }
 
                 template <typename ValueType>
@@ -129,7 +143,7 @@ namespace storm {
                     return scheduler;
                 }
 
-                template <typename ValueType>
+/*                template <typename ValueType>
                 std::vector<ValueType>& BoundedGloballyGameViHelper<ValueType>::xNew() {
                     return _x1IsCurrent ? _x1 : _x2;
                 }
@@ -147,7 +161,7 @@ namespace storm {
                 template <typename ValueType>
                 std::vector<ValueType> const& BoundedGloballyGameViHelper<ValueType>::xOld() const {
                     return _x1IsCurrent ? _x2 : _x1;
-                }
+                }*/
 
                 template class BoundedGloballyGameViHelper<double>;
 #ifdef STORM_HAVE_CARL

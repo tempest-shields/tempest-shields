@@ -45,12 +45,12 @@ namespace storm {
                 private:
                     void performIterationStep(Environment const& env, storm::solver::OptimizationDirection const dir, std::vector<uint64_t>* choices = nullptr);
 
-                    std::vector<ValueType>& xNew();
+/*                    std::vector<ValueType>& xNew();
                     std::vector<ValueType> const& xNew() const;
 
                     std::vector<ValueType>& xOld();
                     std::vector<ValueType> const& xOld() const;
-                    bool _x1IsCurrent;
+                    bool _x1IsCurrent;*/
 
                     /*!
                      * @pre before calling this, a computation call should have been performed during which scheduler production was enabled.
