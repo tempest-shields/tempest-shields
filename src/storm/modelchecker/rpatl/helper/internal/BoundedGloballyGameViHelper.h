@@ -30,7 +30,7 @@ namespace storm {
                      */
                     void fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector psiStates);
 
-                    /*h
+                    /*!
                      * Sets whether an optimal scheduler shall be constructed during the computation
                      */
                     void setProduceScheduler(bool value);
@@ -44,13 +44,6 @@ namespace storm {
 
                 private:
                     void performIterationStep(Environment const& env, storm::solver::OptimizationDirection const dir, std::vector<uint64_t>* choices = nullptr);
-
-/*                    std::vector<ValueType>& xNew();
-                    std::vector<ValueType> const& xNew() const;
-
-                    std::vector<ValueType>& xOld();
-                    std::vector<ValueType> const& xOld() const;
-                    bool _x1IsCurrent;*/
 
                     /*!
                      * @pre before calling this, a computation call should have been performed during which scheduler production was enabled.
@@ -66,7 +59,7 @@ namespace storm {
 
                     storm::storage::SparseMatrix<ValueType> _transitionMatrix;
                     storm::storage::BitVector _statesOfCoalition;
-                    std::vector<ValueType> _x1, _x2;
+                    std::vector<ValueType> _x;
                     std::unique_ptr<storm::solver::Multiplier<ValueType>> _multiplier;
 
                     bool _produceScheduler = false;

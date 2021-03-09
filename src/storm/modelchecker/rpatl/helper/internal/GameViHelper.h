@@ -30,7 +30,7 @@ namespace storm {
                      */
                     void fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector relevantStates, storm::storage::BitVector psiStates);
 
-                    /*h
+                    /*!
                      * Sets whether an optimal scheduler shall be constructed during the computation
                      */
                     void setProduceScheduler(bool value);
