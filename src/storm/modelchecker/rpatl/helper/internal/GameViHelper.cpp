@@ -20,7 +20,7 @@ namespace storm {
                 }
 
                 template <typename ValueType>
-                void GameViHelper<ValueType>::prepareSolversAndMultipliersReachability(const Environment& env) {
+                void GameViHelper<ValueType>::prepareSolversAndMultipliers(const Environment& env) {
                     // TODO we get whole transitionmatrix and psistates DONE IN smgrpatlhelper
                     // -> clip statesofcoalition
                     // -> compute b vector from psiStates
@@ -32,7 +32,7 @@ namespace storm {
 
                 template <typename ValueType>
                 void GameViHelper<ValueType>::performValueIteration(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir) {
-                    prepareSolversAndMultipliersReachability(env);
+                    prepareSolversAndMultipliers(env);
                     ValueType precision = storm::utility::convertNumber<ValueType>(env.solver().game().getPrecision());
                     uint64_t maxIter = env.solver().game().getMaximalNumberOfIterations();
                     _b = b;
@@ -71,7 +71,7 @@ namespace storm {
                 template <typename ValueType>
                 void GameViHelper<ValueType>::performIterationStep(Environment const& env, storm::solver::OptimizationDirection const dir, std::vector<uint64_t>* choices) {
                     if (!_multiplier) {
-                        prepareSolversAndMultipliersReachability(env);
+                        prepareSolversAndMultipliers(env);
                     }
                     _x1IsCurrent = !_x1IsCurrent;
 

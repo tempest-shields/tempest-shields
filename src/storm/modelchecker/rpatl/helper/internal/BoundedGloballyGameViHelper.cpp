@@ -17,7 +17,7 @@ namespace storm {
                 }
 
                 template <typename ValueType>
-                void BoundedGloballyGameViHelper<ValueType>::prepareSolversAndMultipliersReachability(const Environment& env) {
+                void BoundedGloballyGameViHelper<ValueType>::prepareSolversAndMultipliers(const Environment& env) {
                     _multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, _transitionMatrix);
 /*
                     _x1IsCurrent = false;
@@ -26,7 +26,7 @@ namespace storm {
 
                 template <typename ValueType>
                 void BoundedGloballyGameViHelper<ValueType>::performValueIteration(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir, uint64_t upperBound) {
-                    prepareSolversAndMultipliersReachability(env);
+                    prepareSolversAndMultipliers(env);
                     _b = b;
 /*
                     _x1.assign(_transitionMatrix.getRowGroupCount(), storm::utility::zero<ValueType>());
@@ -70,7 +70,7 @@ namespace storm {
                 template <typename ValueType>
                 void BoundedGloballyGameViHelper<ValueType>::performIterationStep(Environment const& env, storm::solver::OptimizationDirection const dir, std::vector<uint64_t>* choices) {
                     if (!_multiplier) {
-                        prepareSolversAndMultipliersReachability(env);
+                        prepareSolversAndMultipliers(env);
                     }
 /*                    _x1IsCurrent = !_x1IsCurrent;*/
 

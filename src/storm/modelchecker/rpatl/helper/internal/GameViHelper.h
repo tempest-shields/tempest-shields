@@ -21,7 +21,7 @@ namespace storm {
                 public:
                     GameViHelper(storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::BitVector statesOfCoalition);
 
-                    void prepareSolversAndMultipliersReachability(const Environment& env);
+                    void prepareSolversAndMultipliers(const Environment& env);
 
                     void performValueIteration(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir);
 
