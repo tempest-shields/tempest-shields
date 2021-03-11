@@ -22,7 +22,7 @@ namespace storm {
                 }
 
                 template <typename ValueType>
-                void BoundedGloballyGameViHelper<ValueType>::performValueIteration(Environment const& env, std::vector<ValueType>& x, storm::solver::OptimizationDirection const dir, uint64_t upperBound) {
+                void BoundedGloballyGameViHelper<ValueType>::performValueIteration(Environment const& env, std::vector<ValueType>& x, storm::solver::OptimizationDirection const dir, uint64_t upperBound, std::vector<ValueType>& constrainedChoiceValues) {
                     prepareSolversAndMultipliers(env);
                     _x = x;
 
@@ -34,6 +34,9 @@ namespace storm {
                     }
 
                     for (uint64_t iter = 0; iter < upperBound; iter++) {
+                        if(iter == upperBound - 1) {
+                            _multiplier->multiply(env, _x, nullptr, constrainedChoiceValues);
+                        }
                         performIterationStep(env, dir);
                     }
 
@@ -47,7 +50,7 @@ namespace storm {
                     }
 
                     // multiplyandreducegaussseidel
-                    // Ax + b
+                    // Ax = x'
                     if (choices == nullptr) {
                         _multiplier->multiplyAndReduce(env, dir, _x, nullptr, _x, nullptr, &_statesOfCoalition);
                     } else {

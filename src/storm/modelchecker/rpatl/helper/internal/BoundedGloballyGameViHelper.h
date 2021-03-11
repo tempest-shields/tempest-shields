@@ -23,7 +23,7 @@ namespace storm {
 
                     void prepareSolversAndMultipliers(const Environment& env);
 
-                    void performValueIteration(Environment const& env, std::vector<ValueType>& x, storm::solver::OptimizationDirection const dir, uint64_t upperBound);
+                    void performValueIteration(Environment const& env, std::vector<ValueType>& x, storm::solver::OptimizationDirection const dir, uint64_t upperBound, std::vector<ValueType>& constrainedChoiceValues);
 
                     /*!
                      * Fills the result vector to the original size with ones for being psiStates, zeros for being not phiStates

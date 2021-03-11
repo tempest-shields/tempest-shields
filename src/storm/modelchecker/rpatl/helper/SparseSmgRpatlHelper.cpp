@@ -120,6 +120,8 @@ namespace storm {
                 // Reduce the matrix to relevant states
                 storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, relevantStates, relevantStates, false);
 
+                std::vector<ValueType> constrainedChoiceValues = std::vector<ValueType>(submatrix.getRowCount(), storm::utility::zero<ValueType>());
+
                 storm::storage::BitVector clippedStatesOfCoalition(relevantStates.getNumberOfSetBits());
                 clippedStatesOfCoalition.setClippedStatesOfCoalition(relevantStates, statesOfCoalition);
                 clippedStatesOfCoalition.complement();
@@ -134,16 +136,14 @@ namespace storm {
                 // in case of upperBound = 0 the states which are initially "safe" are filled with ones
                 if(upperBound > 0)
                 {
-                    viHelper.performValueIteration(env, x, goal.direction(), upperBound);
+                    viHelper.performValueIteration(env, x, goal.direction(), upperBound, constrainedChoiceValues);
+/*                    if (produceScheduler) {
+                        scheduler = std::make_unique<storm::storage::Scheduler<ValueType>>(expandScheduler(viHelper.extractScheduler(), relevantStates, ~relevantStates));
+
+                    }*/
                 }
 
                 viHelper.fillResultVector(x, relevantStates);
-
-                // TODO: i am not sure about that ~psiStates are correct - but I think (~psiStates are unsafe like the ~phiStates before)
-                //  maybe I should create another method for this case
-                if (produceScheduler) {
-                    scheduler = std::make_unique<storm::storage::Scheduler<ValueType>>(expandScheduler(viHelper.extractScheduler(), relevantStates, ~relevantStates));
-                }
 
                 STORM_LOG_DEBUG("x = " << x);
 
