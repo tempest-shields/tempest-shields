@@ -28,6 +28,34 @@ namespace storm {
             return std::static_pointer_cast<Formula>(std::make_shared<BooleanLiteralFormula>(f));
         }
 
+        boost::any CloneVisitor::visit(BoundedGloballyFormula const& f, boost::any const& data) const {
+            std::vector<boost::optional<TimeBound>> lowerBounds, upperBounds;
+            std::vector<TimeBoundReference> timeBoundReferences;
+            for (uint64_t i = 0; i < f.getDimension(); ++i) {
+                if (f.hasLowerBound(i)) {
+                    lowerBounds.emplace_back(TimeBound(f.isLowerBoundStrict(i), f.getLowerBound(i)));
+                } else {
+                    lowerBounds.emplace_back();
+                }
+                if (f.hasUpperBound(i)) {
+                    upperBounds.emplace_back(TimeBound(f.isUpperBoundStrict(i), f.getUpperBound(i)));
+                } else {
+                    upperBounds.emplace_back();
+                }
+                timeBoundReferences.push_back(f.getTimeBoundReference(i));
+            }
+            if (f.hasMultiDimensionalSubformulas()) {
+                std::vector<std::shared_ptr<Formula const>> subformulas;
+                for (uint64_t i = 0; i < f.getDimension(); ++i) {
+                    subformulas.push_back(boost::any_cast<std::shared_ptr<Formula>>(f.getSubformula(i).accept(*this, data)));
+                }
+                return std::static_pointer_cast<Formula>(std::make_shared<BoundedGloballyFormula>(subformulas, lowerBounds, upperBounds, timeBoundReferences));
+            } else {
+                std::shared_ptr<Formula> subformula = boost::any_cast<std::shared_ptr<Formula>>(f.getSubformula().accept(*this, data));
+                return std::static_pointer_cast<Formula>(std::make_shared<BoundedGloballyFormula>(subformula, lowerBounds, upperBounds, timeBoundReferences));
+            }
+        }
+
         boost::any CloneVisitor::visit(BoundedUntilFormula const& f, boost::any const& data) const {
             std::vector<boost::optional<TimeBound>> lowerBounds, upperBounds;
             std::vector<TimeBoundReference> timeBoundReferences;

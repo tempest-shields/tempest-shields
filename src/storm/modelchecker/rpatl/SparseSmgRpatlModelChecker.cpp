@@ -116,6 +116,8 @@ namespace storm {
                 return this->computeGloballyProbabilities(env, checkTask.substituteFormula(formula.asGloballyFormula()));
             } else if (formula.isNextFormula()) {
                 return this->computeNextProbabilities(env, checkTask.substituteFormula(formula.asNextFormula()));
+            } else if (formula.isBoundedGloballyFormula()) {
+                return this->computeBoundedGloballyProbabilities(env, checkTask.substituteFormula(formula.asBoundedGloballyFormula()));
             }
             STORM_LOG_THROW(false, storm::exceptions::InvalidArgumentException, "The given formula '" << formula << "' is invalid.");
         }
@@ -169,6 +171,18 @@ namespace storm {
             ExplicitQualitativeCheckResult const& subResult = subResultPointer->asExplicitQualitativeCheckResult();
 
             auto ret = storm::modelchecker::helper::SparseSmgRpatlHelper<ValueType>::computeNextProbabilities(env, storm::solver::SolveGoal<ValueType>(this->getModel(), checkTask), this->getModel().getTransitionMatrix(), this->getModel().getBackwardTransitions(), subResult.getTruthValuesVector(), checkTask.isQualitativeSet(), statesOfCoalition, checkTask.isProduceSchedulersSet(), checkTask.getHint());
+            std::unique_ptr<CheckResult> result(new ExplicitQuantitativeCheckResult<ValueType>(std::move(ret.values)));
+            return result;
+        }
+
+        template<typename ModelType>
+        std::unique_ptr<CheckResult> SparseSmgRpatlModelChecker<ModelType>::computeBoundedGloballyProbabilities(Environment const& env, CheckTask<storm::logic::BoundedGloballyFormula, ValueType> const& checkTask) {
+            storm::logic::BoundedGloballyFormula const& pathFormula = checkTask.getFormula();
+            STORM_LOG_THROW(checkTask.isOptimizationDirectionSet(), storm::exceptions::InvalidPropertyException, "Formula needs to specify whether minimal or maximal values are to be computed on nondeterministic model.");
+            std::unique_ptr<CheckResult> subResultPointer = this->check(env, pathFormula.getSubformula());
+            ExplicitQualitativeCheckResult const& subResult = subResultPointer->asExplicitQualitativeCheckResult();
+
+            auto ret = storm::modelchecker::helper::SparseSmgRpatlHelper<ValueType>::computeBoundedGloballyProbabilities(env, storm::solver::SolveGoal<ValueType>(this->getModel(), checkTask), this->getModel().getTransitionMatrix(), this->getModel().getBackwardTransitions(), subResult.getTruthValuesVector(), checkTask.isQualitativeSet(), statesOfCoalition, checkTask.isProduceSchedulersSet(), checkTask.getHint(), pathFormula.getNonStrictLowerBound<uint64_t>(), pathFormula.getNonStrictUpperBound<uint64_t>());
             std::unique_ptr<CheckResult> result(new ExplicitQuantitativeCheckResult<ValueType>(std::move(ret.values)));
             return result;
         }

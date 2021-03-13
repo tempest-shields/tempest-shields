@@ -212,6 +212,54 @@ namespace storm {
             ExportJsonType opDecl(f.isTrueFormula() ? true : false);
             return opDecl;
         }
+        boost::any FormulaToJaniJson::visit(storm::logic::BoundedGloballyFormula const& f, boost::any const& data) const {
+            STORM_LOG_THROW(!f.hasMultiDimensionalSubformulas(), storm::exceptions::NotSupportedException, "Jani export of multi-dimensional bounded globally formulas is not supported.");
+            ExportJsonType opDecl;
+            opDecl["op"] = "G";
+            opDecl["exp"] = anyToJson(f.getSubformula().accept(*this, data));
+
+            bool hasStepBounds(false), hasTimeBounds(false);
+            std::vector<ExportJsonType> rewardBounds;
+
+            for (uint64_t i = 0; i < f.getDimension(); ++i) {
+                boost::optional<storm::expressions::Expression> lower, upper;
+                boost::optional<bool> lowerExclusive, upperExclusive;
+                if (f.hasLowerBound(i)) {
+                    lower = f.getLowerBound(i);
+                    lowerExclusive = f.isLowerBoundStrict(i);
+                }
+                if (f.hasUpperBound(i)) {
+                    upper = f.getUpperBound(i);
+                    upperExclusive = f.isUpperBoundStrict(i);
+                }
+                ExportJsonType propertyInterval = constructPropertyInterval(lower, lowerExclusive, upper, upperExclusive);
+
+                auto tbr = f.getTimeBoundReference(i);
+                if (tbr.isStepBound() || (model.isDiscreteTimeModel() && tbr.isTimeBound())) {
+                    STORM_LOG_THROW(!hasStepBounds, storm::exceptions::NotSupportedException, "Jani export of bounded globally formulas with multiple step bounds is not supported.");
+                    hasStepBounds = true;
+                    opDecl["step-bounds"] = propertyInterval;
+                } else if(tbr.isRewardBound()) {
+                    ExportJsonType rewbound;
+                    rewbound["exp"] = buildExpression(model.getRewardModelExpression(tbr.getRewardName()), model.getConstants(), model.getGlobalVariables());
+                    if (tbr.hasRewardAccumulation()) {
+                        rewbound["accumulate"] = constructRewardAccumulation(tbr.getRewardAccumulation(), tbr.getRewardName());
+                    } else {
+                        rewbound["accumulate"] = constructStandardRewardAccumulation(tbr.getRewardName());
+                    }
+                    rewbound["bounds"] = propertyInterval;
+                    rewardBounds.push_back(std::move(rewbound));
+                } else {
+                    STORM_LOG_THROW(!hasTimeBounds, storm::exceptions::NotSupportedException, "Jani export of bounded globally formulas with multiple time bounds is not supported.");
+                    hasTimeBounds = true;
+                    opDecl["time-bounds"] = propertyInterval;
+                }
+            }
+            if (!rewardBounds.empty()) {
+                opDecl["reward-bounds"] = ExportJsonType(rewardBounds);
+            }
+            return opDecl;
+        }
         boost::any FormulaToJaniJson::visit(storm::logic::BoundedUntilFormula const& f, boost::any const& data) const {
             STORM_LOG_THROW(!f.hasMultiDimensionalSubformulas(), storm::exceptions::NotSupportedException, "Jani export of multi-dimensional bounded until formulas is not supported.");
             ExportJsonType opDecl;

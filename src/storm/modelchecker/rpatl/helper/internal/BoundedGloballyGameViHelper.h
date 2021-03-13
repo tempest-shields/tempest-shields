@@ -17,18 +17,18 @@ namespace storm {
             namespace internal {
 
                 template <typename ValueType>
-                class GameViHelper {
+                class BoundedGloballyGameViHelper {
                 public:
-                    GameViHelper(storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::BitVector statesOfCoalition);
+                    BoundedGloballyGameViHelper(storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::BitVector statesOfCoalition);
 
                     void prepareSolversAndMultipliers(const Environment& env);
 
-                    void performValueIteration(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir);
+                    void performValueIteration(Environment const& env, std::vector<ValueType>& x, storm::solver::OptimizationDirection const dir, uint64_t upperBound, std::vector<ValueType>& constrainedChoiceValues);
 
                     /*!
                      * Fills the result vector to the original size with ones for being psiStates, zeros for being not phiStates
                      */
-                    void fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector relevantStates, storm::storage::BitVector psiStates);
+                    void fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector psiStates);
 
                     /*!
                      * Sets whether an optimal scheduler shall be constructed during the computation
@@ -46,18 +46,6 @@ namespace storm {
                     void performIterationStep(Environment const& env, storm::solver::OptimizationDirection const dir, std::vector<uint64_t>* choices = nullptr);
 
                     /*!
-                     * Checks whether the curently computed value achieves the desired precision
-                     */
-                    bool checkConvergence(ValueType precision) const;
-
-                    std::vector<ValueType>& xNew();
-                    std::vector<ValueType> const& xNew() const;
-
-                    std::vector<ValueType>& xOld();
-                    std::vector<ValueType> const& xOld() const;
-                    bool _x1IsCurrent;
-
-                    /*!
                      * @pre before calling this, a computation call should have been performed during which scheduler production was enabled.
                      * @return the produced scheduler of the most recent call.
                      */
@@ -71,7 +59,7 @@ namespace storm {
 
                     storm::storage::SparseMatrix<ValueType> _transitionMatrix;
                     storm::storage::BitVector _statesOfCoalition;
-                    std::vector<ValueType> _x1, _x2, _b;
+                    std::vector<ValueType> _x;
                     std::unique_ptr<storm::solver::Multiplier<ValueType>> _multiplier;
 
                     bool _produceScheduler = false;

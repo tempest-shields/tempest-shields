@@ -115,6 +115,10 @@ namespace storm {
             return false;
         }
 
+        bool Formula::isBoundedGloballyFormula() const {
+            return false;
+        }
+
         bool Formula::isLongRunAverageOperatorFormula() const {
             return false;
         }
@@ -371,6 +375,14 @@ namespace storm {
 
         NextFormula const& Formula::asNextFormula() const {
             return dynamic_cast<NextFormula const&>(*this);
+        }
+
+        BoundedGloballyFormula& Formula::asBoundedGloballyFormula() {
+            return dynamic_cast<BoundedGloballyFormula&>(*this);
+        }
+
+        BoundedGloballyFormula const& Formula::asBoundedGloballyFormula() const {
+            return dynamic_cast<BoundedGloballyFormula const &>(*this);
         }
 
         LongRunAverageOperatorFormula& Formula::asLongRunAverageOperatorFormula() {

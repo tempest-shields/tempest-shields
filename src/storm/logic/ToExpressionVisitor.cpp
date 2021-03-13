@@ -47,6 +47,10 @@ namespace storm {
             return result;
         }
 
+        boost::any ToExpressionVisitor::visit(BoundedGloballyFormula const&, boost::any const&) const {
+            STORM_LOG_THROW(false, storm::exceptions::InvalidOperationException, "Cannot assemble expression from formula that contains illegal elements.");
+        }
+
         boost::any ToExpressionVisitor::visit(BoundedUntilFormula const&, boost::any const&) const {
             STORM_LOG_THROW(false, storm::exceptions::InvalidOperationException, "Cannot assemble expression from formula that contains illegal elements.");
         }

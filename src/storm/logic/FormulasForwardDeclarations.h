@@ -11,6 +11,7 @@ namespace storm {
         class BinaryPathFormula;
         class BinaryStateFormula;
         class BooleanLiteralFormula;
+        class BoundedGloballyFormula;
         class BoundedUntilFormula;
         class ConditionalFormula;
         class CumulativeRewardFormula;
