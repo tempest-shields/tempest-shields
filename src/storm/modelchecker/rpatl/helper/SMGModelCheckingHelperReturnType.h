@@ -17,7 +17,7 @@ namespace storm {
                 SMGSparseModelCheckingHelperReturnType(SMGSparseModelCheckingHelperReturnType const&) = delete;
                 SMGSparseModelCheckingHelperReturnType(SMGSparseModelCheckingHelperReturnType&&) = default;
 
-                SMGSparseModelCheckingHelperReturnType(std::vector<ValueType>&& values, storm::storage::BitVector& relevantStates, std::unique_ptr<storm::storage::Scheduler<ValueType>>&& scheduler = nullptr, std::vector<ValueType>&& choiceValues = nullptr) : values(std::move(values)), relevantStates(relevantStates), scheduler(std::move(scheduler)), choiceValues(std::move(choiceValues)) {
+                SMGSparseModelCheckingHelperReturnType(std::vector<ValueType>&& values, storm::storage::BitVector&& relevantStates = nullptr, std::unique_ptr<storm::storage::Scheduler<ValueType>>&& scheduler = nullptr, std::vector<ValueType>&& choiceValues = nullptr) : values(std::move(values)), relevantStates(relevantStates), scheduler(std::move(scheduler)), choiceValues(std::move(choiceValues)) {
                     // Intentionally left empty.
                 }
 
