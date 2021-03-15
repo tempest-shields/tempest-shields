@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <sstream>
+
 #include "storm/storage/memorystructure/MemoryStructure.h"
 #include "storm/storage/SchedulerChoice.h"
 
@@ -117,10 +119,14 @@ namespace storm {
              */
              void printJsonToStream(std::ostream& out, std::shared_ptr<storm::models::sparse::Model<ValueType>> model = nullptr, bool skipUniqueChoices = false) const;
 
+             void setPrintUndefinedChoices(bool value = true);
+
         private:
 
             boost::optional<storm::storage::MemoryStructure> memoryStructure;
             std::vector<std::vector<SchedulerChoice<ValueType>>> schedulerChoices;
+
+            bool printUndefinedChoices = false;
         protected:
             uint_fast64_t numOfUndefinedChoices;
             uint_fast64_t numOfDeterministicChoices;

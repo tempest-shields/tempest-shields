@@ -100,62 +100,66 @@ namespace storm {
             uint_fast64_t numOfSkippedStatesWithUniqueChoice = 0;
             out << std::setw(widthOfStates) << "model state:" << "    " << (isMemorylessScheduler() ? "" : " memory:     ") << "choice(s)" << std::endl;
             for (uint_fast64_t state = 0; state < schedulerChoiceMapping.front().size(); ++state) {
-                    // Print the state info
-                    if (stateValuationsGiven) {
-                        out << std::setw(widthOfStates)  << (std::to_string(state) + ": " + model->getStateValuations().getStateInfo(state));
-                    } else {
-                        out << std::setw(widthOfStates) << state;
-                    }
-                    out << "    ";
+                std::stringstream stateString;
+                // Print the state info
+                if (stateValuationsGiven) {
+                    stateString << std::setw(widthOfStates)  << (std::to_string(state) + ": " + model->getStateValuations().getStateInfo(state));
+                } else {
+                    stateString << std::setw(widthOfStates) << state;
+                }
+                stateString << "    ";
 
-                    bool firstChoiceIndex = true;
-                    for(uint choiceIndex = 0; choiceIndex < schedulerChoiceMapping[0][state].size(); choiceIndex++) {
-                        SchedulerChoice<ValueType> const& choice = schedulerChoiceMapping[0][state][choiceIndex];
-                        if(firstChoiceIndex) {
-                            firstChoiceIndex = false;
-                            out << std::to_string(choiceIndex) << ": ";
+                bool firstChoiceIndex = true;
+                for(uint choiceIndex = 0; choiceIndex < schedulerChoiceMapping[0][state].size(); choiceIndex++) {
+                    SchedulerChoice<ValueType> const& choice = schedulerChoiceMapping[0][state][choiceIndex];
+                    if(firstChoiceIndex) {
+                        firstChoiceIndex = false;
+                        stateString << std::to_string(choiceIndex) << ": ";
+                    } else {
+                        stateString << std::setw(widthOfStates + 5) << std::to_string(choiceIndex) << ": ";
+                    }
+                    if (choice.isDefined()) {
+                        if (choice.isDeterministic()) {
+                            if (choiceOriginsGiven) {
+                                stateString << model->getChoiceOrigins()->getChoiceInfo(model->getTransitionMatrix().getRowGroupIndices()[state] + choice.getDeterministicChoice());
+                            } else {
+                                stateString << choice.getDeterministicChoice();
+                            }
+                            if (choiceLabelsGiven) {
+                                auto choiceLabels = model->getChoiceLabeling().getLabelsOfChoice(model->getTransitionMatrix().getRowGroupIndices()[state] + choice.getDeterministicChoice());
+                                stateString << " {" << boost::join(choiceLabels, ", ") << "}";
+                            }
                         } else {
-                            out << std::setw(widthOfStates + 5) << std::to_string(choiceIndex) << ": ";
-                        }
-                        if (choice.isDefined()) {
-                            if (choice.isDeterministic()) {
-                                if (choiceOriginsGiven) {
-                                    out << model->getChoiceOrigins()->getChoiceInfo(model->getTransitionMatrix().getRowGroupIndices()[state] + choice.getDeterministicChoice());
+                            bool firstChoice = true;
+                            for (auto const& choiceProbPair : choice.getChoiceAsDistribution()) {
+                                if (firstChoice) {
+                                    firstChoice = false;
                                 } else {
-                                    out << choice.getDeterministicChoice();
+                                    stateString << "   +    ";
+                                }
+                                stateString << choiceProbPair.second << ": (";
+                                if (choiceOriginsGiven) {
+                                    stateString << model->getChoiceOrigins()->getChoiceInfo(model->getTransitionMatrix().getRowGroupIndices()[state] + choiceProbPair.first);
+                                } else {
+                                    stateString << choiceProbPair.first;
                                 }
                                 if (choiceLabelsGiven) {
                                     auto choiceLabels = model->getChoiceLabeling().getLabelsOfChoice(model->getTransitionMatrix().getRowGroupIndices()[state] + choice.getDeterministicChoice());
-                                    out << " {" << boost::join(choiceLabels, ", ") << "}";
+                                    stateString << " {" << boost::join(choiceLabels, ", ") << "}";
                                 }
-                            } else {
-                                bool firstChoice = true;
-                                for (auto const& choiceProbPair : choice.getChoiceAsDistribution()) {
-                                    if (firstChoice) {
-                                        firstChoice = false;
-                                    } else {
-                                        out << "   +    ";
-                                    }
-                                    out << choiceProbPair.second << ": (";
-                                    if (choiceOriginsGiven) {
-                                        out << model->getChoiceOrigins()->getChoiceInfo(model->getTransitionMatrix().getRowGroupIndices()[state] + choiceProbPair.first);
-                                    } else {
-                                        out << choiceProbPair.first;
-                                    }
-                                    if (choiceLabelsGiven) {
-                                        auto choiceLabels = model->getChoiceLabeling().getLabelsOfChoice(model->getTransitionMatrix().getRowGroupIndices()[state] + choice.getDeterministicChoice());
-                                        out << " {" << boost::join(choiceLabels, ", ") << "}";
-                                    }
-                                    out << ")";
-                                }
+                                stateString << ")";
                             }
-                        } else {
-                            out << "undefined.";
                         }
-
-                        // Todo: print memory updates
-                        out << std::endl;
+                    } else {
+                        if(!this->printUndefinedChoices) goto skipStatesWithUndefinedChoices;
+                        stateString << "undefined.";
                     }
+                    // Todo: print memory updates
+                    stateString << std::endl;
+                }
+                out << stateString.str();
+                // jump to label if we find one undefined choice.
+                skipStatesWithUndefinedChoices:;
             }
         }
 
