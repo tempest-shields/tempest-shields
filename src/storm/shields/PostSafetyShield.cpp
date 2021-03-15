@@ -22,14 +22,14 @@ namespace tempest {
                     uint rowGroupSize = this->rowGroupIndices[state + 1] - this->rowGroupIndices[state];
                     auto maxProbabilityIndex = std::max_element(choice_it, choice_it + rowGroupSize) - choice_it;
                     ValueType maxProbability = *(choice_it + maxProbabilityIndex);
-                    if(!allowedValue<ValueType, IndexType>(maxProbability, maxProbability, this->shieldingExpression)) {
+                    if(!this->allowedValue(maxProbability, maxProbability, this->shieldingExpression)) {
                         STORM_LOG_WARN("No shielding action possible with absolute comparison for state with index " << state);
                         shield.setChoice(0, storm::storage::Distribution<ValueType, IndexType>(), state);
                         continue;
                     }
                     for(uint choice = 0; choice < rowGroupSize; choice++, choice_it++) {
                         storm::storage::Distribution<ValueType, IndexType> actionDistribution;
-                        if(allowedValue<ValueType, IndexType>(maxProbability, *choice_it, this->shieldingExpression)) {
+                        if(this->allowedValue(maxProbability, *choice_it, this->shieldingExpression)) {
                             actionDistribution.addProbability(choice, 1);
                         } else {
                             actionDistribution.addProbability(maxProbabilityIndex, 1);

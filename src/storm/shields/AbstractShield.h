@@ -26,8 +26,12 @@ namespace tempest {
             /*!
              * TODO
              */
-            //virtual storm::storage::Scheduler<ValueType>* construct() = 0;
             std::vector<IndexType> computeRowGroupSizes();
+
+            /*!
+             * TODO
+             */
+            bool allowedValue(ValueType const& max, ValueType const& v, std::shared_ptr<storm::logic::ShieldExpression const> const shieldExpression);
 
             /*!
              * TODO
@@ -46,10 +50,5 @@ namespace tempest {
 
             boost::optional<storm::storage::BitVector> coalitionStates;
         };
-
-        template<typename ValueType, typename IndexType>
-        bool allowedValue(ValueType const& max, ValueType const& v, std::shared_ptr<storm::logic::ShieldExpression const> const shieldExpression) {
-            return shieldExpression->isRelative() ? v >= shieldExpression->getValue() * max : v >= shieldExpression->getValue();
-        }
     }
 }

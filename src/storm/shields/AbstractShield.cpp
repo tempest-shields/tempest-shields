@@ -25,6 +25,11 @@ namespace tempest {
         }
 
         template<typename ValueType, typename IndexType>
+        bool AbstractShield<ValueType, IndexType>::allowedValue(ValueType const& max, ValueType const& v, std::shared_ptr<storm::logic::ShieldExpression const> const shieldExpression) {
+            return shieldExpression->isRelative() ? v >= shieldExpression->getValue() * max : v >= shieldExpression->getValue();
+        }
+
+        template<typename ValueType, typename IndexType>
         std::string AbstractShield<ValueType, IndexType>::getClassName() const {
             return std::string(boost::core::demangled_name(BOOST_CORE_TYPEID(*this)));
         }
