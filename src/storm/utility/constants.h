@@ -24,7 +24,7 @@ namespace storm {
     namespace storage {
         template<typename IndexType, typename ValueType> class MatrixEntry;
     }
-    
+
     template<typename RationalType>
     struct NumberTraits;
 
@@ -35,40 +35,78 @@ namespace storm {
             struct ElementLess {
                 typedef std::less<ValueType> type;
             };
-            
+
             struct DoubleLess {
                 bool operator()(double a, double b) const {
                     return (a == 0.0 && b > 0.0) || (b - a > 1e-17);
                 }
             };
-            
+
             template<>
             struct ElementLess<double> {
                 typedef DoubleLess type;
             };
 
             template<typename ValueType>
+            struct ElementLessEqual {
+                typedef std::less_equal<ValueType> type;
+            };
+
+            struct DoubleLessEqual {
+                bool operator()(double a, double b) const {
+                    return (a == 0.0 && b >= 0.0) || (b - a >= 1e-17);
+                }
+            };
+
+            template<>
+            struct ElementLessEqual<double> {
+                typedef DoubleLessEqual type;
+            };
+
+            template<typename ValueType>
             struct ElementGreater {
                 typedef std::greater<ValueType> type;
             };
-            
+
             struct DoubleGreater {
                 bool operator()(double a, double b) const {
                     return (b == 0.0 && a > 0.0) || (a - b > 1e-17);
                 }
             };
-            
+
             template<>
             struct ElementGreater<double> {
                 typedef DoubleGreater type;
             };
+
+            template<typename ValueType>
+            struct ElementGreaterEqual {
+                typedef std::greater_equal<ValueType> type;
+            };
+
+            struct DoubleGreaterEqual {
+                bool operator()(double a, double b) const {
+                    return (b == 0.0 && a >= 0.0) || (a - b >= 1e-17);
+                }
+            };
+
+            template<>
+            struct ElementGreaterEqual<double> {
+                typedef DoubleGreaterEqual type;
+            };
         }
-        
+
         template<typename ValueType>
         using ElementLess = typename detail::ElementLess<ValueType>::type;
 
         template<typename ValueType>
         using ElementGreater = typename detail::ElementGreater<ValueType>::type;
+
+        template<typename ValueType>
+        using ElementLessEqual = typename detail::ElementLessEqual<ValueType>::type;
+
+        template<typename ValueType>
+        using ElementGreaterEqual = typename detail::ElementGreaterEqual<ValueType>::type;
 
         template<typename ValueType>
         ValueType one();
@@ -84,7 +122,7 @@ namespace storm {
 
         template<typename ValueType>
         bool isZero(ValueType const& a);
-        
+
         template<typename ValueType>
         bool isNan(ValueType const& a);
 
@@ -93,7 +131,7 @@ namespace storm {
 
         template<typename ValueType>
         bool isAlmostOne(ValueType const& a);
-        
+
         template<typename ValueType>
         bool isConstant(ValueType const& a);
 
@@ -105,7 +143,7 @@ namespace storm {
 
         template<typename TargetType, typename SourceType>
         TargetType convertNumber(SourceType const& number);
-        
+
         template<typename ValueType>
         std::pair<ValueType, ValueType> asFraction(ValueType const& number);
 
@@ -114,28 +152,28 @@ namespace storm {
 
         template<typename IndexType, typename ValueType>
         storm::storage::MatrixEntry<IndexType, ValueType>& simplify(storm::storage::MatrixEntry<IndexType, ValueType>& matrixEntry);
-        
+
         template<typename IndexType, typename ValueType>
         storm::storage::MatrixEntry<IndexType, ValueType>&& simplify(storm::storage::MatrixEntry<IndexType, ValueType>&& matrixEntry);
 
         template<typename ValueType>
         std::pair<ValueType, ValueType> minmax(std::vector<ValueType> const& values);
-        
+
         template<typename ValueType>
         ValueType minimum(std::vector<ValueType> const& values);
-        
+
         template<typename ValueType>
         ValueType maximum(std::vector<ValueType> const& values);
-        
+
         template< typename K, typename ValueType>
         std::pair<ValueType, ValueType> minmax(std::map<K, ValueType> const& values);
-        
+
         template< typename K, typename ValueType>
         ValueType minimum(std::map<K, ValueType> const& values);
-        
+
         template<typename K, typename ValueType>
         ValueType maximum(std::map<K, ValueType> const& values);
-        
+
         template<typename ValueType>
         ValueType pow(ValueType const& value, int_fast64_t exponent);
 
@@ -147,7 +185,7 @@ namespace storm {
 
         template<typename ValueType>
         ValueType sqrt(ValueType const& number);
-        
+
         template<typename ValueType>
         ValueType abs(ValueType const& number);
 
@@ -183,7 +221,7 @@ namespace storm {
 
         template<typename IntegerType>
         IntegerType mod(IntegerType const& first, IntegerType const& second);
-        
+
         template<typename ValueType>
         std::string to_string(ValueType const& value);
     }
