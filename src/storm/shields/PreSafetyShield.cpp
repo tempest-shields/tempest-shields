@@ -13,17 +13,15 @@ namespace tempest {
         template<typename ValueType, typename IndexType>
         storm::storage::Scheduler<ValueType> PreSafetyShield<ValueType, IndexType>::construct() {
             storm::storage::Scheduler<ValueType> shield(this->rowGroupIndices.size() - 1);
-            STORM_LOG_DEBUG(this->rowGroupIndices.size());
-            STORM_LOG_DEBUG(this->relevantStates);
-            for(auto const& x : this->choiceValues) {
-                STORM_LOG_DEBUG(x << ",");
-            }
             auto choice_it = this->choiceValues.begin();
+            if(this->coalitionStates.is_initialized()) {
+                this->relevantStates &= this->coalitionStates.get();
+            }
             for(uint state = 0; state < this->rowGroupIndices.size() - 1; state++) {
                 if(this->relevantStates.get(state)) {
                     uint rowGroupSize = this->rowGroupIndices[state + 1] - this->rowGroupIndices[state];
                     storm::storage::Distribution<ValueType, IndexType> actionDistribution;
-                    ValueType maxProbability = *std::max_element(this->choiceValues.begin(), this->choiceValues.begin() + rowGroupSize);
+                    ValueType maxProbability = *std::max_element(choice_it, choice_it + rowGroupSize);
                     for(uint choice = 0; choice < rowGroupSize; choice++, choice_it++) {
                         if(allowedValue<ValueType, IndexType>(maxProbability, *choice_it, this->shieldingExpression)) {
                             actionDistribution.addProbability(choice, *choice_it);

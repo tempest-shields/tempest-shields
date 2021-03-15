@@ -26,7 +26,8 @@ namespace tempest {
             /*!
              * TODO
              */
-            virtual storm::storage::Scheduler<ValueType> construct() = 0;
+            //virtual storm::storage::Scheduler<ValueType>* construct() = 0;
+            std::vector<IndexType> computeRowGroupSizes();
 
             /*!
              * TODO

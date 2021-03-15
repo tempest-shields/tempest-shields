@@ -1,6 +1,7 @@
 #include "storm/shields/AbstractShield.h"
 
 #include <boost/core/typeinfo.hpp>
+
 namespace tempest {
     namespace shields {
 
@@ -12,6 +13,15 @@ namespace tempest {
         template<typename ValueType, typename IndexType>
         AbstractShield<ValueType, IndexType>::~AbstractShield() {
             // Intentionally left empty.
+        }
+
+        template<typename ValueType, typename IndexType>
+        std::vector<IndexType> AbstractShield<ValueType, IndexType>::computeRowGroupSizes() {
+            std::vector<IndexType> rowGroupSizes(this->rowGroupIndices.size() - 1);
+            for(uint rowGroupStartIndex = 0; rowGroupStartIndex < rowGroupSizes.size(); rowGroupStartIndex++) {
+                rowGroupSizes.at(rowGroupStartIndex) = this->rowGroupIndices[rowGroupStartIndex + 1] - this->rowGroupIndices[rowGroupStartIndex];
+            }
+            return rowGroupSizes;
         }
 
         template<typename ValueType, typename IndexType>
