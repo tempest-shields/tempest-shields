@@ -1,31 +1,31 @@
 #pragma once
 
 #include <cstdint>
-#include "storm/storage/memorystructure/MemoryStructure.h"
+#include <map>
 #include "storm/storage/SchedulerChoice.h"
+#include "storm/storage/Scheduler.h"
 
 namespace storm {
     namespace storage {
-        template <typename ValueType>
-        class PostScheduler;
+
         /*
+         * TODO needs obvious changes in all comment blocks
          * This class defines which action is chosen in a particular state of a non-deterministic model. More concretely, a scheduler maps a state s to i
          * if the scheduler takes the i-th action available in s (i.e. the choices are relative to the states).
          * A Choice can be undefined, deterministic
          */
         template <typename ValueType>
-        class Scheduler {
+        class PostScheduler : public Scheduler<ValueType> {
         public:
-            friend class PostScheduler<ValueType>;
-
+            typedef uint_fast64_t OldChoice;
             /*!
              * Initializes a scheduler for the given number of model states.
              *
              * @param numberOfModelStates number of model states
              * @param memoryStructure the considered memory structure. If not given, the scheduler is considered as memoryless.
              */
-            Scheduler(uint_fast64_t numberOfModelStates, boost::optional<storm::storage::MemoryStructure> const& memoryStructure = boost::none);
-            Scheduler(uint_fast64_t numberOfModelStates, boost::optional<storm::storage::MemoryStructure>&& memoryStructure);
+            PostScheduler(uint_fast64_t numberOfModelStates, std::vector<uint_fast64_t> numberOfChoicesPerState, boost::optional<storm::storage::MemoryStructure> const& memoryStructure = boost::none);
+            PostScheduler(uint_fast64_t numberOfModelStates, std::vector<uint_fast64_t> numberOfChoicesPerState, boost::optional<storm::storage::MemoryStructure>&& memoryStructure);
 
             /*!
              * Sets the choice defined by the scheduler for the given state.
@@ -34,7 +34,7 @@ namespace storm {
              * @param modelState The state of the model for which to set the choice.
              * @param memoryState The state of the memoryStructure for which to set the choice.
              */
-            void setChoice(SchedulerChoice<ValueType> const& choice, uint_fast64_t modelState, uint_fast64_t memoryState = 0);
+            void setChoice(OldChoice const& oldChoice, SchedulerChoice<ValueType> const& newChoice, uint_fast64_t modelState, uint_fast64_t memoryState = 0);
 
             /*!
              * Is the scheduler defined on the states indicated by the selected-states bitvector?
@@ -55,17 +55,12 @@ namespace storm {
              * @param state The state for which to get the choice.
              * @param memoryState the memory state which we consider.
              */
-            SchedulerChoice<ValueType> const& getChoice(uint_fast64_t modelState, uint_fast64_t memoryState = 0) const;
+            SchedulerChoice<ValueType> const& getChoice(uint_fast64_t modelState, OldChoice oldChoice, uint_fast64_t memoryState = 0) ;
 
             /*!
              * Compute the Action Support: A bit vector that indicates all actions that are selected with positive probability in some memory state
              */
-            storm::storage::BitVector computeActionSupport(std::vector<uint64_t> const& nondeterministicChoiceIndicies) const;
-
-            /*!
-             * Retrieves whether there is a pair of model and memory state for which the choice is undefined.
-             */
-            bool isPartialScheduler() const;
+            //storm::storage::BitVector computeActionSupport(std::vector<uint64_t> const& nondeterministicChoiceIndicies) const;
 
             /*!
              * Retrieves whether all defined choices are deterministic
@@ -80,27 +75,12 @@ namespace storm {
             /*!
              * Retrieves the number of memory states this scheduler considers.
              */
-            uint_fast64_t getNumberOfMemoryStates() const;
+            //uint_fast64_t getNumberOfMemoryStates() const;
 
             /*!
              * Retrieves the memory structure associated with this scheduler
              */
-            boost::optional<storm::storage::MemoryStructure> const& getMemoryStructure() const;
-
-            /*!
-             * Returns a copy of this scheduler with the new value type
-             */
-            template<typename NewValueType>
-			Scheduler<NewValueType> toValueType() const {
-                uint_fast64_t numModelStates = schedulerChoices.front().size();
-                Scheduler<NewValueType> newScheduler(numModelStates, memoryStructure);
-                for (uint_fast64_t memState = 0; memState < this->getNumberOfMemoryStates(); ++memState) {
-                    for (uint_fast64_t modelState = 0; modelState < numModelStates; ++modelState) {
-                        newScheduler.setChoice(getChoice(modelState, memState).template toValueType<NewValueType>(), modelState, memState);
-                    }
-                }
-				return newScheduler;
-			}
+            //boost::optional<storm::storage::MemoryStructure> const& getMemoryStructure() const;
 
             /*!
              * Prints the scheduler to the given output stream.
@@ -110,20 +90,11 @@ namespace storm {
              *                          Requires a model to be given.
              */
             void printToStream(std::ostream& out, std::shared_ptr<storm::models::sparse::Model<ValueType>> model = nullptr, bool skipUniqueChoices = false) const;
-
-
-            /*!
-             * Prints the scheduler in json format to the given output stream.
-             */
-             void printJsonToStream(std::ostream& out, std::shared_ptr<storm::models::sparse::Model<ValueType>> model = nullptr, bool skipUniqueChoices = false) const;
-
         private:
+            std::vector<std::vector<std::vector<SchedulerChoice<ValueType>>>> schedulerChoiceMapping;
 
-            boost::optional<storm::storage::MemoryStructure> memoryStructure;
-            std::vector<std::vector<SchedulerChoice<ValueType>>> schedulerChoices;
-        protected:
-            uint_fast64_t numOfUndefinedChoices;
-            uint_fast64_t numOfDeterministicChoices;
+            std::vector<uint_fast64_t> numberOfChoicesPerState;
+            uint_fast64_t numberOfChoices;
         };
     }
 }
