@@ -10,11 +10,24 @@
 #include "storm/storage/BitVector.h"
 #include "storm/storage/Distribution.h"
 
+#include "storm/utility/constants.h"
+
 #include "storm/solver/OptimizationDirection.h"
+
 #include "storm/logic/ShieldExpression.h"
 
 namespace tempest {
     namespace shields {
+        namespace utility {
+            template<typename ValueType, typename Compare, bool relative>
+            struct ChoiceFilter {
+                bool operator()(ValueType max, ValueType v, double shieldValue) {
+                    Compare compare;
+                    if(relative) return compare(v, max * shieldValue);
+                    else return compare(v, max);
+                }
+            };
+        }
 
         template<typename ValueType, typename IndexType>
         class AbstractShield {
@@ -51,7 +64,6 @@ namespace tempest {
             storm::OptimizationDirection optimizationDirection;
 
             storm::storage::BitVector relevantStates;
-
             boost::optional<storm::storage::BitVector> coalitionStates;
         };
     }
