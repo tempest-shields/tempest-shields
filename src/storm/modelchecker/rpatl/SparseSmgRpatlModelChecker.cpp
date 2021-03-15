@@ -153,7 +153,7 @@ namespace storm {
             STORM_LOG_DEBUG(ret.values);
             std::unique_ptr<CheckResult> result(new ExplicitQuantitativeCheckResult<ValueType>(std::move(ret.values)));
             if(checkTask.isShieldingTask()) {
-                tempest::shields::createShield<ValueType>(std::make_shared<storm::models::sparse::Smg<ValueType>>(this->getModel()), std::move(ret.choiceValues), checkTask.getShieldingExpression(), std::move(ret.relevantStates), statesOfCoalition);
+                tempest::shields::createShield<ValueType>(std::make_shared<storm::models::sparse::Smg<ValueType>>(this->getModel()), std::move(ret.choiceValues), checkTask.getShieldingExpression(), checkTask.getOptimizationDirection(), std::move(ret.relevantStates), statesOfCoalition);
             } else if (checkTask.isProduceSchedulersSet() && ret.scheduler) {
                 result->asExplicitQuantitativeCheckResult<ValueType>().setScheduler(std::move(ret.scheduler));
             }

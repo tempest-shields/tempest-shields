@@ -30,14 +30,14 @@ namespace tempest {
         }
 
         template<typename ValueType, typename IndexType = storm::storage::sparse::state_type>
-        void createShield(std::shared_ptr<storm::models::sparse::Model<ValueType>> model, std::vector<ValueType> const& choiceValues, std::shared_ptr<storm::logic::ShieldExpression const> const& shieldingExpression, storm::storage::BitVector relevantStates, boost::optional<storm::storage::BitVector> coalitionStates) {
+        void createShield(std::shared_ptr<storm::models::sparse::Model<ValueType>> model, std::vector<ValueType> const& choiceValues, std::shared_ptr<storm::logic::ShieldExpression const> const& shieldingExpression, storm::OptimizationDirection optimizationDirection, storm::storage::BitVector relevantStates, boost::optional<storm::storage::BitVector> coalitionStates) {
             std::ofstream stream;
             storm::utility::openFile(shieldFilename(shieldingExpression), stream);
             if(shieldingExpression->isPreSafetyShield()) {
-                PreSafetyShield<ValueType, IndexType> shield(model->getTransitionMatrix().getRowGroupIndices(), choiceValues, shieldingExpression, relevantStates, coalitionStates);
+                PreSafetyShield<ValueType, IndexType> shield(model->getTransitionMatrix().getRowGroupIndices(), choiceValues, shieldingExpression, optimizationDirection, relevantStates, coalitionStates);
                 shield.construct().printToStream(stream, model);
             } else if(shieldingExpression->isPostSafetyShield()) {
-                PostSafetyShield<ValueType, IndexType> shield(model->getTransitionMatrix().getRowGroupIndices(), choiceValues, shieldingExpression, relevantStates, coalitionStates);
+                PostSafetyShield<ValueType, IndexType> shield(model->getTransitionMatrix().getRowGroupIndices(), choiceValues, shieldingExpression, optimizationDirection, relevantStates, coalitionStates);
                 shield.construct().printToStream(stream, model);
             } else if(shieldingExpression->isOptimalShield()) {
                 storm::utility::closeFile(stream);
