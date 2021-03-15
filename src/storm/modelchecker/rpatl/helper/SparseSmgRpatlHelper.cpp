@@ -52,7 +52,7 @@ namespace storm {
                 if (produceScheduler) {
                     scheduler = std::make_unique<storm::storage::Scheduler<ValueType>>(expandScheduler(viHelper.extractScheduler(), psiStates, ~phiStates));
                 }
-                return SMGSparseModelCheckingHelperReturnType<ValueType>(std::move(x), relevantStates, std::move(scheduler), std::move(constrainedChoiceValues));
+                return SMGSparseModelCheckingHelperReturnType<ValueType>(std::move(x), std::move(relevantStates), std::move(scheduler), std::move(constrainedChoiceValues));
             }
 
             template<typename ValueType>
@@ -90,7 +90,7 @@ namespace storm {
             }
 
             template<typename ValueType>
-            MDPSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeNextProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint) {
+            SMGSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeNextProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint) {
                 // create vector x for result, bitvector allStates with a true for each state and a vector b for the probability to get to state psi
                 std::vector<ValueType> x = std::vector<ValueType>(transitionMatrix.getRowGroupCount(), storm::utility::zero<ValueType>());
                 storm::storage::BitVector allStates = storm::storage::BitVector(transitionMatrix.getRowGroupCount(), true);
@@ -104,14 +104,17 @@ namespace storm {
 
                 // create multiplier and execute the calculation for 1 step
                 auto multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, transitionMatrix);
+                std::vector<ValueType> choiceValues = std::vector<ValueType>(transitionMatrix.getRowCount(), storm::utility::zero<ValueType>());
+                if (true) {
+                    multiplier->multiply(env, x, &b, choiceValues);
+                }
                 multiplier->multiplyAndReduce(env, goal.direction(), x, &b, x, nullptr, &statesOfCoalition);
 
-                STORM_LOG_DEBUG("x = " << storm::utility::vector::toString(x));
-                return MDPSparseModelCheckingHelperReturnType<ValueType>(std::move(x));
+                return SMGSparseModelCheckingHelperReturnType<ValueType>(std::move(x), std::move(allStates), nullptr, std::move(choiceValues));
             }
 
             template<typename ValueType>
-            MDPSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeBoundedGloballyProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint,uint64_t lowerBound, uint64_t upperBound) {
+            SMGSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeBoundedGloballyProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint,uint64_t lowerBound, uint64_t upperBound) {
                 auto solverEnv = env;
                 solverEnv.solver().minMax().setMethod(storm::solver::MinMaxMethod::ValueIteration, false);
 
@@ -149,9 +152,7 @@ namespace storm {
 
                 viHelper.fillResultVector(x, relevantStates);
 
-                STORM_LOG_DEBUG("x = " << x);
-
-                return MDPSparseModelCheckingHelperReturnType<ValueType>(std::move(x), std::move(scheduler));
+                return SMGSparseModelCheckingHelperReturnType<ValueType>(std::move(x), std::move(relevantStates), std::move(scheduler), std::move(constrainedChoiceValues));
             }
 
             template class SparseSmgRpatlHelper<double>;
