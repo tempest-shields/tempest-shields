@@ -150,9 +150,10 @@ namespace storm {
             ExplicitQualitativeCheckResult const& rightResult = rightResultPointer->asExplicitQualitativeCheckResult();
 
             auto ret = storm::modelchecker::helper::SparseSmgRpatlHelper<ValueType>::computeUntilProbabilities(env, storm::solver::SolveGoal<ValueType>(this->getModel(), checkTask), this->getModel().getTransitionMatrix(), this->getModel().getBackwardTransitions(), leftResult.getTruthValuesVector(), rightResult.getTruthValuesVector(), checkTask.isQualitativeSet(), statesOfCoalition, checkTask.isProduceSchedulersSet(), checkTask.getHint());
+            STORM_LOG_DEBUG(ret.values);
             std::unique_ptr<CheckResult> result(new ExplicitQuantitativeCheckResult<ValueType>(std::move(ret.values)));
             if(checkTask.isShieldingTask()) {
-                result->asExplicitQuantitativeCheckResult<ValueType>().setScheduler(std::make_unique<storm::storage::Scheduler<ValueType>>(tempest::shields::createShield<ValueType>(this->getModel().getTransitionMatrix().getRowGroupIndices(), std::move(ret.choiceValues), checkTask.getShieldingExpression(), std::move(ret.relevantStates), statesOfCoalition)));
+                tempest::shields::createShield<ValueType>(std::make_shared<storm::models::sparse::Smg<ValueType>>(this->getModel()), std::move(ret.choiceValues), checkTask.getShieldingExpression(), std::move(ret.relevantStates), statesOfCoalition);
             } else if (checkTask.isProduceSchedulersSet() && ret.scheduler) {
                 result->asExplicitQuantitativeCheckResult<ValueType>().setScheduler(std::move(ret.scheduler));
             }
@@ -213,9 +214,7 @@ namespace storm {
             auto values = helper.computeLongRunAverageRewards(env, rewardModel.get());
 
             std::unique_ptr<CheckResult> result(new ExplicitQuantitativeCheckResult<ValueType>(std::move(values)));
-            if(checkTask.isShieldingTask()) {
-                //result->asExplicitQuantitativeCheckResult<ValueType>().setScheduler(std::make_unique<storm::storage::Scheduler<ValueType>>(tempest::shields::createShield<ValueType>(this->getModel().getTransitionMatrix().getRowGroupIndices(), {}, checkTask.getShieldingExpression(), coalitionStates)));
-            } else if (checkTask.isProduceSchedulersSet()) {
+            if (checkTask.isProduceSchedulersSet()) {
                 result->asExplicitQuantitativeCheckResult<ValueType>().setScheduler(std::make_unique<storm::storage::Scheduler<ValueType>>(helper.extractScheduler()));
             }
 
