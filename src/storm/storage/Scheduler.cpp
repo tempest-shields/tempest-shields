@@ -204,7 +204,7 @@ namespace storm {
                                     stateString << choiceProbPair.first;
                                 }
                                 if (choiceLabelsGiven) {
-                                    auto choiceLabels = model->getChoiceLabeling().getLabelsOfChoice(model->getTransitionMatrix().getRowGroupIndices()[state] + choice.getDeterministicChoice());
+                                    auto choiceLabels = model->getChoiceLabeling().getLabelsOfChoice(model->getTransitionMatrix().getRowGroupIndices()[state] + choiceProbPair.first);
                                     stateString << " {" << boost::join(choiceLabels, ", ") << "}";
                                 }
                                 stateString << ")";
