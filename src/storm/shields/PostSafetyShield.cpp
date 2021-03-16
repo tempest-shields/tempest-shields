@@ -12,6 +12,25 @@ namespace tempest {
 
         template<typename ValueType, typename IndexType>
         storm::storage::PostScheduler<ValueType> PostSafetyShield<ValueType, IndexType>::construct() {
+            if (this->getOptimizationDirection() == storm::OptimizationDirection::Minimize) {
+                if(this->shieldingExpression->isRelative()) {
+                    return constructWithCompareType<tempest::shields::utility::ChoiceFilter<ValueType, storm::utility::ElementLessEqual<ValueType>, true>>();
+                } else {
+                    return constructWithCompareType<tempest::shields::utility::ChoiceFilter<ValueType, storm::utility::ElementLessEqual<ValueType>, false>>();
+                }
+            } else {
+                if(this->shieldingExpression->isRelative()) {
+                    return constructWithCompareType<tempest::shields::utility::ChoiceFilter<ValueType, storm::utility::ElementGreaterEqual<ValueType>, true>>();
+                } else {
+                    return constructWithCompareType<tempest::shields::utility::ChoiceFilter<ValueType, storm::utility::ElementGreaterEqual<ValueType>, false>>();
+                }
+            }
+        }
+
+        template<typename ValueType, typename IndexType>
+        template<typename ChoiceFilter>
+        storm::storage::PostScheduler<ValueType> PostSafetyShield<ValueType, IndexType>::constructWithCompareType() {
+            ChoiceFilter choiceFilter;
             storm::storage::PostScheduler<ValueType> shield(this->rowGroupIndices.size() - 1, this->computeRowGroupSizes());
             auto choice_it = this->choiceValues.begin();
             if(this->coalitionStates.is_initialized()) {
@@ -22,14 +41,14 @@ namespace tempest {
                     uint rowGroupSize = this->rowGroupIndices[state + 1] - this->rowGroupIndices[state];
                     auto maxProbabilityIndex = std::max_element(choice_it, choice_it + rowGroupSize) - choice_it;
                     ValueType maxProbability = *(choice_it + maxProbabilityIndex);
-                    if(!this->allowedValue(maxProbability, maxProbability, this->shieldingExpression)) {
+                    if(!choiceFilter(maxProbability, maxProbability, this->shieldingExpression->getValue())) {
                         STORM_LOG_WARN("No shielding action possible with absolute comparison for state with index " << state);
                         shield.setChoice(0, storm::storage::Distribution<ValueType, IndexType>(), state);
                         continue;
                     }
                     for(uint choice = 0; choice < rowGroupSize; choice++, choice_it++) {
                         storm::storage::Distribution<ValueType, IndexType> actionDistribution;
-                        if(this->allowedValue(maxProbability, *choice_it, this->shieldingExpression)) {
+                        if(choiceFilter(*choice_it, maxProbability, this->shieldingExpression->getValue())) {
                             actionDistribution.addProbability(choice, 1);
                         } else {
                             actionDistribution.addProbability(maxProbabilityIndex, 1);
