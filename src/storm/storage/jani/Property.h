@@ -156,7 +156,7 @@ namespace storm {
             std::set<storm::expressions::Variable> undefinedConstants;
 
             // TODO might need refactoring, this cannot be expressed by JANI yet, so this is totally wrong here.
-            boost::optional<std::shared_ptr<storm::logic::ShieldExpression const>> shieldingExpression;
+            boost::optional<std::shared_ptr<storm::logic::ShieldExpression const>> shieldingExpression = boost::none;
         };
 
 

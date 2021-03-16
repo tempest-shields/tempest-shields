@@ -87,7 +87,7 @@ namespace storm {
         }
 
         bool Property::isShieldingProperty() const {
-            return shieldingExpression.is_initialized();
+            return shieldingExpression != boost::none && shieldingExpression.get() != nullptr;
         }
 
         std::shared_ptr<storm::logic::ShieldExpression const> Property::getShieldingExpression() const {
