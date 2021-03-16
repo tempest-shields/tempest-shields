@@ -21,10 +21,10 @@ namespace tempest {
         namespace utility {
             template<typename ValueType, typename Compare, bool relative>
             struct ChoiceFilter {
-                bool operator()(ValueType max, ValueType v, double shieldValue) {
+                bool operator()(ValueType v, ValueType max, double shieldValue) {
                     Compare compare;
                     if(relative) return compare(v, max * shieldValue);
-                    else return compare(v, max);
+                    else return compare(v, shieldValue);
                 }
             };
         }
