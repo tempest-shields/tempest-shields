@@ -54,7 +54,7 @@ namespace storm {
 
             struct DoubleLessEqual {
                 bool operator()(double a, double b) const {
-                    return (a == 0.0 && b >= 0.0) || (b - a >= 1e-17);
+                    return (a == 0.0 && b >= 0.0) || std::fabs(a - b) < 1e-17 || (b - a >= 1e-17);
                 }
             };
 
@@ -86,7 +86,7 @@ namespace storm {
 
             struct DoubleGreaterEqual {
                 bool operator()(double a, double b) const {
-                    return (b == 0.0 && a >= 0.0) || (a - b >= 1e-17);
+                    return (b == 0.0 && a >= 0.0) || std::fabs(a - b) < 1e-17 || (a - b > 1e-17);
                 }
             };
 
