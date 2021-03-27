@@ -48,6 +48,7 @@ namespace storm {
                     viHelper.getChoiceValues(env, x, constrainedChoiceValues);
                 }
                 viHelper.fillResultVector(x, relevantStates, psiStates);
+                viHelper.fillChoiceValuesVector(constrainedChoiceValues, relevantStates, transitionMatrix.getRowGroupIndices());
 
                 if (produceScheduler) {
                     scheduler = std::make_unique<storm::storage::Scheduler<ValueType>>(expandScheduler(viHelper.extractScheduler(), psiStates, ~phiStates));
@@ -86,6 +87,9 @@ namespace storm {
                 for (auto& element : result.values) {
                     element = storm::utility::one<ValueType>() - element;
                 }
+                for (auto& element : result.choiceValues) {
+                    element = storm::utility::one<ValueType>() - element;
+                }
                 return result;
             }
 
@@ -120,6 +124,7 @@ namespace storm {
 
                 // Relevant states are safe states - the psiStates.
                 storm::storage::BitVector relevantStates = psiStates;
+                STORM_LOG_DEBUG(relevantStates);
 
                 // Initialize the solution vector.
                 std::vector<ValueType> x = std::vector<ValueType>(relevantStates.getNumberOfSetBits(), storm::utility::one<ValueType>());
@@ -149,9 +154,11 @@ namespace storm {
 
                     }*/
                 }
+                viHelper.fillChoiceValuesVector(constrainedChoiceValues, relevantStates, transitionMatrix.getRowGroupIndices());
 
                 viHelper.fillResultVector(x, relevantStates);
-
+                viHelper.fillChoiceValuesVector(constrainedChoiceValues, relevantStates, transitionMatrix.getRowGroupIndices());
+                STORM_LOG_DEBUG(x);
                 return SMGSparseModelCheckingHelperReturnType<ValueType>(std::move(x), std::move(relevantStates), std::move(scheduler), std::move(constrainedChoiceValues));
             }
 

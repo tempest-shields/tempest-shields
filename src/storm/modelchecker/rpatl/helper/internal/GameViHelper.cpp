@@ -150,6 +150,21 @@ namespace storm {
                 }
 
                 template <typename ValueType>
+                void GameViHelper<ValueType>::fillChoiceValuesVector(std::vector<ValueType>& choiceValues, storm::storage::BitVector psiStates, std::vector<storm::storage::SparseMatrix<double>::index_type> rowGroupIndices) {
+                    std::vector<ValueType> allChoices = std::vector<ValueType>(rowGroupIndices.at(rowGroupIndices.size() - 1), storm::utility::zero<ValueType>());
+                    auto choice_it = choiceValues.begin();
+                    for(uint state = 0; state < rowGroupIndices.size() - 1; state++) {
+                        uint rowGroupSize = rowGroupIndices[state + 1] - rowGroupIndices[state];
+                        if (psiStates.get(state)) {
+                            for(uint choice = 0; choice < rowGroupSize; choice++, choice_it++) {
+                                allChoices.at(rowGroupIndices.at(state) + choice) = *choice_it;
+                            }
+                        }
+                    }
+                    choiceValues = allChoices;
+                }
+
+                template <typename ValueType>
                 void GameViHelper<ValueType>::setProduceScheduler(bool value) {
                     _produceScheduler = value;
                 }
