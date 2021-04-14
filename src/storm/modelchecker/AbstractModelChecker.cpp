@@ -237,6 +237,10 @@ namespace storm {
                 return this->checkBooleanLiteralFormula(env, checkTask.substituteFormula(stateFormula.asBooleanLiteralFormula()));
             } else if (stateFormula.isGameFormula()) {
                 return this->checkGameFormula(env, checkTask.substituteFormula(stateFormula.asGameFormula()));
+            } else if (stateFormula.isMultiObjectiveFormula()){
+                return this->checkMultiObjectiveFormula(env, checkTask.substituteFormula(stateFormula.asMultiObjectiveFormula()));
+            } else if (stateFormula.isQuantileFormula()){
+                return this->checkQuantileFormula(env, checkTask.substituteFormula(stateFormula.asQuantileFormula()));
             }
             STORM_LOG_THROW(false, storm::exceptions::InvalidArgumentException, "The given formula '" << stateFormula << "' is invalid.");
         }
