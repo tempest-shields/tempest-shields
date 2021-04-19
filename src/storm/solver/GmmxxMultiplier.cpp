@@ -88,7 +88,7 @@ namespace storm {
         }
 
         template<typename ValueType>
-        void GmmxxMultiplier<ValueType>::multiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
+        void GmmxxMultiplier<ValueType>::multiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector const* dirOverride) const {
             initialize();
             std::vector<ValueType>* target = &result;
             if (&x == &result) {
@@ -110,7 +110,7 @@ namespace storm {
         }
 
         template<typename ValueType>
-        void GmmxxMultiplier<ValueType>::multiplyAndReduceGaussSeidel(Environment const& env, OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType>& x, std::vector<ValueType> const* b, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride, bool backwards) const {
+        void GmmxxMultiplier<ValueType>::multiplyAndReduceGaussSeidel(Environment const& env, OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType>& x, std::vector<ValueType> const* b, std::vector<uint_fast64_t>* choices, storm::storage::BitVector const* dirOverride, bool backwards) const {
             initialize();
             multAddReduceHelper(dir, rowGroupIndices, x, b, x, choices, dirOverride, backwards);
         }
@@ -135,7 +135,7 @@ namespace storm {
         }
 
         template<typename ValueType>
-        void GmmxxMultiplier<ValueType>::multAddReduceHelper(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices, storm::storage::BitVector* dirOverride, bool backwards) const {
+        void GmmxxMultiplier<ValueType>::multAddReduceHelper(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices, storm::storage::BitVector const* dirOverride, bool backwards) const {
             bool isOverridden = (dirOverride && !dirOverride->empty()) ? true : false;
             if (dir == storm::OptimizationDirection::Minimize) {
                 if(isOverridden) {
@@ -170,7 +170,7 @@ namespace storm {
 
         template<typename ValueType>
         template<typename Compare, bool backwards, bool directionOverridden>
-        void GmmxxMultiplier<ValueType>::multAddReduceHelper(std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices, storm::storage::BitVector* dirOverride) const {
+        void GmmxxMultiplier<ValueType>::multAddReduceHelper(std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices, storm::storage::BitVector const* dirOverride) const {
             Compare compare;
             typedef std::vector<ValueType> VectorType;
             typedef gmm::csr_matrix<ValueType> MatrixType;
@@ -304,7 +304,7 @@ namespace storm {
 
         template<>
         template<typename Compare, bool backwards, bool directionOverridden>
-        void GmmxxMultiplier<storm::RationalFunction>::multAddReduceHelper(std::vector<uint64_t> const& rowGroupIndices, std::vector<storm::RationalFunction> const& x, std::vector<storm::RationalFunction> const* b, std::vector<storm::RationalFunction>& result, std::vector<uint64_t>* choices, storm::storage::BitVector* dirOverride) const {
+        void GmmxxMultiplier<storm::RationalFunction>::multAddReduceHelper(std::vector<uint64_t> const& rowGroupIndices, std::vector<storm::RationalFunction> const& x, std::vector<storm::RationalFunction> const* b, std::vector<storm::RationalFunction>& result, std::vector<uint64_t>* choices, storm::storage::BitVector const* dirOverride) const {
             STORM_LOG_THROW(false, storm::exceptions::NotSupportedException, "Operation not supported for this data type.");
         }
 
@@ -330,7 +330,7 @@ namespace storm {
         template<typename ValueType, typename Compare>
         class TbbMultAddReduceFunctor {
         public:
-            TbbMultAddReduceFunctor(std::vector<uint64_t> const& rowGroupIndices, gmm::csr_matrix<ValueType> const& matrix, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices, storm::storage::BitVector* dirOverride = nullptr) : rowGroupIndices(rowGroupIndices), matrix(matrix), x(x), b(b), result(result), choices(choices), dirOverride(dirOverride) {
+            TbbMultAddReduceFunctor(std::vector<uint64_t> const& rowGroupIndices, gmm::csr_matrix<ValueType> const& matrix, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices, storm::storage::BitVector const* dirOverride = nullptr) : rowGroupIndices(rowGroupIndices), matrix(matrix), x(x), b(b), result(result), choices(choices), dirOverride(dirOverride) {
                 // Intentionally left empty.
             }
 
@@ -429,12 +429,12 @@ namespace storm {
             std::vector<ValueType> const* b;
             std::vector<ValueType>& result;
             std::vector<uint64_t>* choices;
-            boost::optional<storm::storage::BitVector*> dirOverride = boost::none;
+            boost::optional<storm::storage::BitVector*> const dirOverride = boost::none;
         };
 #endif
 
         template<typename ValueType>
-        void GmmxxMultiplier<ValueType>::multAddReduceParallel(storm::solver::OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices, storm::storage::BitVector* dirOverride) const {
+        void GmmxxMultiplier<ValueType>::multAddReduceParallel(storm::solver::OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint64_t>* choices, storm::storage::BitVector const* dirOverride) const {
 #ifdef STORM_HAVE_INTELTBB
             if (dir == storm::OptimizationDirection::Minimize) {
                 tbb::parallel_for(tbb::blocked_range<unsigned long>(0, rowGroupIndices.size() - 1, 100), TbbMultAddReduceFunctor<ValueType, storm::utility::ElementLess<ValueType>>(rowGroupIndices, this->gmmMatrix, x, b, result, choices, dirOverride));
@@ -448,7 +448,7 @@ namespace storm {
         }
 
         template<>
-        void GmmxxMultiplier<storm::RationalFunction>::multAddReduceParallel(storm::solver::OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<storm::RationalFunction> const& x, std::vector<storm::RationalFunction> const* b, std::vector<storm::RationalFunction>& result, std::vector<uint64_t>* choices, storm::storage::BitVector* dirOverride) const {
+        void GmmxxMultiplier<storm::RationalFunction>::multAddReduceParallel(storm::solver::OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<storm::RationalFunction> const& x, std::vector<storm::RationalFunction> const* b, std::vector<storm::RationalFunction>& result, std::vector<uint64_t>* choices, storm::storage::BitVector const* dirOverride) const {
             STORM_LOG_THROW(false, storm::exceptions::NotSupportedException, "This operation is not supported.");
         }
 

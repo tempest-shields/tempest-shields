@@ -1753,7 +1753,7 @@ namespace storm {
 #endif
 
         template<typename ValueType>
-        void SparseMatrix<ValueType>::multiplyAndReduceForward(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
+        void SparseMatrix<ValueType>::multiplyAndReduceForward(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector const* dirOverride) const {
             if(dirOverride && !dirOverride->empty()) {
                 if (dir == OptimizationDirection::Minimize) {
                     multiplyAndReduceForward<storm::utility::ElementLess<ValueType>, true>(rowGroupIndices, vector, summand, result, choices, dirOverride);
@@ -1771,7 +1771,7 @@ namespace storm {
 
         template<typename ValueType>
         template<typename Compare, bool dirOverridden>
-        void SparseMatrix<ValueType>::multiplyAndReduceForward(std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
+        void SparseMatrix<ValueType>::multiplyAndReduceForward(std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector const* dirOverride) const {
             Compare compare;
             auto elementIt = this->begin();
             auto rowGroupIt = rowGroupIndices.begin();
@@ -1862,13 +1862,13 @@ namespace storm {
 
 #ifdef STORM_HAVE_CARL
         template<>
-        void SparseMatrix<storm::RationalFunction>::multiplyAndReduceForward(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<storm::RationalFunction> const& vector, std::vector<storm::RationalFunction> const* b, std::vector<storm::RationalFunction>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
+        void SparseMatrix<storm::RationalFunction>::multiplyAndReduceForward(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<storm::RationalFunction> const& vector, std::vector<storm::RationalFunction> const* b, std::vector<storm::RationalFunction>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector const* dirOverride) const {
             STORM_LOG_THROW(false, storm::exceptions::NotSupportedException, "This operation is not supported.");
         }
 #endif
 
         template<typename ValueType>
-        void SparseMatrix<ValueType>::multiplyAndReduceBackward(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
+        void SparseMatrix<ValueType>::multiplyAndReduceBackward(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector const* dirOverride) const {
             if(dirOverride && !dirOverride->empty()) {
                 if (dir == storm::OptimizationDirection::Minimize) {
                     multiplyAndReduceBackward<storm::utility::ElementLess<ValueType>, true>(rowGroupIndices, vector, summand, result, choices, dirOverride);
@@ -1886,7 +1886,7 @@ namespace storm {
 
         template<typename ValueType>
         template<typename Compare, bool directionOverridden>
-        void SparseMatrix<ValueType>::multiplyAndReduceBackward(std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
+        void SparseMatrix<ValueType>::multiplyAndReduceBackward(std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector const* dirOverride) const {
             Compare compare;
             auto elementIt = this->end() - 1;
             auto rowGroupIt = rowGroupIndices.end() - 2;
@@ -1972,7 +1972,7 @@ namespace storm {
 
 #ifdef STORM_HAVE_CARL
         template<>
-        void SparseMatrix<storm::RationalFunction>::multiplyAndReduceBackward(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<storm::RationalFunction> const& vector, std::vector<storm::RationalFunction> const* b, std::vector<storm::RationalFunction>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
+        void SparseMatrix<storm::RationalFunction>::multiplyAndReduceBackward(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<storm::RationalFunction> const& vector, std::vector<storm::RationalFunction> const* b, std::vector<storm::RationalFunction>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector const* dirOverride) const {
             STORM_LOG_THROW(false, storm::exceptions::NotSupportedException, "This operation is not supported.");
         }
 #endif
@@ -1985,7 +1985,7 @@ namespace storm {
             typedef typename storm::storage::SparseMatrix<ValueType>::value_type value_type;
             typedef typename storm::storage::SparseMatrix<ValueType>::const_iterator const_iterator;
 
-            TbbMultAddReduceFunctor(std::vector<uint64_t> const& rowGroupIndices, std::vector<MatrixEntry<index_type, value_type>> const& columnsAndEntries, std::vector<uint64_t> const& rowIndications, std::vector<ValueType> const& x, std::vector<ValueType>& result, std::vector<value_type> const* summand, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride = nullptr) : rowGroupIndices(rowGroupIndices), columnsAndEntries(columnsAndEntries), rowIndications(rowIndications), x(x), result(result), summand(summand), choices(choices), dirOverride(dirOverride) {
+            TbbMultAddReduceFunctor(std::vector<uint64_t> const& rowGroupIndices, std::vector<MatrixEntry<index_type, value_type>> const& columnsAndEntries, std::vector<uint64_t> const& rowIndications, std::vector<ValueType> const& x, std::vector<ValueType>& result, std::vector<value_type> const* summand, std::vector<uint_fast64_t>* choices, storm::storage::BitVector const* dirOverride = nullptr) : rowGroupIndices(rowGroupIndices), columnsAndEntries(columnsAndEntries), rowIndications(rowIndications), x(x), result(result), summand(summand), choices(choices), dirOverride(dirOverride) {
                 // Intentionally left empty.
             }
 
@@ -2092,7 +2092,7 @@ namespace storm {
         };
 
         template<typename ValueType>
-        void SparseMatrix<ValueType>::multiplyAndReduceParallel(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
+        void SparseMatrix<ValueType>::multiplyAndReduceParallel(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector const* dirOverride) const {
             if(dirOverride && !dirOverride->empty()) {
                 if (dir == storm::OptimizationDirection::Minimize) {
                     tbb::parallel_for(tbb::blocked_range<index_type>(0, rowGroupIndices.size() - 1, 100), TbbMultAddReduceFunctor<ValueType, storm::utility::ElementLess<ValueType>, true>(rowGroupIndices, columnsAndValues, rowIndications, vector, result, summand, choices, dirOverride));
@@ -2110,14 +2110,14 @@ namespace storm {
 
 #ifdef STORM_HAVE_CARL
         template<>
-        void SparseMatrix<storm::RationalFunction>::multiplyAndReduceParallel(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<storm::RationalFunction> const& vector, std::vector<storm::RationalFunction> const* summand, std::vector<storm::RationalFunction>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
+        void SparseMatrix<storm::RationalFunction>::multiplyAndReduceParallel(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<storm::RationalFunction> const& vector, std::vector<storm::RationalFunction> const* summand, std::vector<storm::RationalFunction>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector const* dirOverride) const {
             STORM_LOG_THROW(false, storm::exceptions::NotSupportedException, "This operation is not supported.");
         }
 #endif
 #endif
 
         template<typename ValueType>
-        void SparseMatrix<ValueType>::multiplyAndReduce(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
+        void SparseMatrix<ValueType>::multiplyAndReduce(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector const* dirOverride) const {
 
             // If the vector and the result are aliases, we need and temporary vector.
             std::vector<ValueType>* target;

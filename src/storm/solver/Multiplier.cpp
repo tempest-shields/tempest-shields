@@ -30,12 +30,12 @@ namespace storm {
         }
 
         template<typename ValueType>
-        void Multiplier<ValueType>::multiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride) const {
+        void Multiplier<ValueType>::multiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType> const& x, std::vector<ValueType> const* b, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector const* dirOverride) const {
             multiplyAndReduce(env, dir, this->matrix.getRowGroupIndices(), x, b, result, choices, dirOverride);
         }
 
         template<typename ValueType>
-        void Multiplier<ValueType>::multiplyAndReduceGaussSeidel(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType>& x, std::vector<ValueType> const* b, std::vector<uint_fast64_t>* choices, storm::storage::BitVector* dirOverride, bool backwards) const {
+        void Multiplier<ValueType>::multiplyAndReduceGaussSeidel(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType>& x, std::vector<ValueType> const* b, std::vector<uint_fast64_t>* choices, storm::storage::BitVector const* dirOverride, bool backwards) const {
             multiplyAndReduceGaussSeidel(env, dir, this->matrix.getRowGroupIndices(), x, b, choices, dirOverride, backwards);
         }
 
@@ -55,7 +55,7 @@ namespace storm {
         }
 
         template<typename ValueType>
-        void Multiplier<ValueType>::repeatedMultiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType>& x, std::vector<ValueType> const* b, uint64_t n, storm::storage::BitVector* dirOverride) const {
+        void Multiplier<ValueType>::repeatedMultiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType>& x, std::vector<ValueType> const* b, uint64_t n, storm::storage::BitVector const* dirOverride) const {
             storm::utility::ProgressMeasurement progress("multiplications");
             progress.setMaxCount(n);
             progress.startNewMeasurement(0);
