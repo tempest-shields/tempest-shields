@@ -6,7 +6,7 @@ namespace tempest {
     namespace shields {
 
         template<typename ValueType, typename IndexType>
-        AbstractShield<ValueType, IndexType>::AbstractShield(std::vector<IndexType> const& rowGroupIndices, std::vector<ValueType> const& choiceValues, std::shared_ptr<storm::logic::ShieldExpression const> const& shieldingExpression, storm::OptimizationDirection optimizationDirection, storm::storage::BitVector relevantStates, boost::optional<storm::storage::BitVector> coalitionStates) : rowGroupIndices(rowGroupIndices), choiceValues(choiceValues), shieldingExpression(shieldingExpression), optimizationDirection(optimizationDirection), relevantStates(relevantStates), coalitionStates(coalitionStates) {
+        AbstractShield<ValueType, IndexType>::AbstractShield(std::vector<IndexType> const& rowGroupIndices, std::shared_ptr<storm::logic::ShieldExpression const> const& shieldingExpression, storm::OptimizationDirection optimizationDirection, storm::storage::BitVector relevantStates, boost::optional<storm::storage::BitVector> coalitionStates) : rowGroupIndices(rowGroupIndices), shieldingExpression(shieldingExpression), optimizationDirection(optimizationDirection), relevantStates(relevantStates), coalitionStates(coalitionStates) {
             // Intentionally left empty.
         }
 

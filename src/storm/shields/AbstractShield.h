@@ -55,10 +55,10 @@ namespace tempest {
             std::string getClassName() const;
 
         protected:
-            AbstractShield(std::vector<IndexType> const& rowGroupIndices, std::vector<ValueType> const& choiceValues, std::shared_ptr<storm::logic::ShieldExpression const> const& shieldingExpression, storm::OptimizationDirection optimizationDirection, storm::storage::BitVector relevantStates, boost::optional<storm::storage::BitVector> coalitionStates);
+            AbstractShield(std::vector<IndexType> const& rowGroupIndices, std::shared_ptr<storm::logic::ShieldExpression const> const& shieldingExpression, storm::OptimizationDirection optimizationDirection, storm::storage::BitVector relevantStates, boost::optional<storm::storage::BitVector> coalitionStates);
 
             std::vector<index_type> rowGroupIndices;
-            std::vector<value_type> choiceValues;
+            //std::vector<value_type> choiceValues;
 
             std::shared_ptr<storm::logic::ShieldExpression const> shieldingExpression;
             storm::OptimizationDirection optimizationDirection;

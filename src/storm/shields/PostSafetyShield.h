@@ -14,6 +14,8 @@ namespace tempest {
             storm::storage::PostScheduler<ValueType> construct();
             template<typename Compare, bool relative>
             storm::storage::PostScheduler<ValueType> constructWithCompareType();
+        private:
+            std::vector<ValueType> choiceValues;
         };
     }
 }
