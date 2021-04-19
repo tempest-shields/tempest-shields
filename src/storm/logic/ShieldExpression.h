@@ -17,7 +17,8 @@ namespace storm {
         class ShieldExpression {
         public:
             ShieldExpression();
-            ShieldExpression(ShieldingType type, ShieldComparison comparison, double value);
+            ShieldExpression(ShieldingType type, std::string filename);
+            ShieldExpression(ShieldingType type, std::string filename, ShieldComparison comparison, double value);
 
             bool isRelative() const;
             bool isPreSafetyShield() const;
@@ -29,12 +30,16 @@ namespace storm {
             std::string typeToString() const;
             std::string comparisonToString() const;
             std::string toString() const;
+            std::string prettify() const;
+            std::string getFilename() const;
             friend std::ostream& operator<<(std::ostream& stream, ShieldExpression const& shieldExpression);
 
         private:
             ShieldingType type;
             ShieldComparison comparison;
             double value;
+
+            std::string filename;
         };
     }
 }

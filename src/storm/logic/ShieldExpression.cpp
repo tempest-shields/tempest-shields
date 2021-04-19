@@ -6,7 +6,11 @@ namespace storm {
     namespace logic {
         ShieldExpression::ShieldExpression() {}
 
-        ShieldExpression::ShieldExpression(ShieldingType type, ShieldComparison comparison, double value) : type(type), comparison(comparison), value(value) {
+        ShieldExpression::ShieldExpression(ShieldingType type, std::string filename) : type(type), filename(filename) {
+            //Intentionally left empty
+        }
+
+        ShieldExpression::ShieldExpression(ShieldingType type, std::string filename, ShieldComparison comparison, double value) : type(type), filename(filename), comparison(comparison), value(value) {
             //Intentionally left empty
         }
 
@@ -47,6 +51,25 @@ namespace storm {
 
         std::string ShieldExpression::toString() const {
             return "<" + typeToString() + ", " + comparisonToString() + "=" + std::to_string(value) + ">";
+        }
+
+        std::string ShieldExpression::prettify() const {
+            std::string prettyString = "";
+            std::string comparisonType = isRelative() ? "relative" : "absolute";
+            switch(type) {
+                case storm::logic::ShieldingType::PostSafety: prettyString += "Post-Safety"; break;
+                case storm::logic::ShieldingType::PreSafety:  prettyString += "Pre-Safety"; break;
+                case storm::logic::ShieldingType::Optimal:    prettyString += "Optimal"; break;
+            }
+            prettyString += "-Shield ";
+            if(!(type == storm::logic::ShieldingType::Optimal)) {
+                prettyString += "with " + comparisonType + " comparison (" + comparisonToString() + " = " + std::to_string(value) + "):";
+            }
+            return prettyString;
+        }
+
+        std::string ShieldExpression::getFilename() const {
+            return filename;
         }
 
         std::ostream& operator<<(std::ostream& out, ShieldExpression const& shieldExpression) {
