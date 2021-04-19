@@ -26,7 +26,7 @@ namespace storm {
             namespace internal {
 
                 template <typename ValueType, typename ComponentType, LraViTransitionsType TransitionsType>
-                LraViHelper<ValueType, ComponentType, TransitionsType>::LraViHelper(ComponentType const& component, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, ValueType const& aperiodicFactor, storm::storage::BitVector const* timedStates, std::vector<ValueType> const* exitRates) : _transitionMatrix(transitionMatrix), _timedStates(timedStates), _hasInstantStates(TransitionsType == LraViTransitionsType::DetTsNondetIs || TransitionsType == LraViTransitionsType::DetTsDetIs), _Tsx1IsCurrent(false) {
+                LraViHelper<ValueType, ComponentType, TransitionsType>::LraViHelper(ComponentType const& component, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, ValueType const& aperiodicFactor, storm::storage::BitVector const* timedStates, std::vector<ValueType> const* exitRates, storm::storage::BitVector const* statesOfCoalition) : _transitionMatrix(transitionMatrix), _timedStates(timedStates), _hasInstantStates(TransitionsType == LraViTransitionsType::DetTsNondetIs || TransitionsType == LraViTransitionsType::DetTsDetIs), _Tsx1IsCurrent(false), _statesOfCoalition(statesOfCoalition) {
                     setComponent(component);
 
                     // Run through the component and collect some data:
@@ -167,6 +167,9 @@ namespace storm {
                     if (env.solver().lra().isMaximalIterationCountSet()) {
                         maxIter = env.solver().lra().getMaximalIterationCount();
                     }
+                    if(gameNondetTs()) {
+                      STORM_LOG_ASSERT(_statesOfCoalition != nullptr, "Tried to solve LRA problem for a game, but coalition states have not been set.");
+                    }
 
                     // start the iterations
                     ValueType result = storm::utility::zero<ValueType>();
@@ -218,13 +221,13 @@ namespace storm {
                         }
                         performIterationStep(env, dir, choices);
                     }
-                    std::cout << "result (" << iter << " steps):" << std::endl;
+                    //std::cout << "result (" << iter << " steps):" << std::endl;
                     storm::utility::vector::applyPointwise<ValueType, ValueType>(xNew(), xNew(), [&iter] (ValueType const& x_i) -> ValueType { return x_i / (double)iter; });
-                    for(int i = 0; i < xNew().size() ; i++ ) {
-                        std::cout << std::setprecision(4) << i << "\t: " << xNew().at(i) << "\t" << xNew().at(i) * _uniformizationRate << "\t" << std::setprecision(16) << xOld().at(i) *_uniformizationRate << std::endl;
-                        //if(i == 50) {std::cout << "only showing top 50 lines"; break; }
-                    }
-                    if(gameNondetTs()) result = xOld().at(0) * _uniformizationRate; // TODO is "init" always going to be .at(0) ?
+                    //for(int i = 0; i < xNew().size() ; i++ ) {
+                    //    std::cout << std::setprecision(4) << i << "\t: " << xNew().at(i) << "\t" << xNew().at(i) * _uniformizationRate << "\t" << std::setprecision(16) << xOld().at(i) *_uniformizationRate << std::endl;
+                    //    //if(i == 50) {std::cout << "only showing top 50 lines"; break; }
+                    //}
+                    if(gameNondetTs()) result = (xOld().at(0) * _uniformizationRate)/(double)iter; // TODO is "init" always going to be .at(0) ?
                     return result;
                 }
 
@@ -386,10 +389,10 @@ namespace storm {
                         }
                     } else if(gameNondetTs()) { // TODO DRYness? exact same behaviour as case above?
                         if (choices == nullptr) {
-                            _TsMultiplier->multiplyAndReduce(env, *dir, xOld(), &_TsChoiceValues, xNew());
+                            _TsMultiplier->multiplyAndReduce(env, *dir, xOld(), &_TsChoiceValues, xNew(), nullptr, _statesOfCoalition);
                         } else {
                             std::vector<uint64_t> tsChoices(_TsTransitions.getRowGroupCount());
-                            _TsMultiplier->multiplyAndReduce(env, *dir, xOld(), &_TsChoiceValues, xNew(), &tsChoices);
+                            _TsMultiplier->multiplyAndReduce(env, *dir, xOld(), &_TsChoiceValues, xNew(), &tsChoices, _statesOfCoalition);
                             setInputModelChoices(*choices, tsChoices); // no components -> no need for that call?
                         }
                     } else {
