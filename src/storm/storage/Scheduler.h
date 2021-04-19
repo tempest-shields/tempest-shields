@@ -121,13 +121,12 @@ namespace storm {
 
              void setPrintUndefinedChoices(bool value = true);
 
-        private:
+        protected:
 
             boost::optional<storm::storage::MemoryStructure> memoryStructure;
             std::vector<std::vector<SchedulerChoice<ValueType>>> schedulerChoices;
 
             bool printUndefinedChoices = false;
-        protected:
             uint_fast64_t numOfUndefinedChoices;
             uint_fast64_t numOfDeterministicChoices;
         };
