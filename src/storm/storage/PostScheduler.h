@@ -4,6 +4,7 @@
 #include <map>
 #include "storm/storage/SchedulerChoice.h"
 #include "storm/storage/Scheduler.h"
+#include "storm/logic/ShieldExpression.h"
 
 namespace storm {
     namespace storage {
@@ -89,7 +90,7 @@ namespace storm {
              * @param skipUniqueChoices If true, the (unique) choice for deterministic states (i.e., states with only one enabled choice) is not printed explicitly.
              *                          Requires a model to be given.
              */
-            void printToStream(std::ostream& out, std::shared_ptr<storm::models::sparse::Model<ValueType>> model = nullptr, bool skipUniqueChoices = false) const;
+            void printToStream(std::ostream& out, std::shared_ptr<storm::logic::ShieldExpression const> shieldingExpression, std::shared_ptr<storm::models::sparse::Model<ValueType>> model = nullptr, bool skipUniqueChoices = false) const;
         private:
             std::vector<std::vector<std::vector<SchedulerChoice<ValueType>>>> schedulerChoiceMapping;
 

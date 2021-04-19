@@ -87,7 +87,8 @@ namespace storm {
         }
 
         template <typename ValueType>
-        void PostScheduler<ValueType>::printToStream(std::ostream& out, std::shared_ptr<storm::models::sparse::Model<ValueType>> model, bool skipUniqueChoices) const {
+        void PostScheduler<ValueType>::printToStream(std::ostream& out, std::shared_ptr<storm::logic::ShieldExpression const> shieldingExpression, std::shared_ptr<storm::models::sparse::Model<ValueType>> model, bool skipUniqueChoices) const {
+            STORM_LOG_THROW(this->isMemorylessScheduler(), storm::exceptions::InvalidOperationException, "The given scheduler is incompatible.");
 
             bool const stateValuationsGiven = model != nullptr && model->hasStateValuations();
             bool const choiceLabelsGiven = model != nullptr && model->hasChoiceLabeling();
@@ -97,8 +98,17 @@ namespace storm {
                 widthOfStates += model->getStateValuations().getStateInfo(schedulerChoiceMapping.front().size() - 1).length() + 5;
             }
             widthOfStates = std::max(widthOfStates, (uint_fast64_t)12);
+            out << "___________________________________________________________________" << std::endl;
+            out << shieldingExpression->prettify() << std::endl;
+            STORM_LOG_WARN_COND(!(skipUniqueChoices && model == nullptr), "Can not skip unique choices if the model is not given.");
+            out << std::setw(widthOfStates) << "model state:" << "    " << "correction";
+            if(choiceLabelsGiven) {
+                out << " [<action> {action label}: <corrected action> {corrected action label}]";
+            } else {
+                out << " [<action>: (<corrected action>)}";
+            }
+            out << ":" << std::endl;
             uint_fast64_t numOfSkippedStatesWithUniqueChoice = 0;
-            out << std::setw(widthOfStates) << "model state:" << "    " << (isMemorylessScheduler() ? "" : " memory:     ") << "choice(s)" << std::endl;
             for (uint_fast64_t state = 0; state < schedulerChoiceMapping.front().size(); ++state) {
                 std::stringstream stateString;
                 // Print the state info
@@ -114,50 +124,35 @@ namespace storm {
                     SchedulerChoice<ValueType> const& choice = schedulerChoiceMapping[0][state][choiceIndex];
                     if(firstChoiceIndex) {
                         firstChoiceIndex = false;
-                        stateString << std::to_string(choiceIndex) << ": ";
                     } else {
-                        stateString << std::setw(widthOfStates + 5) << std::to_string(choiceIndex) << ": ";
+                        stateString << ";    ";
                     }
                     if (choice.isDefined()) {
-                        if (choice.isDeterministic()) {
-                            if (choiceOriginsGiven) {
-                                stateString << model->getChoiceOrigins()->getChoiceInfo(model->getTransitionMatrix().getRowGroupIndices()[state] + choice.getDeterministicChoice());
-                            } else {
-                                stateString << choice.getDeterministicChoice();
-                            }
-                            if (choiceLabelsGiven) {
-                                auto choiceLabels = model->getChoiceLabeling().getLabelsOfChoice(model->getTransitionMatrix().getRowGroupIndices()[state] + choice.getDeterministicChoice());
-                                stateString << " {" << boost::join(choiceLabels, ", ") << "}";
-                            }
+                        auto choiceProbPair = *(choice.getChoiceAsDistribution().begin());
+                        if(choiceLabelsGiven) {
+                            auto choiceLabels = model->getChoiceLabeling().getLabelsOfChoice(model->getTransitionMatrix().getRowGroupIndices()[state] + choiceIndex);
+                            stateString << std::to_string(choiceIndex) << " {" << boost::join(choiceLabels, ", ") << "}: ";
                         } else {
-                            bool firstChoice = true;
-                            for (auto const& choiceProbPair : choice.getChoiceAsDistribution()) {
-                                if (firstChoice) {
-                                    firstChoice = false;
-                                } else {
-                                    stateString << "   +    ";
-                                }
-                                stateString << choiceProbPair.second << ": (";
-                                if (choiceOriginsGiven) {
-                                    stateString << model->getChoiceOrigins()->getChoiceInfo(model->getTransitionMatrix().getRowGroupIndices()[state] + choiceProbPair.first);
-                                } else {
-                                    stateString << choiceProbPair.first;
-                                }
-                                if (choiceLabelsGiven) {
-                                    auto choiceLabels = model->getChoiceLabeling().getLabelsOfChoice(model->getTransitionMatrix().getRowGroupIndices()[state] + choiceProbPair.first);
-                                    stateString << " {" << boost::join(choiceLabels, ", ") << "}";
-                                }
-                                stateString << ")";
-                            }
+                            stateString << std::to_string(choiceIndex) << ": ";
                         }
+                        //stateString << choiceProbPair.second << ": (";
+                        if (choiceOriginsGiven) {
+                            stateString << model->getChoiceOrigins()->getChoiceInfo(model->getTransitionMatrix().getRowGroupIndices()[state] + choiceProbPair.first);
+                        } else {
+                            stateString << choiceProbPair.first;
+                        }
+                        if (choiceLabelsGiven) {
+                            auto choiceLabels = model->getChoiceLabeling().getLabelsOfChoice(model->getTransitionMatrix().getRowGroupIndices()[state] + choiceProbPair.first);
+                            stateString << " {" << boost::join(choiceLabels, ", ") << "}";
+                        }
+
                     } else {
                         if(!this->printUndefinedChoices) goto skipStatesWithUndefinedChoices;
                         stateString << "undefined.";
                     }
                     // Todo: print memory updates
-                    stateString << std::endl;
                 }
-                out << stateString.str();
+                out << stateString.str() << std::endl;
                 // jump to label if we find one undefined choice.
                 skipStatesWithUndefinedChoices:;
             }
