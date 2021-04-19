@@ -140,7 +140,7 @@ namespace storm {
             gameFormula = (qi::lit("<<") > playerCoalition > qi::lit(">>") > operatorFormula)[qi::_val = phoenix::bind(&FormulaParserGrammar::createGameFormula, phoenix::ref(*this), qi::_1, qi::_2)];
             gameFormula.name("game formula");
 
-            shieldExpression = (qi::lit("<") > shieldingType > qi::lit(",") > shieldComparison > qi::lit(">"))[qi::_val = phoenix::bind(&FormulaParserGrammar::createShieldExpression, phoenix::ref(*this), qi::_1, qi::_2)];
+            shieldExpression = (qi::lit("<") > label > qi::lit(",") > shieldingType > -(qi::lit(",") > shieldComparison) > qi::lit(">"))[qi::_val = phoenix::bind(&FormulaParserGrammar::createShieldExpression, phoenix::ref(*this), qi::_2, qi::_1, qi::_3)];
 
             shieldExpression.name("shield expression");
 
@@ -512,8 +512,12 @@ namespace storm {
             return std::make_pair(comparisonType, value);
         }
 
-        std::shared_ptr<storm::logic::ShieldExpression const> FormulaParserGrammar::createShieldExpression(storm::logic::ShieldingType type, std::pair<storm::logic::ShieldComparison, double> comparisonStruct) {
-            return std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(type, comparisonStruct.first, comparisonStruct.second));
+        std::shared_ptr<storm::logic::ShieldExpression const> FormulaParserGrammar::createShieldExpression(storm::logic::ShieldingType type, std::string name, boost::optional<std::pair<storm::logic::ShieldComparison, double>> comparisonStruct) {
+            if(comparisonStruct.is_initialized()) {
+                return std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(type, name, comparisonStruct.get().first, comparisonStruct.get().second));
+            } else {
+                return std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(type, name));
+            }
         }
 
         storm::jani::Property FormulaParserGrammar::createShieldingProperty(boost::optional<std::string> const& propertyName, std::shared_ptr<storm::logic::Formula const> const& formula, std::shared_ptr<storm::logic::ShieldExpression const> const& shieldExpression) {
