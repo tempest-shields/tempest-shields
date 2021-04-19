@@ -71,6 +71,7 @@ namespace storm {
             }
 
             statesOfCoalition = this->getModel().computeStatesOfCoalition(gameFormula.getCoalition());
+            statesOfCoalition.complement();
 
             STORM_LOG_DEBUG("\n" << this->getModel().getTransitionMatrix());
 
