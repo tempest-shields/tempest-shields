@@ -1,6 +1,7 @@
 #pragma once
 
 #include "storm/shields/AbstractShield.h"
+#include "storm/storage/PreScheduler.h"
 
 namespace tempest {
     namespace shields {
@@ -10,9 +11,9 @@ namespace tempest {
         public:
             PreSafetyShield(std::vector<IndexType> const& rowGroupIndices, std::vector<ValueType> const& choiceValues, std::shared_ptr<storm::logic::ShieldExpression const> const& shieldingExpression, storm::OptimizationDirection optimizationDirection, storm::storage::BitVector relevantStates, boost::optional<storm::storage::BitVector> coalitionStates);
 
-            storm::storage::Scheduler<ValueType> construct();
+            storm::storage::PreScheduler<ValueType> construct();
             template<typename Compare, bool relative>
-            storm::storage::Scheduler<ValueType> constructWithCompareType();
+            storm::storage::PreScheduler<ValueType> constructWithCompareType();
         private:
             std::vector<ValueType> choiceValues;
         };

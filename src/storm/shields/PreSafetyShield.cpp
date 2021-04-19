@@ -11,7 +11,7 @@ namespace tempest {
         }
 
         template<typename ValueType, typename IndexType>
-        storm::storage::Scheduler<ValueType> PreSafetyShield<ValueType, IndexType>::construct() {
+        storm::storage::PreScheduler<ValueType> PreSafetyShield<ValueType, IndexType>::construct() {
             if (this->getOptimizationDirection() == storm::OptimizationDirection::Minimize) {
                 if(this->shieldingExpression->isRelative()) {
                     return constructWithCompareType<storm::utility::ElementLessEqual<ValueType>, true>();
@@ -29,9 +29,9 @@ namespace tempest {
 
         template<typename ValueType, typename IndexType>
         template<typename Compare, bool relative>
-        storm::storage::Scheduler<ValueType> PreSafetyShield<ValueType, IndexType>::constructWithCompareType() {
+        storm::storage::PreScheduler<ValueType> PreSafetyShield<ValueType, IndexType>::constructWithCompareType() {
             tempest::shields::utility::ChoiceFilter<ValueType, Compare, relative> choiceFilter;
-            storm::storage::Scheduler<ValueType> shield(this->rowGroupIndices.size() - 1);
+            storm::storage::PreScheduler<ValueType> shield(this->rowGroupIndices.size() - 1);
             auto choice_it = this->choiceValues.begin();
             if(this->coalitionStates.is_initialized()) {
                 this->relevantStates &= this->coalitionStates.get();
