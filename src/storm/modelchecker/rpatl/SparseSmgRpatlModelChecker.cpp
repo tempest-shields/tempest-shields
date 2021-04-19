@@ -212,15 +212,17 @@ namespace storm {
         template<typename SparseSmgModelType>
         std::unique_ptr<CheckResult> SparseSmgRpatlModelChecker<SparseSmgModelType>::computeLongRunAverageRewards(Environment const& env, storm::logic::RewardMeasureType rewardMeasureType, CheckTask<storm::logic::LongRunAverageRewardFormula, ValueType> const& checkTask) {
             auto rewardModel = storm::utility::createFilteredRewardModel(this->getModel(), checkTask);
-            STORM_LOG_THROW(checkTask.isPlayerCoalitionSet(), storm::exceptions::InvalidPropertyException, "No player coalition was set.");
-            auto coalitionStates = this->getModel().computeStatesOfCoalition(checkTask.getPlayerCoalition());
-            std::cout << "Found " << coalitionStates.getNumberOfSetBits() << " states in coalition." << std::endl;
+            //STORM_LOG_THROW(checkTask.isPlayerCoalitionSet(), storm::exceptions::InvalidPropertyException, "No player coalition was set.");
+            //auto coalitionStates = this->getModel().computeStatesOfCoalition(checkTask.getPlayerCoalition());
+            std::cout << "Found " << statesOfCoalition.getNumberOfSetBits() << " states in coalition." << std::endl;
             storm::modelchecker::helper::SparseNondeterministicGameInfiniteHorizonHelper<ValueType> helper(this->getModel().getTransitionMatrix(), statesOfCoalition);
             storm::modelchecker::helper::setInformationFromCheckTaskNondeterministic(helper, checkTask, this->getModel());
             auto values = helper.computeLongRunAverageRewards(env, rewardModel.get());
 
             std::unique_ptr<CheckResult> result(new ExplicitQuantitativeCheckResult<ValueType>(std::move(values)));
-            if (checkTask.isProduceSchedulersSet()) {
+            if(checkTask.isShieldingTask()) {
+                tempest::shields::createOptimalShield<ValueType>(std::make_shared<storm::models::sparse::Smg<ValueType>>(this->getModel()), helper.getProducedOptimalChoices(), checkTask.getShieldingExpression(), checkTask.getOptimizationDirection(), statesOfCoalition, statesOfCoalition);
+            } else if (checkTask.isProduceSchedulersSet()) {
                 result->asExplicitQuantitativeCheckResult<ValueType>().setScheduler(std::make_unique<storm::storage::Scheduler<ValueType>>(helper.extractScheduler()));
             }
 
