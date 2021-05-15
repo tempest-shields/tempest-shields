@@ -15,6 +15,7 @@
 #include "storm/modelchecker/csl/helper/SparseCtmcCslHelper.h"
 #include "storm/modelchecker/prctl/helper/rewardbounded/QuantileHelper.h"
 #include "storm/modelchecker/helper/infinitehorizon/SparseDeterministicInfiniteHorizonHelper.h"
+#include "storm/modelchecker/helper/ltl/SparseLTLHelper.h"
 #include "storm/modelchecker/helper/utility/SetInformationFromCheckTask.h"
 
 #include "storm/logic/FragmentSpecification.h"
@@ -161,7 +162,7 @@ namespace storm {
             STORM_LOG_INFO("Extracting maximal state formulas and computing satisfaction sets for path formula: " << pathFormula);
 
             std::map<std::string, storm::storage::BitVector> apSets;
-
+            // todo instead: std::map<std::string, storm::storage::BitVector> apSets =  storm::modelchecker::helper::computeApSets(env, checkTask);
             for (auto& p : extracted) {
                 STORM_LOG_INFO(" Computing satisfaction set for atomic proposition \"" << p.first << "\" <=> " << *p.second << "...");
 
@@ -174,20 +175,12 @@ namespace storm {
                 apSets[p.first] = std::move(sat);
             }
 
-            STORM_LOG_INFO("Resulting LTL path formula: " << *ltlFormula);
-            STORM_LOG_INFO(" in prefix format: " << ltlFormula->toPrefixString());
-
-            std::shared_ptr<storm::automata::DeterministicAutomaton> da = storm::automata::LTL2DeterministicAutomaton::ltl2da(*ltlFormula);
-
-            STORM_LOG_INFO("Deterministic automaton for LTL formula has "
-                    << da->getNumberOfStates() << " states, "
-                    << da->getAPSet().size() << " atomic propositions and "
-                    << *da->getAcceptance()->getAcceptanceExpression() << " as acceptance condition.");
-
             const SparseDtmcModelType& dtmc = this->getModel();
-            storm::solver::SolveGoal<ValueType> goal(dtmc, checkTask);
 
-            std::vector<ValueType> numericResult = storm::modelchecker::helper::SparseDtmcPrctlHelper<ValueType>::computeDAProductProbabilities(env, dtmc, std::move(goal), *da, apSets, checkTask.isQualitativeSet());
+            storm::modelchecker::helper::SparseLTLHelper<ValueType, SparseDtmcModelType, false> helper(dtmc, dtmc.getTransitionMatrix());
+            storm::modelchecker::helper::setInformationFromCheckTaskDeterministic(helper, checkTask, dtmc);
+            std::vector<ValueType> numericResult = helper.computeLTLProbabilities(env, storm::solver::SolveGoal<ValueType>(this->getModel(), checkTask), *ltlFormula, apSets);
+
             return std::unique_ptr<CheckResult>(new ExplicitQuantitativeCheckResult<ValueType>(std::move(numericResult)));
         }
 
@@ -256,14 +249,13 @@ namespace storm {
 
         template<typename SparseDtmcModelType>
         std::unique_ptr<CheckResult> SparseDtmcPrctlModelChecker<SparseDtmcModelType>::computeLongRunAverageProbabilities(Environment const& env, CheckTask<storm::logic::StateFormula, ValueType> const& checkTask) {
-
             storm::logic::StateFormula const& stateFormula = checkTask.getFormula();
-			std::unique_ptr<CheckResult> subResultPointer = this->check(env, stateFormula);
-			ExplicitQualitativeCheckResult const& subResult = subResultPointer->asExplicitQualitativeCheckResult();
+			      std::unique_ptr<CheckResult> subResultPointer = this->check(env, stateFormula);
+			      ExplicitQualitativeCheckResult const& subResult = subResultPointer->asExplicitQualitativeCheckResult();
 
-			storm::modelchecker::helper::SparseDeterministicInfiniteHorizonHelper<ValueType> helper(this->getModel().getTransitionMatrix());
+			      storm::modelchecker::helper::SparseDeterministicInfiniteHorizonHelper<ValueType> helper(this->getModel().getTransitionMatrix());
             storm::modelchecker::helper::setInformationFromCheckTaskDeterministic(helper, checkTask, this->getModel());
-			auto values = helper.computeLongRunAverageProbabilities(env, subResult.getTruthValuesVector());
+			      auto values = helper.computeLongRunAverageProbabilities(env, subResult.getTruthValuesVector());
 
             return std::unique_ptr<CheckResult>(new ExplicitQuantitativeCheckResult<ValueType>(std::move(values)));
         }
