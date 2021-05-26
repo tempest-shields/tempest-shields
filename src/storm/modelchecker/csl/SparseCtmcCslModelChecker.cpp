@@ -30,7 +30,7 @@ namespace storm {
         SparseCtmcCslModelChecker<SparseCtmcModelType>::SparseCtmcCslModelChecker(SparseCtmcModelType const& model) : SparsePropositionalModelChecker<SparseCtmcModelType>(model) {
             // Intentionally left empty.
         }
-        
+
         template <typename ModelType>
         bool SparseCtmcCslModelChecker<ModelType>::canHandleStatic(CheckTask<storm::logic::Formula, ValueType> const& checkTask) {
             auto fragment = storm::logic::csrl().setGloballyFormulasAllowed(false).setLongRunAverageRewardFormulasAllowed(true).setLongRunAverageProbabilitiesAllowed(true).setTimeAllowed(true).setTimeOperatorsAllowed(true).setTotalRewardFormulasAllowed(true).setRewardAccumulationAllowed(true);
@@ -39,12 +39,12 @@ namespace storm {
             }
             return checkTask.getFormula().isInFragment(fragment);
         }
-        
+
         template <typename SparseCtmcModelType>
         bool SparseCtmcCslModelChecker<SparseCtmcModelType>::canHandle(CheckTask<storm::logic::Formula, ValueType> const& checkTask) const {
             return canHandleStatic(checkTask);
         }
-        
+
         template <typename SparseCtmcModelType>
         std::unique_ptr<CheckResult> SparseCtmcCslModelChecker<SparseCtmcModelType>::computeBoundedUntilProbabilities(Environment const& env, CheckTask<storm::logic::BoundedUntilFormula, ValueType> const& checkTask) {
             storm::logic::BoundedUntilFormula const& pathFormula = checkTask.getFormula();
@@ -68,7 +68,7 @@ namespace storm {
             std::vector<ValueType> numericResult = storm::modelchecker::helper::SparseCtmcCslHelper::computeBoundedUntilProbabilities(env, storm::solver::SolveGoal<ValueType>(this->getModel(), checkTask), this->getModel().getTransitionMatrix(), this->getModel().getBackwardTransitions(), leftResult.getTruthValuesVector(), rightResult.getTruthValuesVector(), this->getModel().getExitRateVector(), checkTask.isQualitativeSet(), lowerBound, upperBound);
             return std::unique_ptr<CheckResult>(new ExplicitQuantitativeCheckResult<ValueType>(std::move(numericResult)));
         }
-        
+
         template <typename SparseCtmcModelType>
         std::unique_ptr<CheckResult> SparseCtmcCslModelChecker<SparseCtmcModelType>::computeNextProbabilities(Environment const& env, CheckTask<storm::logic::NextFormula, ValueType> const& checkTask) {
             storm::logic::NextFormula const& pathFormula = checkTask.getFormula();
@@ -77,7 +77,7 @@ namespace storm {
             std::vector<ValueType> numericResult = storm::modelchecker::helper::SparseCtmcCslHelper::computeNextProbabilities(env, this->getModel().getTransitionMatrix(), this->getModel().getExitRateVector(), subResult.getTruthValuesVector());
             return std::unique_ptr<CheckResult>(new ExplicitQuantitativeCheckResult<ValueType>(std::move(numericResult)));
         }
-        
+
         template <typename SparseCtmcModelType>
         std::unique_ptr<CheckResult> SparseCtmcCslModelChecker<SparseCtmcModelType>::computeUntilProbabilities(Environment const& env, CheckTask<storm::logic::UntilFormula, ValueType> const& checkTask) {
             storm::logic::UntilFormula const& pathFormula = checkTask.getFormula();
@@ -88,7 +88,61 @@ namespace storm {
             std::vector<ValueType> numericResult = storm::modelchecker::helper::SparseCtmcCslHelper::computeUntilProbabilities(env, storm::solver::SolveGoal<ValueType>(this->getModel(), checkTask), this->getModel().getTransitionMatrix(), this->getModel().getBackwardTransitions(), this->getModel().getExitRateVector(), leftResult.getTruthValuesVector(), rightResult.getTruthValuesVector(), checkTask.isQualitativeSet());
             return std::unique_ptr<CheckResult>(new ExplicitQuantitativeCheckResult<ValueType>(std::move(numericResult)));
         }
-        
+
+        template<typename SparseCtmcModelType>
+        std::unique_ptr<CheckResult> SparseCtmcCslModelChecker<SparseCtmcModelType>::computeLTLProbabilities(Environment const& env, CheckTask<storm::logic::PathFormula, ValueType> const& checkTask) {
+            storm::logic::PathFormula const& pathFormula = checkTask.getFormula();
+
+            std::vector<storm::logic::ExtractMaximalStateFormulasVisitor::LabelFormulaPair> extracted;
+            std::shared_ptr<storm::logic::Formula> ltlFormula = storm::logic::ExtractMaximalStateFormulasVisitor::extract(pathFormula, extracted);
+
+            STORM_LOG_INFO("Extracting maximal state formulas and computing satisfaction sets for path formula: " << pathFormula);
+
+            std::map<std::string, storm::storage::BitVector> apSets;
+
+            for (auto& p : extracted) {
+                STORM_LOG_INFO(" Computing satisfaction set for atomic proposition \"" << p.first << "\" <=> " << *p.second << "...");
+
+                std::unique_ptr<CheckResult> subResultPointer = this->check(env, *p.second);
+                ExplicitQualitativeCheckResult const& subResult = subResultPointer->asExplicitQualitativeCheckResult();
+                auto sat = subResult.getTruthValuesVector();
+
+                STORM_LOG_INFO(" Atomic proposition \"" << p.first << "\" is satisfied by " << sat.getNumberOfSetBits() << " states.");
+
+                apSets[p.first] = std::move(sat);
+            }
+
+            STORM_LOG_INFO("Resulting LTL path formula: " << *ltlFormula);
+            STORM_LOG_INFO(" in prefix format: " << ltlFormula->toPrefixString());
+
+            std::shared_ptr<storm::automata::DeterministicAutomaton> da = storm::automata::LTL2DeterministicAutomaton::ltl2da(*ltlFormula, false);
+
+            STORM_LOG_INFO("Deterministic automaton for LTL formula has "
+                    << da->getNumberOfStates() << " states, "
+                    << da->getAPSet().size() << " atomic propositions and "
+                    << *da->getAcceptance()->getAcceptanceExpression() << " as acceptance condition.");
+
+            const SparseCtmcModelType& ctmc = this->getModel();
+            typedef typename storm::models::sparse::Dtmc<typename SparseCtmcModelType::ValueType> SparseDtmcModelType;
+
+            STORM_LOG_INFO("Computing embedded DTMC...");
+            // compute probability matrix (embedded DTMC)
+            storm::storage::SparseMatrix<ValueType> probabilityMatrix = storm::modelchecker::helper::SparseCtmcCslHelper::computeProbabilityMatrix(ctmc.getTransitionMatrix(), ctmc.getExitRateVector());
+            // copy of the state labelings of the CTMC
+            storm::models::sparse::StateLabeling labeling(ctmc.getStateLabeling());
+
+            // the embedded DTMC, used for building the product and computing the probabilities in the product
+            SparseDtmcModelType embeddedDtmc(std::move(probabilityMatrix), std::move(labeling));
+            storm::solver::SolveGoal<ValueType> goal(embeddedDtmc, checkTask);
+
+
+            STORM_LOG_INFO("Performing DA product and probability computations in embedded DTMC...");
+            std::vector<ValueType> numericResult = storm::modelchecker::helper::SparseDtmcPrctlHelper<ValueType>::computeDAProductProbabilities(env, embeddedDtmc, std::move(goal), *da, apSets, checkTask.isQualitativeSet());
+            // we can directly return the numericResult vector as the state space of the CTMC and the embedded DTMC are exactly the same
+            return std::unique_ptr<CheckResult>(new ExplicitQuantitativeCheckResult<ValueType>(std::move(numericResult)));
+        }
+
+
         template <typename SparseCtmcModelType>
         std::unique_ptr<CheckResult> SparseCtmcCslModelChecker<SparseCtmcModelType>::computeInstantaneousRewards(Environment const& env, storm::logic::RewardMeasureType, CheckTask<storm::logic::InstantaneousRewardFormula, ValueType> const& checkTask) {
             storm::logic::InstantaneousRewardFormula const& rewardPathFormula = checkTask.getFormula();
@@ -96,7 +150,7 @@ namespace storm {
             std::vector<ValueType> numericResult = storm::modelchecker::helper::SparseCtmcCslHelper::computeInstantaneousRewards(env, storm::solver::SolveGoal<ValueType>(this->getModel(), checkTask), this->getModel().getTransitionMatrix(), this->getModel().getExitRateVector(), checkTask.isRewardModelSet() ? this->getModel().getRewardModel(checkTask.getRewardModel()) : this->getModel().getRewardModel(""), rewardPathFormula.getBound<double>());
             return std::unique_ptr<CheckResult>(new ExplicitQuantitativeCheckResult<ValueType>(std::move(numericResult)));
         }
-                
+
         template <typename SparseCtmcModelType>
         std::unique_ptr<CheckResult> SparseCtmcCslModelChecker<SparseCtmcModelType>::computeCumulativeRewards(Environment const& env, storm::logic::RewardMeasureType, CheckTask<storm::logic::CumulativeRewardFormula, ValueType> const& checkTask) {
             storm::logic::CumulativeRewardFormula const& rewardPathFormula = checkTask.getFormula();
@@ -105,7 +159,7 @@ namespace storm {
             std::vector<ValueType> numericResult = storm::modelchecker::helper::SparseCtmcCslHelper::computeCumulativeRewards(env, storm::solver::SolveGoal<ValueType>(this->getModel(), checkTask), this->getModel().getTransitionMatrix(), this->getModel().getExitRateVector(), rewardModel.get(), rewardPathFormula.getNonStrictBound<double>());
             return std::unique_ptr<CheckResult>(new ExplicitQuantitativeCheckResult<ValueType>(std::move(numericResult)));
         }
-                
+
         template <typename SparseCtmcModelType>
         std::unique_ptr<CheckResult> SparseCtmcCslModelChecker<SparseCtmcModelType>::computeReachabilityRewards(Environment const& env, storm::logic::RewardMeasureType, CheckTask<storm::logic::EventuallyFormula, ValueType> const& checkTask) {
             storm::logic::EventuallyFormula const& eventuallyFormula = checkTask.getFormula();
@@ -115,25 +169,25 @@ namespace storm {
             std::vector<ValueType> numericResult = storm::modelchecker::helper::SparseCtmcCslHelper::computeReachabilityRewards(env, storm::solver::SolveGoal<ValueType>(this->getModel(), checkTask), this->getModel().getTransitionMatrix(), this->getModel().getBackwardTransitions(), this->getModel().getExitRateVector(), rewardModel.get(), subResult.getTruthValuesVector(), checkTask.isQualitativeSet());
             return std::unique_ptr<CheckResult>(new ExplicitQuantitativeCheckResult<ValueType>(std::move(numericResult)));
         }
-        
+
         template<typename SparseCtmcModelType>
         std::unique_ptr<CheckResult> SparseCtmcCslModelChecker<SparseCtmcModelType>::computeTotalRewards(Environment const& env, storm::logic::RewardMeasureType, CheckTask<storm::logic::TotalRewardFormula, ValueType> const& checkTask) {
             auto rewardModel = storm::utility::createFilteredRewardModel(this->getModel(), checkTask);
             std::vector<ValueType> numericResult = storm::modelchecker::helper::SparseCtmcCslHelper::computeTotalRewards(env, storm::solver::SolveGoal<ValueType>(this->getModel(), checkTask), this->getModel().getTransitionMatrix(), this->getModel().getBackwardTransitions(), this->getModel().getExitRateVector(), rewardModel.get(), checkTask.isQualitativeSet());
             return std::unique_ptr<CheckResult>(new ExplicitQuantitativeCheckResult<ValueType>(std::move(numericResult)));
         }
-        
+
         template <typename SparseCtmcModelType>
         std::unique_ptr<CheckResult> SparseCtmcCslModelChecker<SparseCtmcModelType>::computeLongRunAverageProbabilities(Environment const& env, CheckTask<storm::logic::StateFormula, ValueType> const& checkTask) {
             storm::logic::StateFormula const& stateFormula = checkTask.getFormula();
             std::unique_ptr<CheckResult> subResultPointer = this->check(env, stateFormula);
             ExplicitQualitativeCheckResult const& subResult = subResultPointer->asExplicitQualitativeCheckResult();
-            
+
             auto probabilisticTransitions = this->getModel().computeProbabilityMatrix();
             storm::modelchecker::helper::SparseDeterministicInfiniteHorizonHelper<ValueType> helper(probabilisticTransitions, this->getModel().getExitRateVector());
             storm::modelchecker::helper::setInformationFromCheckTaskDeterministic(helper, checkTask, this->getModel());
 			auto values = helper.computeLongRunAverageProbabilities(env, subResult.getTruthValuesVector());
-			
+
             return std::unique_ptr<CheckResult>(new ExplicitQuantitativeCheckResult<ValueType>(std::move(values)));
         }
 
@@ -146,7 +200,7 @@ namespace storm {
 			auto values = helper.computeLongRunAverageRewards(env, rewardModel.get());
             return std::unique_ptr<CheckResult>(new ExplicitQuantitativeCheckResult<ValueType>(std::move(values)));
         }
-        
+
         template <typename SparseCtmcModelType>
         std::unique_ptr<CheckResult> SparseCtmcCslModelChecker<SparseCtmcModelType>::computeReachabilityTimes(Environment const& env, storm::logic::RewardMeasureType, CheckTask<storm::logic::EventuallyFormula, ValueType> const& checkTask) {
             storm::logic::EventuallyFormula const& eventuallyFormula = checkTask.getFormula();
@@ -172,13 +226,13 @@ namespace storm {
             std::vector<ValueType> result = storm::modelchecker::helper::SparseCtmcCslHelper::computeAllTransientProbabilities(env, this->getModel().getTransitionMatrix(), this->getModel().getInitialStates(), leftResult.getTruthValuesVector(), rightResult.getTruthValuesVector(), this->getModel().getExitRateVector(), upperBound);
             return result;
         }
-        
+
         template <typename SparseCtmcModelType>
         std::unique_ptr<CheckResult> SparseCtmcCslModelChecker<SparseCtmcModelType>::computeSteadyStateDistribution(Environment const& env) {
             // Initialize helper
             auto probabilisticTransitions = this->getModel().computeProbabilityMatrix();
             storm::modelchecker::helper::SparseDeterministicInfiniteHorizonHelper<ValueType> helper(probabilisticTransitions, this->getModel().getExitRateVector());
-            
+
             // Compute result
             std::vector<ValueType> result;
             auto const& initialStates = this->getModel().getInitialStates();
