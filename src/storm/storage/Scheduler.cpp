@@ -224,6 +224,10 @@ namespace storm {
                 out << "Skipped " << numOfSkippedStatesWithUniqueChoice << " deterministic states with unique choice." << std::endl;
             }
             out << "___________________________________________________________________" << std::endl;
+
+            // TODO only for tests:
+            out << memoryStructure->toString();
+            out << std::endl;
         }
 
         template <>
