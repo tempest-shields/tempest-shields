@@ -215,6 +215,18 @@ namespace storm {
                         stateString << "undefined.";
                     }
 
+                    if(!isMemorylessScheduler()) {
+                        stateString << "    ";
+                        for (auto const& choiceProbPair : choice.getChoiceAsDistribution()) {
+                            for (auto entryIt = model->getTransitionMatrix().getRow(state + choiceProbPair.first).begin(); entryIt < model->getTransitionMatrix().getRow(state +  choiceProbPair.first).end(); ++entryIt) {
+                                out << ", model state' = " << entryIt->getColumn() << ": (transition = " << state+choiceProbPair.first << ") -> " << "(m' = "<<this->memoryStructure->getSuccessorMemoryState(memoryState, entryIt - model->getTransitionMatrix().begin()) <<")";
+                            }
+
+                        }
+
+                    stateString << std::endl;
+                    }
+
                     // Todo: print memory updates
                     out << stateString.str();
                     out << std::endl;
