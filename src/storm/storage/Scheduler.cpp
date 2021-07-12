@@ -145,7 +145,7 @@ namespace storm {
             }
             out << ":" << std::endl;
             STORM_LOG_WARN_COND(!(skipUniqueChoices && model == nullptr), "Can not skip unique choices if the model is not given.");
-            out << std::setw(widthOfStates) << "model state:" << "    " << (isMemorylessScheduler() ? "" : " memory:     ") << "choice(s)" << std::endl;
+            out << std::setw(widthOfStates) << "model state:" << "    " << (isMemorylessScheduler() ? "" : " memory:     ") << "choice(s)" << (isMemorylessScheduler() ? "" : "     memory updates:     ") << std::endl;
             for (uint_fast64_t state = 0; state < schedulerChoices.front().size(); ++state) {
                 std::stringstream stateString;
                 // Check whether the state is skipped
@@ -215,11 +215,12 @@ namespace storm {
                         stateString << "undefined.";
                     }
 
+                    // Print memory updates
                     if(!isMemorylessScheduler()) {
-                        stateString << "    ";
+                        out << "    ";
                         for (auto const& choiceProbPair : choice.getChoiceAsDistribution()) {
                             for (auto entryIt = model->getTransitionMatrix().getRow(state + choiceProbPair.first).begin(); entryIt < model->getTransitionMatrix().getRow(state +  choiceProbPair.first).end(); ++entryIt) {
-                                out << ", model state' = " << entryIt->getColumn() << ": (transition = " << state+choiceProbPair.first << ") -> " << "(m' = "<<this->memoryStructure->getSuccessorMemoryState(memoryState, entryIt - model->getTransitionMatrix().begin()) <<")";
+                                out << ", model state' = " << entryIt->getColumn() << ": (transition = " << entryIt - model->getTransitionMatrix().begin() << ") -> " << "(m' = "<<this->memoryStructure->getSuccessorMemoryState(memoryState, entryIt - model->getTransitionMatrix().begin()) <<")";
                             }
 
                         }
@@ -227,7 +228,6 @@ namespace storm {
                     stateString << std::endl;
                     }
 
-                    // Todo: print memory updates
                     out << stateString.str();
                     out << std::endl;
                 }
