@@ -25,7 +25,7 @@ namespace storm {
             }
 
             template<typename ValueType>
-            std::vector<ValueType> SparseNondeterministicStepBoundedHorizonHelper<ValueType>::compute(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& phiStates, storm::storage::BitVector const& psiStates,   uint64_t lowerBound, uint64_t upperBound,  ModelCheckerHint const& hint)
+            std::vector<ValueType> SparseNondeterministicStepBoundedHorizonHelper<ValueType>::compute(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& phiStates, storm::storage::BitVector const& psiStates, uint64_t lowerBound, uint64_t upperBound, ModelCheckerHint const& hint, storm::storage::BitVector& resultMaybeStates, std::vector<ValueType>& choiceValues)
             {
                 std::vector<ValueType> result(transitionMatrix.getRowGroupCount(), storm::utility::zero<ValueType>());
                 storm::storage::BitVector makeZeroColumns;
@@ -61,13 +61,27 @@ namespace storm {
 
                     auto multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, submatrix);
                     if (lowerBound == 0) {
-                        multiplier->repeatedMultiplyAndReduce(env, goal.direction(), subresult, &b, upperBound);
+                        if(goal.isShieldingTask())
+                        {
+                            multiplier->repeatedMultiplyAndReduceWithChoices(env, goal.direction(), subresult, &b, upperBound, nullptr, choiceValues, transitionMatrix.getRowGroupIndices());
+                        } else {
+                            multiplier->repeatedMultiplyAndReduce(env, goal.direction(), subresult, &b, upperBound);
+                        }
                     } else {
-                        multiplier->repeatedMultiplyAndReduce(env, goal.direction(), subresult, &b, upperBound - lowerBound + 1);
-                        storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, maybeStates, maybeStates, false);
-                        auto multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, submatrix);
-                        b = std::vector<ValueType>(b.size(), storm::utility::zero<ValueType>());
-                        multiplier->repeatedMultiplyAndReduce(env, goal.direction(), subresult, &b, lowerBound - 1);
+                        if(goal.isShieldingTask())
+                        {
+                            multiplier->repeatedMultiplyAndReduceWithChoices(env, goal.direction(), subresult, &b, upperBound - lowerBound + 1, nullptr, choiceValues, transitionMatrix.getRowGroupIndices());
+                            storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, maybeStates, maybeStates, false);
+                            auto multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, submatrix);
+                            b = std::vector<ValueType>(b.size(), storm::utility::zero<ValueType>());
+                            multiplier->repeatedMultiplyAndReduceWithChoices(env, goal.direction(), subresult, &b, lowerBound - 1, nullptr, choiceValues, transitionMatrix.getRowGroupIndices());
+                        } else {
+                            multiplier->repeatedMultiplyAndReduce(env, goal.direction(), subresult, &b, upperBound - lowerBound + 1);
+                            storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, maybeStates, maybeStates, false);
+                            auto multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, submatrix);
+                            b = std::vector<ValueType>(b.size(), storm::utility::zero<ValueType>());
+                            multiplier->repeatedMultiplyAndReduce(env, goal.direction(), subresult, &b, lowerBound - 1);
+                        }
                     }
                     // Set the values of the resulting vector accordingly.
                     storm::utility::vector::setVectorValues(result, maybeStates, subresult);
@@ -75,9 +89,14 @@ namespace storm {
                 if (lowerBound == 0) {
                     storm::utility::vector::setVectorValues(result, psiStates, storm::utility::one<ValueType>());
                 }
+
+                //TODO: check if this works with nullptr as default for resultMaybeStates
+                if(!resultMaybeStates.empty())
+                {
+                    resultMaybeStates = maybeStates;
+                }
                 return result;
             }
-
 
             template class SparseNondeterministicStepBoundedHorizonHelper<double>;
             template class SparseNondeterministicStepBoundedHorizonHelper<storm::RationalNumber>;
