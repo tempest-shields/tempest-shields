@@ -122,6 +122,11 @@ namespace storm {
             relevantValueVector = std::move(values);
         }
 
+        template<typename ValueType>
+        bool SolveGoal<ValueType>::isShieldingTask() const {
+            return shieldingTask;
+        }
+
         template class SolveGoal<double>;
         
 #ifdef STORM_HAVE_CARL
