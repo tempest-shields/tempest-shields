@@ -69,9 +69,43 @@ namespace storm {
         }
 
         template<typename ValueType>
+        void Multiplier<ValueType>::repeatedMultiplyAndReduceWithChoices(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType>& x, std::vector<ValueType> const* b, uint64_t n, storm::storage::BitVector const* dirOverride, std::vector<ValueType>& choiceValues, std::vector<storm::storage::SparseMatrix<double>::index_type> rowGroupIndices) const {
+            storm::utility::ProgressMeasurement progress("multiplications");
+            progress.setMaxCount(n);
+            progress.startNewMeasurement(0);
+            for (uint64_t i = 0; i < n; ++i) {
+
+                multiply(env, x, b, choiceValues);
+                reduce(env, dir, choiceValues, rowGroupIndices, x);
+
+                multiplyAndReduce(env, dir, x, b, x);
+                if (storm::utility::resources::isTerminate()) {
+                    STORM_LOG_WARN("Aborting after " << i << " of " << n << " multiplications");
+                    break;
+                }
+            }
+        }
+
+        template<typename ValueType>
         void Multiplier<ValueType>::multiplyRow2(uint64_t const& rowIndex, std::vector<ValueType> const& x1, ValueType& val1, std::vector<ValueType> const& x2, ValueType& val2) const {
             multiplyRow(rowIndex, x1, val1);
             multiplyRow(rowIndex, x2, val2);
+        }
+
+        template<typename ValueType>
+        void Multiplier<ValueType>::reduce(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType> const& choiceValues, std::vector<storm::storage::SparseMatrix<double>::index_type> rowGroupIndices, std::vector<ValueType>& result, storm::storage::BitVector const* dirOverride) const {
+            auto choice_it = choiceValues.begin();
+            for(uint state = 0; state < rowGroupIndices.size() - 1; state++) {
+                uint rowGroupSize = rowGroupIndices[state + 1] - rowGroupIndices[state];
+                if((dir == storm::OptimizationDirection::Minimize && !dirOverride->get(state)) || (dir == storm::OptimizationDirection::Maximize && dirOverride->get(state))) {
+                    result.at(state) = *std::min_element(choice_it, choice_it + rowGroupSize);
+                    choice_it += rowGroupSize;
+                }
+                else {
+                    result.at(state) = *std::max_element(choice_it, choice_it + rowGroupSize);
+                    choice_it += rowGroupSize;
+                }
+            }
         }
 
         template<typename ValueType>

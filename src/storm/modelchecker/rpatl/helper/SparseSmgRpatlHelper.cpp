@@ -41,8 +41,7 @@ namespace storm {
                 }
 
                 viHelper.performValueIteration(env, x, b, goal.direction());
-                //if(goal.isShieldingTask()) {
-                if(true) {
+                if(goal.isShieldingTask()) {
                     viHelper.getChoiceValues(env, x, constrainedChoiceValues);
                 }
                 viHelper.fillResultVector(x, relevantStates, psiStates);
@@ -107,13 +106,12 @@ namespace storm {
                 // create multiplier and execute the calculation for 1 step
                 auto multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, transitionMatrix);
                 std::vector<ValueType> choiceValues = std::vector<ValueType>(transitionMatrix.getRowCount(), storm::utility::zero<ValueType>());
-
-                //if(goal.isShieldingTask()) {
-                if (true) {
+                if (goal.isShieldingTask()) {
                     multiplier->multiply(env, x, &b, choiceValues);
+                    multiplier->reduce(env, goal.direction(), choiceValues, transitionMatrix.getRowGroupIndices(), x, &statesOfCoalition);
+                } else {
+                    multiplier->multiplyAndReduce(env, goal.direction(), x, &b, x, nullptr, &statesOfCoalition);
                 }
-                multiplier->multiplyAndReduce(env, goal.direction(), x, &b, x, nullptr, &statesOfCoalition);
-
                 return SMGSparseModelCheckingHelperReturnType<ValueType>(std::move(x), std::move(allStates), nullptr, std::move(choiceValues));
             }
 
