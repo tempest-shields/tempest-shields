@@ -24,7 +24,7 @@
 
 #include "storm/models/sparse/StandardRewardModel.h"
 
-#include "storm/shields/shield-handling.h"
+#include "storm/shields/ShieldHandling.h"
 
 #include "storm/settings/modules/GeneralSettings.h"
 
@@ -212,7 +212,7 @@ namespace storm {
 
             std::unique_ptr<CheckResult> result(new ExplicitQuantitativeCheckResult<ValueType>(std::move(values)));
             if(checkTask.isShieldingTask()) {
-                tempest::shields::createOptimalShield<ValueType>(std::make_shared<storm::models::sparse::Smg<ValueType>>(this->getModel()), helper.getProducedOptimalChoices(), checkTask.getShieldingExpression(), checkTask.getOptimizationDirection(), statesOfCoalition, statesOfCoalition);
+                tempest::shields::createQuantitativeShield<ValueType>(std::make_shared<storm::models::sparse::Smg<ValueType>>(this->getModel()), helper.getProducedOptimalChoices(), checkTask.getShieldingExpression(), checkTask.getOptimizationDirection(), statesOfCoalition, statesOfCoalition);
             } else if (checkTask.isProduceSchedulersSet()) {
                 result->asExplicitQuantitativeCheckResult<ValueType>().setScheduler(std::make_unique<storm::storage::Scheduler<ValueType>>(helper.extractScheduler()));
             }
