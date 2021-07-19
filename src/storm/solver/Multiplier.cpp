@@ -97,13 +97,23 @@ namespace storm {
             auto choice_it = choiceValues.begin();
             for(uint state = 0; state < rowGroupIndices.size() - 1; state++) {
                 uint rowGroupSize = rowGroupIndices[state + 1] - rowGroupIndices[state];
-                if((dir == storm::OptimizationDirection::Minimize && !dirOverride->get(state)) || (dir == storm::OptimizationDirection::Maximize && dirOverride->get(state))) {
-                    result.at(state) = *std::min_element(choice_it, choice_it + rowGroupSize);
-                    choice_it += rowGroupSize;
-                }
-                else {
-                    result.at(state) = *std::max_element(choice_it, choice_it + rowGroupSize);
-                    choice_it += rowGroupSize;
+                if(dirOverride != nullptr) {
+                    if((dir == storm::OptimizationDirection::Minimize && !dirOverride->get(state)) || (dir == storm::OptimizationDirection::Maximize && dirOverride->get(state))) {
+                        result.at(state) = *std::min_element(choice_it, choice_it + rowGroupSize);
+                        choice_it += rowGroupSize;
+                    }
+                    else {
+                        result.at(state) = *std::max_element(choice_it, choice_it + rowGroupSize);
+                        choice_it += rowGroupSize;
+                    }
+                } else {
+                    if(dir == storm::OptimizationDirection::Minimize) {
+                        result.at(state) = *std::min_element(choice_it, choice_it + rowGroupSize);
+                        choice_it += rowGroupSize;
+                    } else {
+                        result.at(state) = *std::max_element(choice_it, choice_it + rowGroupSize);
+                        choice_it += rowGroupSize;
+                    }
                 }
             }
         }
