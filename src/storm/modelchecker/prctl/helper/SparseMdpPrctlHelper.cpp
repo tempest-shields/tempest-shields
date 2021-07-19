@@ -620,10 +620,18 @@ namespace storm {
 
                 // create multiplier and execute the calculation for 1 additional step
                 auto multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, transitionMatrix);
-                std::vector<ValueType> choiceValues = std::vector<ValueType>(transitionMatrix.getRowCount(), storm::utility::zero<ValueType>());
+
+                uint sizeChoiceValues = 0;
+                for(uint counter = 0; counter < qualitativeStateSets.maybeStates.size(); counter++) {
+                    if(qualitativeStateSets.maybeStates.get(counter)) {
+                        sizeChoiceValues += transitionMatrix.getRowGroupSize(counter);
+                    }
+                }
+
+                std::vector<ValueType> choiceValues = std::vector<ValueType>(sizeChoiceValues, storm::utility::zero<ValueType>());
                 
                 // Check whether we need to compute exact probabilities for some states.
-                if (qualitative || maybeStatesNotRelevant) {
+                if (qualitative || maybeStatesNotRelevant || !goal.isShieldingTask()) {
                     // Set the values for all maybe-states to 0.5 to indicate that their probability values are neither 0 nor 1.
                     storm::utility::vector::setVectorValues<ValueType>(result, qualitativeStateSets.maybeStates, storm::utility::convertNumber<ValueType>(0.5));
                 } else {
@@ -663,8 +671,50 @@ namespace storm {
                             }
                         }
                         if (goal.isShieldingTask()) {
-                            multiplier->multiply(env, result, &b, choiceValues);
-                            multiplier->reduce(env, goal.direction(), choiceValues, transitionMatrix.getRowGroupIndices(), result, nullptr);
+                            STORM_LOG_DEBUG("SparseMdpPrctlHelper<ValueType>::computeUntilProbabilities: Before multiply()");
+                            STORM_LOG_DEBUG(result);
+
+                            std::vector<ValueType> subResult;
+                            uint sizeChoiceValues = 0;
+                            for(uint counter = 0; counter < qualitativeStateSets.maybeStates.size(); counter++) {
+                                if(qualitativeStateSets.maybeStates.get(counter)) {
+                                    subResult.push_back(result.at(counter));
+                                }
+                            }
+
+                            STORM_LOG_DEBUG(subResult);
+
+
+                            STORM_LOG_DEBUG(choiceValues);
+                            //std::vector<ValueType> b_complete = transitionMatrix.getConstrainedRowGroupSumVector(storm::storage::BitVector(qualitativeStateSets.maybeStates.size(), true), qualitativeStateSets.statesWithProbability1);
+
+                            submatrix = transitionMatrix.getSubmatrix(true, qualitativeStateSets.maybeStates, qualitativeStateSets.maybeStates, false);
+
+                            //STORM_LOG_DEBUG(b_complete);
+
+                            auto sub_multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, submatrix);
+
+
+                            sub_multiplier->multiply(env, subResult, &b, choiceValues);
+                            STORM_LOG_DEBUG(choiceValues);
+
+                            std::vector<ValueType> allChoices = std::vector<ValueType>(transitionMatrix.getRowGroupIndices().at(transitionMatrix.getRowGroupIndices().size() - 1), storm::utility::zero<ValueType>());
+                            auto choice_it = choiceValues.begin();
+                            for(uint state = 0; state < transitionMatrix.getRowGroupIndices().size() - 1; state++) {
+                                uint rowGroupSize = transitionMatrix.getRowGroupIndices().at(state + 1) - transitionMatrix.getRowGroupIndices().at(state);
+                                if (qualitativeStateSets.maybeStates.get(state)) {
+                                    for(uint choice = 0; choice < rowGroupSize; choice++, choice_it++) {
+                                        allChoices.at(transitionMatrix.getRowGroupIndices().at(state) + choice) = *choice_it;
+                                    }
+                                }
+                            }
+                            choiceValues = allChoices;
+
+                            STORM_LOG_DEBUG(choiceValues);
+
+
+                            //TODO: fill up choiceValues with Zeros (dimension!)
+
                         }
                     }
                 }
@@ -702,6 +752,9 @@ namespace storm {
                     auto result = computeUntilProbabilities(env, std::move(goal), transitionMatrix, backwardTransitions, storm::storage::BitVector(transitionMatrix.getRowGroupCount(), true), ~psiStates, qualitative, produceScheduler);
                     for (auto& element : result.values) {
                         element = storm::utility::one<ValueType>() - element;
+                    }
+                    for (auto& choice : result.choiceValues) {
+                        choice = storm::utility::one<ValueType>() - choice;
                     }
                     return result;
                 }
