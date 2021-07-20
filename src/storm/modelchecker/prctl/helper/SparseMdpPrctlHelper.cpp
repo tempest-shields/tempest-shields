@@ -603,7 +603,7 @@ namespace storm {
                 // We need to identify the maybe states (states which have a probability for satisfying the until formula
                 // that is strictly between 0 and 1) and the states that satisfy the formula with probablity 1 and 0, respectively.
                 QualitativeStateSetsUntilProbabilities qualitativeStateSets = getQualitativeStateSetsUntilProbabilities(goal, transitionMatrix, backwardTransitions, phiStates, psiStates, hint);
-                
+
                 STORM_LOG_INFO("Preprocessing: " << qualitativeStateSets.statesWithProbability1.getNumberOfSetBits() << " states with probability 1, " << qualitativeStateSets.statesWithProbability0.getNumberOfSetBits() << " with probability 0 (" << qualitativeStateSets.maybeStates.getNumberOfSetBits() << " states remaining).");
                 
                 // Set values of resulting vector that are known exactly.
@@ -621,14 +621,14 @@ namespace storm {
                 // create multiplier and execute the calculation for 1 additional step
                 auto multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, transitionMatrix);
 
-                uint sizeChoiceValues = 0;
+                uint sizeMaybeStateChoiceValues = 0;
                 for(uint counter = 0; counter < qualitativeStateSets.maybeStates.size(); counter++) {
                     if(qualitativeStateSets.maybeStates.get(counter)) {
-                        sizeChoiceValues += transitionMatrix.getRowGroupSize(counter);
+                        sizeMaybeStateChoiceValues += transitionMatrix.getRowGroupSize(counter);
                     }
                 }
 
-                std::vector<ValueType> choiceValues = std::vector<ValueType>(sizeChoiceValues, storm::utility::zero<ValueType>());
+                std::vector<ValueType> maybeStateChoiceValues = std::vector<ValueType>(sizeMaybeStateChoiceValues, storm::utility::zero<ValueType>());
                 
                 // Check whether we need to compute exact probabilities for some states.
                 if (qualitative || maybeStatesNotRelevant || !goal.isShieldingTask()) {
@@ -681,19 +681,27 @@ namespace storm {
 
                             submatrix = transitionMatrix.getSubmatrix(true, qualitativeStateSets.maybeStates, qualitativeStateSets.maybeStates, false);
                             auto sub_multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, submatrix);
-                            sub_multiplier->multiply(env, subResult, &b, choiceValues);
+                            sub_multiplier->multiply(env, subResult, &b, maybeStateChoiceValues);
 
-                            std::vector<ValueType> allChoices = std::vector<ValueType>(transitionMatrix.getRowGroupIndices().at(transitionMatrix.getRowGroupIndices().size() - 1), storm::utility::zero<ValueType>());
-                            auto choice_it = choiceValues.begin();
-                            for(uint state = 0; state < transitionMatrix.getRowGroupIndices().size() - 1; state++) {
-                                uint rowGroupSize = transitionMatrix.getRowGroupIndices().at(state + 1) - transitionMatrix.getRowGroupIndices().at(state);
-                                if (qualitativeStateSets.maybeStates.get(state)) {
-                                    for(uint choice = 0; choice < rowGroupSize; choice++, choice_it++) {
-                                        allChoices.at(transitionMatrix.getRowGroupIndices().at(state) + choice) = *choice_it;
-                                    }
-                                }
-                            }
-                            choiceValues = allChoices;
+                        }
+                    }
+                }
+
+                std::vector<ValueType> choiceValues = std::vector<ValueType>(transitionMatrix.getRowGroupIndices().at(transitionMatrix.getRowGroupIndices().size() - 1), storm::utility::zero<ValueType>());
+                auto choice_it = maybeStateChoiceValues.begin();
+                for(uint state = 0; state < transitionMatrix.getRowGroupIndices().size() - 1; state++) {
+                    uint rowGroupSize = transitionMatrix.getRowGroupIndices().at(state + 1) - transitionMatrix.getRowGroupIndices().at(state);
+                    if (qualitativeStateSets.maybeStates.get(state)) {
+                        for(uint choice = 0; choice < rowGroupSize; choice++, choice_it++) {
+                            choiceValues.at(transitionMatrix.getRowGroupIndices().at(state) + choice) = *choice_it;
+                        }
+                    } else if (qualitativeStateSets.statesWithProbability0.get(state)) {
+                        for(uint choice = 0; choice < rowGroupSize; choice++) {
+                            choiceValues.at(transitionMatrix.getRowGroupIndices().at(state) + choice) = 0;
+                        }
+                    } else if (qualitativeStateSets.statesWithProbability1.get(state)) {
+                        for(uint choice = 0; choice < rowGroupSize; choice++) {
+                            choiceValues.at(transitionMatrix.getRowGroupIndices().at(state) + choice) = 1;
                         }
                     }
                 }
