@@ -74,11 +74,8 @@ namespace storm {
             progress.setMaxCount(n);
             progress.startNewMeasurement(0);
             for (uint64_t i = 0; i < n; ++i) {
-
                 multiply(env, x, b, choiceValues);
                 reduce(env, dir, choiceValues, rowGroupIndices, x);
-
-                multiplyAndReduce(env, dir, x, b, x);
                 if (storm::utility::resources::isTerminate()) {
                     STORM_LOG_WARN("Aborting after " << i << " of " << n << " multiplications");
                     break;

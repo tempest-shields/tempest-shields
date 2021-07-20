@@ -637,14 +637,14 @@ namespace storm {
                 } else {
                     if (!qualitativeStateSets.maybeStates.empty()) {
                         // In this case we have have to compute the remaining probabilities.
-                        
+
                         // Obtain proper hint information either from the provided hint or from requirements of the solver.
                         SparseMdpHintType<ValueType> hintInformation = computeHints(env, SolutionType::UntilProbabilities, hint, goal.direction(), transitionMatrix, backwardTransitions, qualitativeStateSets.maybeStates, phiStates, qualitativeStateSets.statesWithProbability1, produceScheduler);
                         
                         // Declare the components of the equation system we will solve.
                         storm::storage::SparseMatrix<ValueType> submatrix;
                         std::vector<ValueType> b;
-                        
+
                         // If the hint information tells us that we have to eliminate MECs, we do so now.
                         boost::optional<SparseMdpEndComponentInformation<ValueType>> ecInformation;
                         if (hintInformation.getEliminateEndComponents()) {
@@ -671,9 +671,6 @@ namespace storm {
                             }
                         }
                         if (goal.isShieldingTask()) {
-                            STORM_LOG_DEBUG("SparseMdpPrctlHelper<ValueType>::computeUntilProbabilities: Before multiply()");
-                            STORM_LOG_DEBUG(result);
-
                             std::vector<ValueType> subResult;
                             uint sizeChoiceValues = 0;
                             for(uint counter = 0; counter < qualitativeStateSets.maybeStates.size(); counter++) {
@@ -682,21 +679,9 @@ namespace storm {
                                 }
                             }
 
-                            STORM_LOG_DEBUG(subResult);
-
-
-                            STORM_LOG_DEBUG(choiceValues);
-                            //std::vector<ValueType> b_complete = transitionMatrix.getConstrainedRowGroupSumVector(storm::storage::BitVector(qualitativeStateSets.maybeStates.size(), true), qualitativeStateSets.statesWithProbability1);
-
                             submatrix = transitionMatrix.getSubmatrix(true, qualitativeStateSets.maybeStates, qualitativeStateSets.maybeStates, false);
-
-                            //STORM_LOG_DEBUG(b_complete);
-
                             auto sub_multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, submatrix);
-
-
                             sub_multiplier->multiply(env, subResult, &b, choiceValues);
-                            STORM_LOG_DEBUG(choiceValues);
 
                             std::vector<ValueType> allChoices = std::vector<ValueType>(transitionMatrix.getRowGroupIndices().at(transitionMatrix.getRowGroupIndices().size() - 1), storm::utility::zero<ValueType>());
                             auto choice_it = choiceValues.begin();
@@ -709,12 +694,6 @@ namespace storm {
                                 }
                             }
                             choiceValues = allChoices;
-
-                            STORM_LOG_DEBUG(choiceValues);
-
-
-                            //TODO: fill up choiceValues with Zeros (dimension!)
-
                         }
                     }
                 }
@@ -745,7 +724,6 @@ namespace storm {
                             statesInPsiMecs.set(stateActionsPair.first, true);
                         }
                     }
-                    
                     return computeUntilProbabilities(env, std::move(goal), transitionMatrix, backwardTransitions, psiStates, statesInPsiMecs, qualitative, produceScheduler);
                 } else {
                     goal.oneMinus();
@@ -1150,7 +1128,7 @@ namespace storm {
                 
                 // Prepare resulting vector.
                 std::vector<ValueType> result(transitionMatrix.getRowGroupCount(), storm::utility::zero<ValueType>());
-                
+
                 // Determine which states have a reward that is infinity or less than infinity.
                 QualitativeStateSetsReachabilityRewards qualitativeStateSets = getQualitativeStateSetsReachabilityRewards(goal, transitionMatrix, backwardTransitions, targetStates, hint, zeroRewardStatesGetter, zeroRewardChoicesGetter);
                 
@@ -1242,10 +1220,7 @@ namespace storm {
                 STORM_LOG_ASSERT((!produceScheduler && !scheduler) || scheduler->isDeterministicScheduler(), "Expected a deterministic scheduler");
                 STORM_LOG_ASSERT((!produceScheduler && !scheduler) || scheduler->isMemorylessScheduler(), "Expected a memoryless scheduler");
 
-
-                //TODO: keep nullvector for choiceValues in computeReachabilityRewardsHelper? - nullptr causes ERROR
-                //std::vector<ValueType> choiceValues = std::vector<ValueType>(transitionMatrix.getRowCount(), storm::utility::zero<ValueType>());
-                std::vector<ValueType> choiceValues = std::vector<ValueType>();
+                std::vector<ValueType> choiceValues;
 
                 return MDPSparseModelCheckingHelperReturnType<ValueType>(std::move(result), std::move(qualitativeStateSets.maybeStates), std::move(scheduler), std::move(choiceValues));
             }

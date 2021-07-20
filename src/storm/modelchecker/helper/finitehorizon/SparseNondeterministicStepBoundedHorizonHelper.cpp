@@ -63,18 +63,67 @@ namespace storm {
                     if (lowerBound == 0) {
                         if(goal.isShieldingTask())
                         {
-                            multiplier->repeatedMultiplyAndReduceWithChoices(env, goal.direction(), subresult, &b, upperBound, nullptr, choiceValues, transitionMatrix.getRowGroupIndices());
+
+                            std::vector<storm::storage::SparseMatrix<double>::index_type> rowGroupIndices = transitionMatrix.getRowGroupIndices();
+                            std::vector<storm::storage::SparseMatrix<double>::index_type> reducedRowGroupIndices;
+                            uint sizeChoiceValues = 0;
+                            for(uint counter = 0; counter < maybeStates.size(); counter++) {
+                                if(maybeStates.get(counter)) {
+                                    sizeChoiceValues += transitionMatrix.getRowGroupSize(counter);
+                                    reducedRowGroupIndices.push_back(rowGroupIndices.at(counter));
+                                }
+                            }
+                            choiceValues = std::vector<ValueType>(sizeChoiceValues, storm::utility::zero<ValueType>());
+
+                            multiplier->repeatedMultiplyAndReduceWithChoices(env, goal.direction(), subresult, &b, upperBound, nullptr, choiceValues, reducedRowGroupIndices);
+
+                            // fill up choicesValues for shields
+                            std::vector<ValueType> allChoices = std::vector<ValueType>(transitionMatrix.getRowGroupIndices().at(transitionMatrix.getRowGroupIndices().size() - 1), storm::utility::zero<ValueType>());
+                            auto choice_it = choiceValues.begin();
+                            for(uint state = 0; state < transitionMatrix.getRowGroupIndices().size() - 1; state++) {
+                                uint rowGroupSize = transitionMatrix.getRowGroupIndices().at(state + 1) - transitionMatrix.getRowGroupIndices().at(state);
+                                if (maybeStates.get(state)) {
+                                    for(uint choice = 0; choice < rowGroupSize; choice++, choice_it++) {
+                                        allChoices.at(transitionMatrix.getRowGroupIndices().at(state) + choice) = *choice_it;
+                                    }
+                                }
+                            }
+                            choiceValues = allChoices;
                         } else {
                             multiplier->repeatedMultiplyAndReduce(env, goal.direction(), subresult, &b, upperBound);
                         }
                     } else {
                         if(goal.isShieldingTask())
                         {
-                            multiplier->repeatedMultiplyAndReduceWithChoices(env, goal.direction(), subresult, &b, upperBound - lowerBound + 1, nullptr, choiceValues, transitionMatrix.getRowGroupIndices());
+                            std::vector<storm::storage::SparseMatrix<double>::index_type> rowGroupIndices = transitionMatrix.getRowGroupIndices();
+                            std::vector<storm::storage::SparseMatrix<double>::index_type> reducedRowGroupIndices;
+                            uint sizeChoiceValues = 0;
+                            for(uint counter = 0; counter < maybeStates.size(); counter++) {
+                                if(maybeStates.get(counter)) {
+                                    sizeChoiceValues += transitionMatrix.getRowGroupSize(counter);
+                                    reducedRowGroupIndices.push_back(rowGroupIndices.at(counter));
+                                }
+                            }
+                            choiceValues = std::vector<ValueType>(sizeChoiceValues, storm::utility::zero<ValueType>());
+
+                            multiplier->repeatedMultiplyAndReduceWithChoices(env, goal.direction(), subresult, &b, upperBound - lowerBound + 1, nullptr, choiceValues, reducedRowGroupIndices);
                             storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, maybeStates, maybeStates, false);
                             auto multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, submatrix);
                             b = std::vector<ValueType>(b.size(), storm::utility::zero<ValueType>());
-                            multiplier->repeatedMultiplyAndReduceWithChoices(env, goal.direction(), subresult, &b, lowerBound - 1, nullptr, choiceValues, transitionMatrix.getRowGroupIndices());
+                            multiplier->repeatedMultiplyAndReduceWithChoices(env, goal.direction(), subresult, &b, lowerBound - 1, nullptr, choiceValues, reducedRowGroupIndices);
+
+                            // fill up choicesValues for shields
+                            std::vector<ValueType> allChoices = std::vector<ValueType>(transitionMatrix.getRowGroupIndices().at(transitionMatrix.getRowGroupIndices().size() - 1), storm::utility::zero<ValueType>());
+                            auto choice_it = choiceValues.begin();
+                            for(uint state = 0; state < transitionMatrix.getRowGroupIndices().size() - 1; state++) {
+                                uint rowGroupSize = transitionMatrix.getRowGroupIndices().at(state + 1) - transitionMatrix.getRowGroupIndices().at(state);
+                                if (maybeStates.get(state)) {
+                                    for(uint choice = 0; choice < rowGroupSize; choice++, choice_it++) {
+                                        allChoices.at(transitionMatrix.getRowGroupIndices().at(state) + choice) = *choice_it;
+                                    }
+                                }
+                            }
+                            choiceValues = allChoices;
                         } else {
                             multiplier->repeatedMultiplyAndReduce(env, goal.direction(), subresult, &b, upperBound - lowerBound + 1);
                             storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, maybeStates, maybeStates, false);
@@ -90,11 +139,7 @@ namespace storm {
                     storm::utility::vector::setVectorValues(result, psiStates, storm::utility::one<ValueType>());
                 }
 
-                //TODO: check if this works with nullptr as default for resultMaybeStates
-                if(!resultMaybeStates.empty())
-                {
-                    resultMaybeStates = maybeStates;
-                }
+                resultMaybeStates = maybeStates;
                 return result;
             }
 
