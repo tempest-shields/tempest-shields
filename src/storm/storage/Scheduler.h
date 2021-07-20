@@ -5,6 +5,7 @@
 
 #include "storm/storage/memorystructure/MemoryStructure.h"
 #include "storm/storage/SchedulerChoice.h"
+#include "storm/storage/BitVector.h"
 
 namespace storm {
     namespace storage {
@@ -65,7 +66,7 @@ namespace storm {
             storm::storage::BitVector computeActionSupport(std::vector<uint64_t> const& nondeterministicChoiceIndicies) const;
 
             /*!
-             * Retrieves whether there is a pair of model and memory state for which the choice is undefined.
+             * Retrieves whether there is a *reachable* pair of model and memory state for which the choice is undefined.
              */
             bool isPartialScheduler() const;
 
@@ -127,8 +128,11 @@ namespace storm {
             std::vector<std::vector<SchedulerChoice<ValueType>>> schedulerChoices;
 
             bool printUndefinedChoices = false;
-            uint_fast64_t numOfUndefinedChoices;
+
+            std::vector<storm::storage::BitVector> reachableStates;
+            uint_fast64_t numOfUndefinedChoices; // Only consider reachable ones
             uint_fast64_t numOfDeterministicChoices;
+            uint_fast64_t numOfUnreachableStates;
         };
     }
 }
