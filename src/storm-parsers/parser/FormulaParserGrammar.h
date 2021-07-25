@@ -10,6 +10,7 @@
 #include "storm/storage/jani/Property.h"
 #include "storm/logic/Formulas.h"
 #include "storm-parsers/parser/ExpressionParser.h"
+#include "storm-parsers/parser/ConstantDataType.h"
 
 #include "storm/modelchecker/results/FilterType.h"
 
@@ -147,10 +148,6 @@ namespace storm {
             qi::symbols<char, storm::expressions::Expression> identifiers_;
 
             qi::rule<Iterator, std::vector<storm::jani::Property>(), Skipper> start;
-
-            enum class ConstantDataType {
-                Bool, Integer, Rational
-            };
 
             qi::rule<Iterator, qi::unused_type(), qi::locals<ConstantDataType>, Skipper> constantDefinition;
             qi::rule<Iterator, std::string(), Skipper> identifier;
