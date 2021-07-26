@@ -37,7 +37,7 @@ namespace tempest {
                 PostSafetyShield<ValueType, IndexType> shield(model->getTransitionMatrix().getRowGroupIndices(), choiceValues, shieldingExpression, optimizationDirection, relevantStates, coalitionStates);
                 shield.construct().printToStream(stream, shieldingExpression, model);
             } else {
-                STORM_LOG_THROW(false, storm::exceptions::InvalidArgumentException, "Cannot create " + shieldingExpression->typeToString() + " shields yet");
+                STORM_LOG_THROW(false, storm::exceptions::InvalidArgumentException, "Unknown Shielding Type: " + shieldingExpression->typeToString());
                 storm::utility::closeFile(stream);
             }
             storm::utility::closeFile(stream);
@@ -48,11 +48,10 @@ namespace tempest {
             std::ofstream stream;
             storm::utility::openFile(shieldFilename(shieldingExpression), stream);
             if(shieldingExpression->isOptimalShield()) {
-                STORM_LOG_DEBUG("createOptimalShield");
                 OptimalShield<ValueType, IndexType> shield(model->getTransitionMatrix().getRowGroupIndices(), precomputedChoices, shieldingExpression, optimizationDirection, relevantStates, coalitionStates);
                 shield.construct().printToStream(stream, shieldingExpression, model);
             } else {
-                STORM_LOG_THROW(false, storm::exceptions::InvalidArgumentException, "Cannot create " + shieldingExpression->typeToString() + " shields yet");
+                STORM_LOG_THROW(false, storm::exceptions::InvalidArgumentException, "Unknown Shielding Type: " + shieldingExpression->typeToString());
                 storm::utility::closeFile(stream);
             }
             storm::utility::closeFile(stream);
