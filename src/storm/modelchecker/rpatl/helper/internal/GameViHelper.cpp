@@ -8,8 +8,6 @@
 #include "storm/utility/SignalHandler.h"
 #include "storm/utility/vector.h"
 
-// TODO this will undergo major refactoring as soon as we implement model checking of further properties
-
 namespace storm {
     namespace modelchecker {
         namespace helper {
@@ -21,10 +19,6 @@ namespace storm {
 
                 template <typename ValueType>
                 void GameViHelper<ValueType>::prepareSolversAndMultipliers(const Environment& env) {
-                    // TODO we get whole transitionmatrix and psistates DONE IN smgrpatlhelper
-                    // -> clip statesofcoalition
-                    // -> compute b vector from psiStates
-                    // -> clip transitionmatrix and create multiplier
                     _multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, _transitionMatrix);
 
                     _x1IsCurrent = false;
@@ -75,29 +69,16 @@ namespace storm {
                     }
                     _x1IsCurrent = !_x1IsCurrent;
 
-                    // multiplyandreducegaussseidel
-                    // Ax + b
                     if (choices == nullptr) {
-                        //STORM_LOG_DEBUG("\n" << _transitionMatrix);
-                        //STORM_LOG_DEBUG("xOld = " << storm::utility::vector::toString(xOld()));
-                        //STORM_LOG_DEBUG("b = " << storm::utility::vector::toString(_b));
-                        //STORM_LOG_DEBUG("xNew = " << storm::utility::vector::toString(xNew()));
                         _multiplier->multiplyAndReduce(env, dir, xOld(), &_b, xNew(), nullptr, &_statesOfCoalition);
-                        //std::cin.get();
                     } else {
-                        // Also keep track of the choices made.
                         _multiplier->multiplyAndReduce(env, dir, xOld(), &_b, xNew(), choices, &_statesOfCoalition);
                     }
 
                     // compare applyPointwise
                     storm::utility::vector::applyPointwise<ValueType, ValueType, ValueType>(xOld(), xNew(), xNew(), [&dir] (ValueType const& a, ValueType const& b) -> ValueType {
-                       if(storm::solver::maximize(dir)) {
-                            if(a > b) return a;
-                            else return b;
-                       } else {
-                            if(a > b) return a;
-                            else return b;
-                       }
+                       if(a > b) return a;
+                       else return b;
                     });
                 }
 
@@ -129,7 +110,6 @@ namespace storm {
                             return false;
                         }
                     }
-                    // TODO needs checking
                     return true;
                 }
 

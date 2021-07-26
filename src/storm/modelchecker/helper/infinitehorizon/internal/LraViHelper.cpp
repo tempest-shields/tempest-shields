@@ -221,13 +221,10 @@ namespace storm {
                         }
                         performIterationStep(env, dir, choices);
                     }
-                    //std::cout << "result (" << iter << " steps):" << std::endl;
-                    storm::utility::vector::applyPointwise<ValueType, ValueType>(xNew(), xNew(), [&iter] (ValueType const& x_i) -> ValueType { return x_i / (double)iter; });
-                    //for(int i = 0; i < xNew().size() ; i++ ) {
-                    //    std::cout << std::setprecision(4) << i << "\t: " << xNew().at(i) << "\t" << xNew().at(i) * _uniformizationRate << "\t" << std::setprecision(16) << xOld().at(i) *_uniformizationRate << std::endl;
-                    //    //if(i == 50) {std::cout << "only showing top 50 lines"; break; }
-                    //}
-                    if(gameNondetTs()) result = (xOld().at(0) * _uniformizationRate)/(double)iter; // TODO is "init" always going to be .at(0) ?
+                    if(gameNondetTs()) {
+                      storm::utility::vector::applyPointwise<ValueType, ValueType>(xNew(), xNew(), [&iter] (ValueType const& x_i) -> ValueType { return x_i / (double)iter; });
+                      result = (xOld().at(0) * _uniformizationRate)/(double)iter; // TODO is "init" always going to be .at(0) ?
+                    }
                     return result;
                 }
 
