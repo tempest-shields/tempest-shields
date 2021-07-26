@@ -66,11 +66,6 @@ namespace storm {
             storm::logic::GameFormula const& gameFormula = checkTask.getFormula();
             storm::logic::Formula const& subFormula = gameFormula.getSubformula();
 
-            if(checkTask.isShieldingTask()) {
-                std::cout << "Creating Shield for " << checkTask.getShieldingExpression() << std::endl;
-            }
-
-            STORM_LOG_THROW(checkTask.isPlayerCoalitionSet(), storm::exceptions::InvalidPropertyException, "No player coalition was set.");
             statesOfCoalition = this->getModel().computeStatesOfCoalition(gameFormula.getCoalition());
             std::cout << "Found " << statesOfCoalition.getNumberOfSetBits() << " states in coalition." << std::endl;
             statesOfCoalition.complement();
