@@ -70,7 +70,9 @@ namespace storm {
                 std::cout << "Creating Shield for " << checkTask.getShieldingExpression() << std::endl;
             }
 
+            STORM_LOG_THROW(checkTask.isPlayerCoalitionSet(), storm::exceptions::InvalidPropertyException, "No player coalition was set.");
             statesOfCoalition = this->getModel().computeStatesOfCoalition(gameFormula.getCoalition());
+            std::cout << "Found " << statesOfCoalition.getNumberOfSetBits() << " states in coalition." << std::endl;
             statesOfCoalition.complement();
 
             if (subFormula.isRewardOperatorFormula()) {
@@ -209,10 +211,6 @@ namespace storm {
         template<typename SparseSmgModelType>
         std::unique_ptr<CheckResult> SparseSmgRpatlModelChecker<SparseSmgModelType>::computeLongRunAverageRewards(Environment const& env, storm::logic::RewardMeasureType rewardMeasureType, CheckTask<storm::logic::LongRunAverageRewardFormula, ValueType> const& checkTask) {
             auto rewardModel = storm::utility::createFilteredRewardModel(this->getModel(), checkTask);
-            // TODO
-            //STORM_LOG_THROW(checkTask.isPlayerCoalitionSet(), storm::exceptions::InvalidPropertyException, "No player coalition was set.");
-            //auto coalitionStates = this->getModel().computeStatesOfCoalition(checkTask.getPlayerCoalition());
-            std::cout << "Found " << statesOfCoalition.getNumberOfSetBits() << " states in coalition." << std::endl;
             storm::modelchecker::helper::SparseNondeterministicGameInfiniteHorizonHelper<ValueType> helper(this->getModel().getTransitionMatrix(), statesOfCoalition);
             storm::modelchecker::helper::setInformationFromCheckTaskNondeterministic(helper, checkTask, this->getModel());
             auto values = helper.computeLongRunAverageRewards(env, rewardModel.get());
