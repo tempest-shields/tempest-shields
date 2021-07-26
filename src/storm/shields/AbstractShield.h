@@ -38,20 +38,12 @@ namespace tempest {
             virtual ~AbstractShield() = 0;
 
             /*!
-             * TODO
+             * Computes the sizes of the row groups based on the indices given.
              */
             std::vector<IndexType> computeRowGroupSizes();
 
-            /*!
-             * TODO
-             */
-            bool allowedValue(ValueType const& max, ValueType const& v, std::shared_ptr<storm::logic::ShieldExpression const> const shieldExpression);
-
             storm::OptimizationDirection getOptimizationDirection();
 
-            /*!
-             * TODO
-             */
             std::string getClassName() const;
 
         protected:

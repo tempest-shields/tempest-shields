@@ -25,11 +25,6 @@ namespace tempest {
         }
 
         template<typename ValueType, typename IndexType>
-        bool AbstractShield<ValueType, IndexType>::allowedValue(ValueType const& max, ValueType const& v, std::shared_ptr<storm::logic::ShieldExpression const> const shieldExpression) {
-            return shieldExpression->isRelative() ? v >= shieldExpression->getValue() * max : v >= shieldExpression->getValue();
-        }
-
-        template<typename ValueType, typename IndexType>
         storm::OptimizationDirection AbstractShield<ValueType, IndexType>::getOptimizationDirection() {
             return optimizationDirection;
         }
