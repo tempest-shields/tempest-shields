@@ -91,7 +91,6 @@ namespace storm {
         }
 
         std::shared_ptr<storm::logic::ShieldExpression const> Property::getShieldingExpression() const {
-            //STORM_LOG_ASSERT(isShieldingProperty(), "This property does not have an associated shielding expression.");
             if(!isShieldingProperty()) return nullptr;
             return shieldingExpression.get();
         }
