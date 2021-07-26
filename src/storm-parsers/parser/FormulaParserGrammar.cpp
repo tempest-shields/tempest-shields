@@ -146,7 +146,7 @@ namespace storm {
 
             shieldingType = (qi::lit("PreSafety")[qi::_val = storm::logic::ShieldingType::PreSafety]   |
                              qi::lit("PostSafety")[qi::_val = storm::logic::ShieldingType::PostSafety] |
-                             qi::lit("Optimal")[qi::_val = storm::logic::ShieldingType::Optimal]);
+                             qi::lit("Optimal")[qi::_val = storm::logic::ShieldingType::Optimal]) > -qi::lit("Shield");
             shieldingType.name("shielding type");
 
             multiplicativeFactor = qi::double_[qi::_pass = (qi::_1 >= 0) & (qi::_1 <= 1.0), qi::_val = qi::_1 ];
