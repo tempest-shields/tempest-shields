@@ -16,14 +16,11 @@ namespace storm {
             template<typename ValueType>
             SMGSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeUntilProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& phiStates, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint) {
                 // TODO add Kwiatkowska original reference
-                // TODO FIX solver min max mess
-
                 auto solverEnv = env;
                 solverEnv.solver().minMax().setMethod(storm::solver::MinMaxMethod::ValueIteration, false);
 
                 // Initialize the solution vector.
                 std::vector<ValueType> x = std::vector<ValueType>(transitionMatrix.getRowGroupCount() - psiStates.getNumberOfSetBits(), storm::utility::zero<ValueType>());
-
                 // Relevant states are those states which are phiStates and not PsiStates.
                 storm::storage::BitVector relevantStates = phiStates & ~psiStates;
 
@@ -44,6 +41,7 @@ namespace storm {
                 }
 
                 viHelper.performValueIteration(env, x, b, goal.direction());
+                //if(goal.isShieldingTask()) {
                 if(true) {
                     viHelper.getChoiceValues(env, x, constrainedChoiceValues);
                 }
@@ -109,6 +107,8 @@ namespace storm {
                 // create multiplier and execute the calculation for 1 step
                 auto multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, transitionMatrix);
                 std::vector<ValueType> choiceValues = std::vector<ValueType>(transitionMatrix.getRowCount(), storm::utility::zero<ValueType>());
+
+                //if(goal.isShieldingTask()) {
                 if (true) {
                     multiplier->multiply(env, x, &b, choiceValues);
                 }
@@ -124,7 +124,6 @@ namespace storm {
 
                 // Relevant states are safe states - the psiStates.
                 storm::storage::BitVector relevantStates = psiStates;
-                STORM_LOG_DEBUG(relevantStates);
 
                 // Initialize the solution vector.
                 std::vector<ValueType> x = std::vector<ValueType>(relevantStates.getNumberOfSetBits(), storm::utility::one<ValueType>());
@@ -149,16 +148,16 @@ namespace storm {
                 if(upperBound > 0)
                 {
                     viHelper.performValueIteration(env, x, goal.direction(), upperBound, constrainedChoiceValues);
-/*                    if (produceScheduler) {
-                        scheduler = std::make_unique<storm::storage::Scheduler<ValueType>>(expandScheduler(viHelper.extractScheduler(), relevantStates, ~relevantStates));
-
-                    }*/
                 }
                 viHelper.fillChoiceValuesVector(constrainedChoiceValues, relevantStates, transitionMatrix.getRowGroupIndices());
 
                 viHelper.fillResultVector(x, relevantStates);
                 viHelper.fillChoiceValuesVector(constrainedChoiceValues, relevantStates, transitionMatrix.getRowGroupIndices());
-                STORM_LOG_DEBUG(x);
+
+                if (produceScheduler) {
+                    scheduler = std::make_unique<storm::storage::Scheduler<ValueType>>(expandScheduler(viHelper.extractScheduler(), relevantStates, ~relevantStates));
+                }
+
                 return SMGSparseModelCheckingHelperReturnType<ValueType>(std::move(x), std::move(relevantStates), std::move(scheduler), std::move(constrainedChoiceValues));
             }
 
