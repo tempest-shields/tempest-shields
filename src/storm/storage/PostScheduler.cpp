@@ -44,27 +44,6 @@ namespace storm {
             STORM_LOG_ASSERT(memoryState == 0, "Currently we do not support PostScheduler with memory");
             STORM_LOG_ASSERT(modelState < schedulerChoiceMapping[memoryState].size(), "Illegal model state index");
 
-            //auto& schedulerChoice = schedulerChoiceMapping[memoryState][modelState];
-            //if (schedulerChoice.isDefined()) {
-            //    if (!choice.isDefined()) {
-            //        ++numOfUndefinedChoices;
-            //    }
-            //} else {
-            //    if (choice.isDefined()) {
-            //       assert(numOfUndefinedChoices > 0);
-            //        --numOfUndefinedChoices;
-            //    }
-            //}
-            //if (schedulerChoice.isDeterministic()) {
-            //    if (!choice.isDeterministic()) {
-            //        assert(numOfDeterministicChoices > 0);
-            //        --numOfDeterministicChoices;
-            //    }
-            //} else {
-            //    if (choice.isDeterministic()) {
-            //        ++numOfDeterministicChoices;
-            //    }
-            //}
             schedulerChoiceMapping[memoryState][modelState][oldChoice] = newChoice;
         }
 
