@@ -18,14 +18,8 @@ namespace storm {
         storm::solver::MultiplierType const& getType() const;
         bool const& isTypeSetFromDefault() const;
         void setType(storm::solver::MultiplierType value, bool isSetFromDefault = false);
-
-        void setOptimizationDirectionOverride(storm::storage::BitVector optimizationDirectionOverride);
-        boost::optional<storm::storage::BitVector> const& getOptimizationDirectionOverride() const;
-
     private:
         storm::solver::MultiplierType type;
         bool typeSetFromDefault;
-
-        boost::optional<storm::storage::BitVector> optimizationDirectionOverride = boost::none;
     };
 }
