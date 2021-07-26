@@ -149,11 +149,11 @@ namespace storm {
                              qi::lit("Optimal")[qi::_val = storm::logic::ShieldingType::Optimal]) > -qi::lit("Shield");
             shieldingType.name("shielding type");
 
-            multiplicativeFactor = qi::double_[qi::_pass = (qi::_1 >= 0) & (qi::_1 <= 1.0), qi::_val = qi::_1 ];
-            multiplicativeFactor.name("multiplicative factor between 0 and 1");
+            probability = qi::double_[qi::_pass = (qi::_1 >= 0) & (qi::_1 <= 1.0), qi::_val = qi::_1 ];
+            probability.name("double between 0 and 1");
 
             shieldComparison = ((qi::lit("lambda")[qi::_a = storm::logic::ShieldComparison::Relative] |
-                                 qi::lit("gamma")[qi::_a = storm::logic::ShieldComparison::Absolute]) > qi::lit("=") > multiplicativeFactor)[qi::_val = phoenix::bind(&FormulaParserGrammar::createShieldComparisonStruct, phoenix::ref(*this), qi::_a, qi::_1)];
+                                 qi::lit("gamma")[qi::_a = storm::logic::ShieldComparison::Absolute]) > qi::lit("=") > probability)[qi::_val = phoenix::bind(&FormulaParserGrammar::createShieldComparisonStruct, phoenix::ref(*this), qi::_a, qi::_1)];
             shieldComparison.name("shield comparison type");
 
             stateFormula = (orStateFormula | multiFormula | quantileFormula | gameFormula);
@@ -182,30 +182,30 @@ namespace storm {
             start.name("start");
 
             // Enable the following lines to print debug output for most the rules.
-//            debug(start);
-//            debug(constantDefinition);
-//            debug(stateFormula);
-//            debug(orStateFormula);
-//            debug(andStateFormula);
-//            debug(probabilityOperator);
-//            debug(rewardOperator);
-//            debug(longRunAverageOperator);
-//            debug(timeOperator);
-//            debug(pathFormulaWithoutUntil);
-//            debug(pathFormula);
-//            debug(conditionalFormula);
-//            debug(nextFormula);
-//            debug(globallyFormula);
-//            debug(eventuallyFormula);
-//            debug(atomicStateFormula);
-//            debug(booleanLiteralFormula);
-//            debug(labelFormula);
-//            debug(expressionFormula);
-//            debug(rewardPathFormula);
-//            debug(cumulativeRewardFormula);
-//            debug(totalRewardFormula);
-//            debug(instantaneousRewardFormula);
-//            debug(multiFormula);
+            //debug(start);
+            //debug(constantDefinition);
+            //debug(stateFormula);
+            //debug(orStateFormula);
+            //debug(andStateFormula);
+            //debug(probabilityOperator);
+            //debug(rewardOperator);
+            //debug(longRunAverageOperator);
+            //debug(timeOperator);
+            //debug(pathFormulaWithoutUntil);
+            //debug(pathFormula);
+            //debug(conditionalFormula);
+            //debug(nextFormula);
+            //debug(globallyFormula);
+            //debug(eventuallyFormula);
+            //debug(atomicStateFormula);
+            //debug(booleanLiteralFormula);
+            //debug(labelFormula);
+            //debug(expressionFormula);
+            //debug(rewardPathFormula);
+            //debug(cumulativeRewardFormula);
+            //debug(totalRewardFormula);
+            //debug(instantaneousRewardFormula);
+            //debug(multiFormula);
 
             // Enable error reporting.
             qi::on_error<qi::fail>(start, handler(qi::_1, qi::_2, qi::_3, qi::_4));
@@ -514,8 +514,10 @@ namespace storm {
 
         std::shared_ptr<storm::logic::ShieldExpression const> FormulaParserGrammar::createShieldExpression(storm::logic::ShieldingType type, std::string name, boost::optional<std::pair<storm::logic::ShieldComparison, double>> comparisonStruct) {
             if(comparisonStruct.is_initialized()) {
+                STORM_LOG_WARN_COND(type != storm::logic::ShieldingType::Optimal , "Comparison for optimal shield will be ignored.");
                 return std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(type, name, comparisonStruct.get().first, comparisonStruct.get().second));
             } else {
+                STORM_LOG_THROW(type == storm::logic::ShieldingType::Optimal , storm::exceptions::WrongFormatException, "Construction of safety shield needs a comparison parameter (lambda or gamma)");
                 return std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(type, name));
             }
         }
