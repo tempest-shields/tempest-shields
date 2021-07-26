@@ -190,21 +190,21 @@ namespace storm {
             }
 
             /*
-             * TODO
+             * Returns whether this is a task for which a shield should be produced.
              */
             bool isShieldingTask() const {
                 return static_cast<bool>(shieldingExpression);
             }
 
             /*
-             * TODO
+             * Retrieves the associated shielding expression.
              */
             std::shared_ptr<storm::logic::ShieldExpression const> getShieldingExpression() const {
                 return shieldingExpression.get();
             }
 
             /*
-             * TODO
+             * Sets the shielding expression for this check task.
              */
             CheckTask<FormulaType, ValueType>& setShieldingExpression(std::shared_ptr<storm::logic::ShieldExpression const> const& shieldingExpression) {
                 this->shieldingExpression = shieldingExpression;
