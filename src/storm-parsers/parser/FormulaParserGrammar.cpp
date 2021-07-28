@@ -140,11 +140,29 @@ namespace storm {
             gameFormula = (qi::lit("<<") > playerCoalition > qi::lit(">>") > operatorFormula)[qi::_val = phoenix::bind(&FormulaParserGrammar::createGameFormula, phoenix::ref(*this), qi::_1, qi::_2)];
             gameFormula.name("game formula");
 
+            shieldExpression = (qi::lit("<") > label > qi::lit(",") > shieldingType > -(qi::lit(",") > shieldComparison) > qi::lit(">"))[qi::_val = phoenix::bind(&FormulaParserGrammar::createShieldExpression, phoenix::ref(*this), qi::_2, qi::_1, qi::_3)];
+
+            shieldExpression.name("shield expression");
+
+            shieldingType = (qi::lit("PreSafety")[qi::_val = storm::logic::ShieldingType::PreSafety]   |
+                             qi::lit("PostSafety")[qi::_val = storm::logic::ShieldingType::PostSafety] |
+                             qi::lit("Optimal")[qi::_val = storm::logic::ShieldingType::Optimal]) > -qi::lit("Shield");
+            shieldingType.name("shielding type");
+
+            probability = qi::double_[qi::_pass = (qi::_1 >= 0) & (qi::_1 <= 1.0), qi::_val = qi::_1 ];
+            probability.name("double between 0 and 1");
+
+            shieldComparison = ((qi::lit("lambda")[qi::_a = storm::logic::ShieldComparison::Relative] |
+                                 qi::lit("gamma")[qi::_a = storm::logic::ShieldComparison::Absolute]) > qi::lit("=") > probability)[qi::_val = phoenix::bind(&FormulaParserGrammar::createShieldComparisonStruct, phoenix::ref(*this), qi::_a, qi::_1)];
+            shieldComparison.name("shield comparison type");
+
             stateFormula = (orStateFormula | multiFormula | quantileFormula | gameFormula);
             stateFormula.name("state formula");
 
             formulaName = qi::lit("\"") >> identifier >> qi::lit("\"") >> qi::lit(":");
             formulaName.name("formula name");
+
+
 
             constantDefinition = (qi::lit("const") > -(qi::lit("int")[qi::_a = ConstantDataType::Integer] | qi::lit("bool")[qi::_a = ConstantDataType::Bool] | qi::lit("double")[qi::_a = ConstantDataType::Rational]) >> identifier >> -(qi::lit("=") > expressionParser))[phoenix::bind(&FormulaParserGrammar::addConstant, phoenix::ref(*this), qi::_1, qi::_a, qi::_2)];
             constantDefinition.name("constant definition");
@@ -152,7 +170,7 @@ namespace storm {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Woverloaded-shift-op-parentheses"
 
-            filterProperty = (-formulaName >> qi::lit("filter") > qi::lit("(") > filterType_ > qi::lit(",") > stateFormula > qi::lit(",") > stateFormula > qi::lit(")"))[qi::_val = phoenix::bind(&FormulaParserGrammar::createProperty, phoenix::ref(*this), qi::_1, qi::_2, qi::_3, qi::_4)] | (-formulaName >> stateFormula)[qi::_val = phoenix::bind(&FormulaParserGrammar::createPropertyWithDefaultFilterTypeAndStates, phoenix::ref(*this), qi::_1, qi::_2)];
+            filterProperty = (-formulaName >> qi::lit("filter") > qi::lit("(") > filterType_ > qi::lit(",") > stateFormula > qi::lit(",") > stateFormula > qi::lit(")"))[qi::_val = phoenix::bind(&FormulaParserGrammar::createProperty, phoenix::ref(*this), qi::_1, qi::_2, qi::_3, qi::_4)] | (-formulaName >> stateFormula)[qi::_val = phoenix::bind(&FormulaParserGrammar::createPropertyWithDefaultFilterTypeAndStates, phoenix::ref(*this), qi::_1, qi::_2)] | (-formulaName >> shieldExpression >> stateFormula)[qi::_val = phoenix::bind(&FormulaParserGrammar::createShieldingProperty, phoenix::ref(*this), qi::_1, qi::_3, qi::_2)];
             filterProperty.name("filter property");
 
 #pragma clang diagnostic pop
@@ -164,30 +182,30 @@ namespace storm {
             start.name("start");
 
             // Enable the following lines to print debug output for most the rules.
-//            debug(start);
-//            debug(constantDefinition);
-//            debug(stateFormula);
-//            debug(orStateFormula);
-//            debug(andStateFormula);
-//            debug(probabilityOperator);
-//            debug(rewardOperator);
-//            debug(longRunAverageOperator);
-//            debug(timeOperator);
-//            debug(pathFormulaWithoutUntil);
-//            debug(pathFormula);
-//            debug(conditionalFormula);
-//            debug(nextFormula);
-//            debug(globallyFormula);
-//            debug(eventuallyFormula);
-//            debug(atomicStateFormula);
-//            debug(booleanLiteralFormula);
-//            debug(labelFormula);
-//            debug(expressionFormula);
-//            debug(rewardPathFormula);
-//            debug(cumulativeRewardFormula);
-//            debug(totalRewardFormula);
-//            debug(instantaneousRewardFormula);
-//            debug(multiFormula);
+            //debug(start);
+            //debug(constantDefinition);
+            //debug(stateFormula);
+            //debug(orStateFormula);
+            //debug(andStateFormula);
+            //debug(probabilityOperator);
+            //debug(rewardOperator);
+            //debug(longRunAverageOperator);
+            //debug(timeOperator);
+            //debug(pathFormulaWithoutUntil);
+            //debug(pathFormula);
+            //debug(conditionalFormula);
+            //debug(nextFormula);
+            //debug(globallyFormula);
+            //debug(eventuallyFormula);
+            //debug(atomicStateFormula);
+            //debug(booleanLiteralFormula);
+            //debug(labelFormula);
+            //debug(expressionFormula);
+            //debug(rewardPathFormula);
+            //debug(cumulativeRewardFormula);
+            //debug(totalRewardFormula);
+            //debug(instantaneousRewardFormula);
+            //debug(multiFormula);
 
             // Enable error reporting.
             qi::on_error<qi::fail>(start, handler(qi::_1, qi::_2, qi::_3, qi::_4));
@@ -487,6 +505,29 @@ namespace storm {
                 return storm::jani::Property(propertyName.get(), formula, this->getUndefinedConstants(formula));
             } else {
                 return storm::jani::Property(std::to_string(propertyCount), formula, this->getUndefinedConstants(formula));
+            }
+        }
+
+        std::pair<storm::logic::ShieldComparison, double> FormulaParserGrammar::createShieldComparisonStruct(storm::logic::ShieldComparison comparisonType, double value) {
+            return std::make_pair(comparisonType, value);
+        }
+
+        std::shared_ptr<storm::logic::ShieldExpression const> FormulaParserGrammar::createShieldExpression(storm::logic::ShieldingType type, std::string name, boost::optional<std::pair<storm::logic::ShieldComparison, double>> comparisonStruct) {
+            if(comparisonStruct.is_initialized()) {
+                STORM_LOG_WARN_COND(type != storm::logic::ShieldingType::Optimal , "Comparison for optimal shield will be ignored.");
+                return std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(type, name, comparisonStruct.get().first, comparisonStruct.get().second));
+            } else {
+                STORM_LOG_THROW(type == storm::logic::ShieldingType::Optimal , storm::exceptions::WrongFormatException, "Construction of safety shield needs a comparison parameter (lambda or gamma)");
+                return std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(type, name));
+            }
+        }
+
+        storm::jani::Property FormulaParserGrammar::createShieldingProperty(boost::optional<std::string> const& propertyName, std::shared_ptr<storm::logic::Formula const> const& formula, std::shared_ptr<storm::logic::ShieldExpression const> const& shieldExpression) {
+            ++propertyCount;
+            if (propertyName) {
+                return storm::jani::Property(propertyName.get(), formula, this->getUndefinedConstants(formula), shieldExpression);
+            } else {
+                return storm::jani::Property(std::to_string(propertyCount), formula, this->getUndefinedConstants(formula), shieldExpression);
             }
         }
 

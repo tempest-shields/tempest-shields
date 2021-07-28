@@ -8,12 +8,12 @@
 
 namespace storm {
     class Environment;
-    
-    
+
+
     namespace modelchecker {
         namespace helper {
             namespace internal {
-                
+
                 /*!
                  * Specifies differnt kinds of transition types with which this helper can be used
                  * Ts means timed states (cf. Markovian states in a Markov Automaton) and Is means instant states (cf. probabilistic states in a Markov automaton).
@@ -45,7 +45,7 @@ namespace storm {
                 public:
                     /// Function mapping from indices to values
                     typedef std::function<ValueType(uint64_t)> ValueGetter;
-                    
+
                     /*!
                      * Initializes a new VI helper for the provided MEC or BSCC
                      * @param component the MEC or BSCC
@@ -55,7 +55,7 @@ namespace storm {
                      * @param exitRates The exit rates of the timed states (relevant for continuous time models). If nullptr, all rates are assumed to be 1 (which corresponds to a discrete time model)
                      * @note All indices and vectors must be w.r.t. the states as described by the provided transition matrix
                      */
-                    LraViHelper(ComponentType const& component, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, ValueType const& aperiodicFactor, storm::storage::BitVector const* timedStates = nullptr, std::vector<ValueType> const* exitRates = nullptr);
+                    LraViHelper(ComponentType const& component, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, ValueType const& aperiodicFactor, storm::storage::BitVector const* timedStates = nullptr, std::vector<ValueType> const* exitRates = nullptr, storm::storage::BitVector const* statesOfCoalition = nullptr);
 
                     /*!
                      * Performs value iteration with the given state- and action values.
@@ -69,9 +69,9 @@ namespace storm {
                      * @note it is possible to call this method multiple times with different values. However, other changes to the environment or the optimization direction might not have the expected effect due to caching.
                      */
                     ValueType performValueIteration(Environment const& env, ValueGetter const& stateValueGetter, ValueGetter const& actionValueGetter, std::vector<ValueType> const* exitRates = nullptr, storm::solver::OptimizationDirection const* dir = nullptr, std::vector<uint64_t>* choices = nullptr);
-                    
+
                 private:
-                    
+
                     /*!
                      * Initializes the value iterations with the provided values.
                      * Resets all information from potential previous calls.
@@ -80,7 +80,7 @@ namespace storm {
                      * @param stateValueGetter Function that returns for each global choice index (w.r.t. the input transitions) the value (e.g. reward) for that choice
                      */
                     void initializeNewValues(ValueGetter const& stateValueGetter, ValueGetter const& actionValueGetter, std::vector<ValueType> const* exitRates = nullptr);
-                    
+
                     /*!
                      * Performs a single iteration step.
                      * @param env The environment.
@@ -90,41 +90,41 @@ namespace storm {
                      * @pre when calling this the first time, initializeNewValues must have been called before. Moreover, prepareNextIteration must be called between two calls of this.
                     */
                     void performIterationStep(Environment const& env, storm::solver::OptimizationDirection const* dir = nullptr, std::vector<uint64_t>* choices = nullptr);
-                    
+
                     struct ConvergenceCheckResult {
                         bool isPrecisionAchieved;
                         ValueType currentValue;
                     };
-                
+
                     /*!
                      * Checks whether the curently computed value achieves the desired precision
                      */
                     ConvergenceCheckResult checkConvergence(bool relative, ValueType precision) const;
-                    
+
                     /*!
                      * Must be called between two calls of performIterationStep.
                      */
                     void prepareNextIteration(Environment const& env);
-                    
+
                     /// Prepares the necessary solvers and multipliers for doing the iterations.
                     void prepareSolversAndMultipliers(Environment const& env, storm::solver::OptimizationDirection const* dir = nullptr);
-                    
+
                     void setInputModelChoices(std::vector<uint64_t>& choices, std::vector<uint64_t> const& localMecChoices, bool setChoiceZeroToMarkovianStates = false, bool setChoiceZeroToProbabilisticStates = false) const;
-                    
+
                     /// Returns true iff the given state is a timed state
                     bool isTimedState(uint64_t const& inputModelStateIndex) const;
-                    
+
                     /// The result for timed states of the most recent iteration
                     std::vector<ValueType>& xNew();
                     std::vector<ValueType> const& xNew() const;
-                    
+
                     /// The result for timed states of the previous iteration
                     std::vector<ValueType>& xOld();
                     std::vector<ValueType> const& xOld() const;
 
                     /// @return true iff there potentially is a nondeterministic choice at timed states
                     bool nondetTs() const;
-                    
+
                     /// @return true iff there potentially is a nondeterministic choice at instant states. Returns false if there are no instant states.
                     bool nondetIs() const;
 
@@ -132,14 +132,15 @@ namespace storm {
                     bool gameNondetTs() const;
 
                     void setComponent(ComponentType component);
-                    
+
                     // We need to make sure that states/choices will be processed in ascending order
                     typedef std::map<uint64_t, std::set<uint64_t>> InternalComponentType;
 
-                    
+
                     InternalComponentType _component;
                     storm::storage::SparseMatrix<ValueType> const& _transitionMatrix;
                     storm::storage::BitVector const* _timedStates; // e.g. Markovian states of a Markov automaton.
+                    storm::storage::BitVector const* _statesOfCoalition;
                     bool _hasInstantStates;
                     ValueType _uniformizationRate;
                     storm::storage::SparseMatrix<ValueType> _TsTransitions, _TsToIsTransitions, _IsTransitions, _IsToTsTransitions;

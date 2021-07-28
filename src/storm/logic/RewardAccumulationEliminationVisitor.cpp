@@ -15,25 +15,25 @@ namespace storm {
         RewardAccumulationEliminationVisitor::RewardAccumulationEliminationVisitor(storm::jani::Model const& model) : model(model) {
             // Intentionally left empty
         }
-        
+
         std::shared_ptr<Formula> RewardAccumulationEliminationVisitor::eliminateRewardAccumulations(Formula const& f) const {
             boost::any result = f.accept(*this, boost::any());
             return boost::any_cast<std::shared_ptr<Formula>>(result);
         }
-        
+
         void RewardAccumulationEliminationVisitor::eliminateRewardAccumulations(std::vector<storm::jani::Property>& properties) const {
             for (auto& p : properties) {
                 eliminateRewardAccumulations(p);
             }
         }
-        
+
         void RewardAccumulationEliminationVisitor::eliminateRewardAccumulations(storm::jani::Property& property) const {
             auto formula = eliminateRewardAccumulations(*property.getFilter().getFormula());
             auto states = eliminateRewardAccumulations(*property.getFilter().getStatesFormula());
             storm::jani::FilterExpression fe(formula, property.getFilter().getFilterType(), states);
-            property = storm::jani::Property(property.getName(), storm::jani::FilterExpression(formula, property.getFilter().getFilterType(), states), property.getUndefinedConstants(), property.getComment());
+            property = storm::jani::Property(property.getName(), storm::jani::FilterExpression(formula, property.getFilter().getFilterType(), states), property.getUndefinedConstants(), property.getShieldingExpression(), property.getComment());
         }
-        
+
         boost::any RewardAccumulationEliminationVisitor::visit(BoundedUntilFormula const& f, boost::any const& data) const {
             std::vector<boost::optional<TimeBound>> lowerBounds, upperBounds;
             std::vector<TimeBoundReference> timeBoundReferences;
@@ -68,7 +68,7 @@ namespace storm {
                 return std::static_pointer_cast<Formula>(std::make_shared<BoundedUntilFormula>(left, right, lowerBounds, upperBounds, timeBoundReferences));
             }
         }
-        
+
         boost::any RewardAccumulationEliminationVisitor::visit(CumulativeRewardFormula const& f, boost::any const& data) const {
             boost::optional<storm::logic::RewardAccumulation> rewAcc;
             STORM_LOG_THROW(!data.empty(), storm::exceptions::UnexpectedException, "Formula " << f << " does not seem to be a subformula of a reward operator.");
@@ -90,7 +90,7 @@ namespace storm {
             }
             return std::static_pointer_cast<Formula>(std::make_shared<CumulativeRewardFormula>(bounds, timeBoundReferences, rewAcc));
         }
-        
+
         boost::any RewardAccumulationEliminationVisitor::visit(LongRunAverageRewardFormula const& f, boost::any const& data) const {
             STORM_LOG_THROW(!data.empty(), storm::exceptions::UnexpectedException, "Formula " << f << " does not seem to be a subformula of a reward operator.");
             auto rewName = boost::any_cast<boost::optional<std::string>>(data);
@@ -100,7 +100,7 @@ namespace storm {
                 return std::static_pointer_cast<Formula>(std::make_shared<LongRunAverageRewardFormula>(f.getRewardAccumulation()));
             }
         }
-        
+
         boost::any RewardAccumulationEliminationVisitor::visit(EventuallyFormula const& f, boost::any const& data) const {
            std::shared_ptr<Formula> subformula = boost::any_cast<std::shared_ptr<Formula>>(f.getSubformula().accept(*this, data));
             if (f.hasRewardAccumulation()) {
@@ -120,12 +120,12 @@ namespace storm {
             }
             return std::static_pointer_cast<Formula>(std::make_shared<EventuallyFormula>(subformula, f.getContext()));
         }
-        
+
         boost::any RewardAccumulationEliminationVisitor::visit(RewardOperatorFormula const& f, boost::any const& data) const {
             std::shared_ptr<Formula> subformula = boost::any_cast<std::shared_ptr<Formula>>(f.getSubformula().accept(*this, f.getOptionalRewardModelName()));
             return std::static_pointer_cast<Formula>(std::make_shared<RewardOperatorFormula>(subformula, f.getOptionalRewardModelName(), f.getOperatorInformation()));
         }
-        
+
         boost::any RewardAccumulationEliminationVisitor::visit(TotalRewardFormula const& f, boost::any const& data) const {
             STORM_LOG_THROW(!data.empty(), storm::exceptions::UnexpectedException, "Formula " << f << " does not seem to be a subformula of a reward operator.");
             auto rewName = boost::any_cast<boost::optional<std::string>>(data);
@@ -135,11 +135,11 @@ namespace storm {
                 return std::static_pointer_cast<Formula>(std::make_shared<TotalRewardFormula>(f.getRewardAccumulation()));
             }
         }
-        
+
         bool RewardAccumulationEliminationVisitor::canEliminate(storm::logic::RewardAccumulation const& accumulation, boost::optional<std::string> rewardModelName) const {
             STORM_LOG_THROW(rewardModelName.is_initialized(), storm::exceptions::InvalidPropertyException, "Unable to find transient variable for unique reward model.");
             storm::jani::RewardModelInformation info(model, rewardModelName.get());
-            
+
             if ((info.hasActionRewards() || info.hasTransitionRewards())  && !accumulation.isStepsSet()) {
                 return false;
             }

@@ -116,7 +116,7 @@ namespace storm {
                 if (this->isContinuousTime()) {
                     STORM_LOG_THROW(false, storm::exceptions::InternalException, "We cannot handle continuous time games.");
                 } else {
-                    storm::modelchecker::helper::internal::LraViHelper<ValueType, storm::storage::MaximalEndComponent, storm::modelchecker::helper::internal::LraViTransitionsType::GameNondetTsNoIs> viHelper(mec, this->_transitionMatrix, aperiodicFactor);
+                    storm::modelchecker::helper::internal::LraViHelper<ValueType, storm::storage::MaximalEndComponent, storm::modelchecker::helper::internal::LraViTransitionsType::GameNondetTsNoIs> viHelper(mec, this->_transitionMatrix, aperiodicFactor, nullptr, nullptr, &statesOfCoalition);
                     return viHelper.performValueIteration(env, stateRewardsGetter, actionRewardsGetter, nullptr, &this->getOptimizationDirection(), optimalChoices);
                 }
             }

@@ -29,13 +29,4 @@ namespace storm {
         type = value;
         typeSetFromDefault = isSetFromDefault;
     }
-
-    void MultiplierEnvironment::setOptimizationDirectionOverride(storm::storage::BitVector optDirOverride) {
-        optimizationDirectionOverride = optDirOverride;
-    }
-
-    boost::optional<storm::storage::BitVector> const& MultiplierEnvironment::getOptimizationDirectionOverride() const {
-        return optimizationDirectionOverride;
-    }
-
 }

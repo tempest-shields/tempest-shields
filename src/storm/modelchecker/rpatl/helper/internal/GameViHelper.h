@@ -31,6 +31,11 @@ namespace storm {
                     void fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector relevantStates, storm::storage::BitVector psiStates);
 
                     /*!
+                     * Fills the choice values vector to the original size with zeros for ~psiState choices.
+                     */
+                    void fillChoiceValuesVector(std::vector<ValueType>& choiceValues, storm::storage::BitVector psiStates, std::vector<storm::storage::SparseMatrix<double>::index_type> rowGroupIndices);
+
+                    /*!
                      * Sets whether an optimal scheduler shall be constructed during the computation
                      */
                     void setProduceScheduler(bool value);
@@ -42,6 +47,7 @@ namespace storm {
 
                     storm::storage::Scheduler<ValueType> extractScheduler() const;
 
+                    void getChoiceValues(Environment const& env, std::vector<ValueType> const& x, std::vector<ValueType>& choiceValues);
                 private:
                     void performIterationStep(Environment const& env, storm::solver::OptimizationDirection const dir, std::vector<uint64_t>* choices = nullptr);
 
