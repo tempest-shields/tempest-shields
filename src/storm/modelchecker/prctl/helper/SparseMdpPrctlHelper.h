@@ -41,7 +41,7 @@ namespace storm {
 
                 static std::map<storm::storage::sparse::state_type, ValueType> computeRewardBoundedValues(Environment const& env, OptimizationDirection dir, rewardbounded::MultiDimensionalRewardUnfolding<ValueType, true>& rewardUnfolding, storm::storage::BitVector const& initialStates);
                 
-                static std::vector<ValueType> computeNextProbabilities(Environment const& env, OptimizationDirection dir, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::BitVector const& nextStates);
+                static MDPSparseModelCheckingHelperReturnType<ValueType> computeNextProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, OptimizationDirection dir, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::BitVector const& nextStates);
 
                 static MDPSparseModelCheckingHelperReturnType<ValueType> computeUntilProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& phiStates, storm::storage::BitVector const& psiStates, bool qualitative, bool produceScheduler, ModelCheckerHint const& hint = ModelCheckerHint());
                 

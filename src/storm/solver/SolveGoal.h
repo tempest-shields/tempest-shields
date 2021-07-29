@@ -51,6 +51,7 @@ namespace storm {
                     comparisonType = checkTask.getBoundComparisonType();
                     threshold = checkTask.getBoundThreshold();
                 }
+                shieldingTask = checkTask.isShieldingTask();
             }
             
             SolveGoal(bool minimize);
@@ -77,19 +78,23 @@ namespace storm {
             ValueType const& thresholdValue() const;
             
             bool hasRelevantValues() const;
-            
+
             storm::storage::BitVector& relevantValues();
             storm::storage::BitVector const& relevantValues() const;
            
             void restrictRelevantValues(storm::storage::BitVector const& filter);
             void setRelevantValues(storm::storage::BitVector&& values);
-            
+
+            bool isShieldingTask() const;
+
         private:
             boost::optional<OptimizationDirection> optimizationDirection;
             
             boost::optional<storm::logic::ComparisonType> comparisonType;
             boost::optional<ValueType> threshold;
             boost::optional<storm::storage::BitVector> relevantValueVector;
+            // We only want to know if it **is** a shielding task
+            bool shieldingTask;
         };
         
         template<typename ValueType, typename MatrixType>

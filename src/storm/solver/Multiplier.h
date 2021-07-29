@@ -8,6 +8,8 @@
 
 #include "storm/solver/OptimizationDirection.h"
 #include "storm/solver/MultiplicationStyle.h"
+#include "storm/storage/SparseMatrix.h"
+
 
 namespace storm {
 
@@ -119,6 +121,8 @@ namespace storm {
              */
             void repeatedMultiplyAndReduce(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType>& x, std::vector<ValueType> const* b, uint64_t n, storm::storage::BitVector const* dirOverride = nullptr) const;
 
+            void repeatedMultiplyAndReduceWithChoices(const Environment &env, const OptimizationDirection &dir, std::vector<ValueType> &x, const std::vector<ValueType> *b, uint64_t n, const storage::BitVector *dirOverride, std::vector<ValueType> &choiceValues, std::vector<unsigned long> rowGroupIndices) const;
+
             /*!
              * Multiplies the row with the given index with x and adds the result to the provided value
              * @param rowIndex The index of the considered row
@@ -137,9 +141,12 @@ namespace storm {
              */
             virtual void multiplyRow2(uint64_t const& rowIndex, std::vector<ValueType> const& x1, ValueType& val1, std::vector<ValueType> const& x2, ValueType& val2) const;
 
+            void reduce(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType> const& choiceValues, std::vector<storm::storage::SparseMatrix<double>::index_type> rowGroupIndices, std::vector<ValueType>& result, storm::storage::BitVector const* dirOverride = nullptr) const;
+
         protected:
             mutable std::unique_ptr<std::vector<ValueType>> cachedVector;
             storm::storage::SparseMatrix<ValueType> const& matrix;
+
         };
 
         template<typename ValueType>

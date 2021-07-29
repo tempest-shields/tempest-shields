@@ -134,16 +134,25 @@ namespace storm {
             }
 
             template<typename ValueType>
-            std::vector<ValueType> SparseMdpPrctlHelper<ValueType>::computeNextProbabilities(Environment const& env, OptimizationDirection dir, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::BitVector const& nextStates) {
+            MDPSparseModelCheckingHelperReturnType<ValueType> SparseMdpPrctlHelper<ValueType>::computeNextProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, OptimizationDirection dir, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::BitVector const& nextStates) {
 
                 // Create the vector with which to multiply and initialize it correctly.
                 std::vector<ValueType> result(transitionMatrix.getRowGroupCount());
                 storm::utility::vector::setVectorValues(result, nextStates, storm::utility::one<ValueType>());
-                
+                std::vector<ValueType> choiceValues = std::vector<ValueType>(transitionMatrix.getRowCount(), storm::utility::zero<ValueType>());
+                storm::storage::BitVector allStates = storm::storage::BitVector(transitionMatrix.getRowGroupCount(), true);
+
                 auto multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, transitionMatrix);
-                multiplier->multiplyAndReduce(env, dir, result, nullptr, result);
-                
-                return result;
+
+                if(goal.isShieldingTask()) {
+                    multiplier->multiply(env, result, nullptr, choiceValues);
+                    multiplier->reduce(env, goal.direction(), choiceValues, transitionMatrix.getRowGroupIndices(), result, nullptr);
+                }
+                else {
+                    multiplier->multiplyAndReduce(env, dir, result, nullptr, result);
+                }
+
+                return MDPSparseModelCheckingHelperReturnType<ValueType>(std::move(result), std::move(allStates), nullptr, std::move(choiceValues));
             }
             
             template<typename ValueType>
@@ -594,7 +603,7 @@ namespace storm {
                 // We need to identify the maybe states (states which have a probability for satisfying the until formula
                 // that is strictly between 0 and 1) and the states that satisfy the formula with probablity 1 and 0, respectively.
                 QualitativeStateSetsUntilProbabilities qualitativeStateSets = getQualitativeStateSetsUntilProbabilities(goal, transitionMatrix, backwardTransitions, phiStates, psiStates, hint);
-                
+
                 STORM_LOG_INFO("Preprocessing: " << qualitativeStateSets.statesWithProbability1.getNumberOfSetBits() << " states with probability 1, " << qualitativeStateSets.statesWithProbability0.getNumberOfSetBits() << " with probability 0 (" << qualitativeStateSets.maybeStates.getNumberOfSetBits() << " states remaining).");
                 
                 // Set values of resulting vector that are known exactly.
@@ -608,22 +617,34 @@ namespace storm {
                 
                 // Check if the values of the maybe states are relevant for the SolveGoal
                 bool maybeStatesNotRelevant = goal.hasRelevantValues() && goal.relevantValues().isDisjointFrom(qualitativeStateSets.maybeStates);
+
+                // create multiplier and execute the calculation for 1 additional step
+                auto multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, transitionMatrix);
+
+                uint sizeMaybeStateChoiceValues = 0;
+                for(uint counter = 0; counter < qualitativeStateSets.maybeStates.size(); counter++) {
+                    if(qualitativeStateSets.maybeStates.get(counter)) {
+                        sizeMaybeStateChoiceValues += transitionMatrix.getRowGroupSize(counter);
+                    }
+                }
+
+                std::vector<ValueType> maybeStateChoiceValues = std::vector<ValueType>(sizeMaybeStateChoiceValues, storm::utility::zero<ValueType>());
                 
                 // Check whether we need to compute exact probabilities for some states.
-                if (qualitative || maybeStatesNotRelevant) {
+                if (qualitative || maybeStatesNotRelevant || !goal.isShieldingTask()) {
                     // Set the values for all maybe-states to 0.5 to indicate that their probability values are neither 0 nor 1.
                     storm::utility::vector::setVectorValues<ValueType>(result, qualitativeStateSets.maybeStates, storm::utility::convertNumber<ValueType>(0.5));
                 } else {
                     if (!qualitativeStateSets.maybeStates.empty()) {
                         // In this case we have have to compute the remaining probabilities.
-                        
+
                         // Obtain proper hint information either from the provided hint or from requirements of the solver.
                         SparseMdpHintType<ValueType> hintInformation = computeHints(env, SolutionType::UntilProbabilities, hint, goal.direction(), transitionMatrix, backwardTransitions, qualitativeStateSets.maybeStates, phiStates, qualitativeStateSets.statesWithProbability1, produceScheduler);
                         
                         // Declare the components of the equation system we will solve.
                         storm::storage::SparseMatrix<ValueType> submatrix;
                         std::vector<ValueType> b;
-                        
+
                         // If the hint information tells us that we have to eliminate MECs, we do so now.
                         boost::optional<SparseMdpEndComponentInformation<ValueType>> ecInformation;
                         if (hintInformation.getEliminateEndComponents()) {
@@ -632,10 +653,10 @@ namespace storm {
                             // Otherwise, we compute the standard equations.
                             computeFixedPointSystemUntilProbabilities(goal, transitionMatrix, qualitativeStateSets, submatrix, b);
                         }
-                        
+
                         // Now compute the results for the maybe states.
                         MaybeStateResult<ValueType> resultForMaybeStates = computeValuesForMaybeStates(env, std::move(goal), std::move(submatrix), b, produceScheduler, hintInformation);
-                        
+
                         // If we eliminated end components, we need to extract the result differently.
                         if (ecInformation && ecInformation.get().getEliminatedEndComponents()) {
                             ecInformation.get().setValues(result, qualitativeStateSets.maybeStates, resultForMaybeStates.getValues());
@@ -648,6 +669,39 @@ namespace storm {
                             if (produceScheduler) {
                                 extractSchedulerChoices(*scheduler, resultForMaybeStates.getScheduler(), qualitativeStateSets.maybeStates);
                             }
+                        }
+                        if (goal.isShieldingTask()) {
+                            std::vector<ValueType> subResult;
+                            uint sizeChoiceValues = 0;
+                            for(uint counter = 0; counter < qualitativeStateSets.maybeStates.size(); counter++) {
+                                if(qualitativeStateSets.maybeStates.get(counter)) {
+                                    subResult.push_back(result.at(counter));
+                                }
+                            }
+
+                            submatrix = transitionMatrix.getSubmatrix(true, qualitativeStateSets.maybeStates, qualitativeStateSets.maybeStates, false);
+                            auto sub_multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, submatrix);
+                            sub_multiplier->multiply(env, subResult, &b, maybeStateChoiceValues);
+
+                        }
+                    }
+                }
+
+                std::vector<ValueType> choiceValues = std::vector<ValueType>(transitionMatrix.getRowGroupIndices().at(transitionMatrix.getRowGroupIndices().size() - 1), storm::utility::zero<ValueType>());
+                auto choice_it = maybeStateChoiceValues.begin();
+                for(uint state = 0; state < transitionMatrix.getRowGroupIndices().size() - 1; state++) {
+                    uint rowGroupSize = transitionMatrix.getRowGroupIndices().at(state + 1) - transitionMatrix.getRowGroupIndices().at(state);
+                    if (qualitativeStateSets.maybeStates.get(state)) {
+                        for(uint choice = 0; choice < rowGroupSize; choice++, choice_it++) {
+                            choiceValues.at(transitionMatrix.getRowGroupIndices().at(state) + choice) = *choice_it;
+                        }
+                    } else if (qualitativeStateSets.statesWithProbability0.get(state)) {
+                        for(uint choice = 0; choice < rowGroupSize; choice++) {
+                            choiceValues.at(transitionMatrix.getRowGroupIndices().at(state) + choice) = 0;
+                        }
+                    } else if (qualitativeStateSets.statesWithProbability1.get(state)) {
+                        for(uint choice = 0; choice < rowGroupSize; choice++) {
+                            choiceValues.at(transitionMatrix.getRowGroupIndices().at(state) + choice) = 1;
                         }
                     }
                 }
@@ -664,7 +718,7 @@ namespace storm {
                 STORM_LOG_ASSERT((!produceScheduler && !scheduler) || scheduler->isMemorylessScheduler(), "Expected a memoryless scheduler");
 
                 // Return result.
-                return MDPSparseModelCheckingHelperReturnType<ValueType>(std::move(result), std::move(scheduler));
+                return MDPSparseModelCheckingHelperReturnType<ValueType>(std::move(result), std::move(qualitativeStateSets.maybeStates), std::move(scheduler), std::move(choiceValues));
             }
 
             template<typename ValueType>
@@ -678,13 +732,15 @@ namespace storm {
                             statesInPsiMecs.set(stateActionsPair.first, true);
                         }
                     }
-                    
                     return computeUntilProbabilities(env, std::move(goal), transitionMatrix, backwardTransitions, psiStates, statesInPsiMecs, qualitative, produceScheduler);
                 } else {
                     goal.oneMinus();
                     auto result = computeUntilProbabilities(env, std::move(goal), transitionMatrix, backwardTransitions, storm::storage::BitVector(transitionMatrix.getRowGroupCount(), true), ~psiStates, qualitative, produceScheduler);
                     for (auto& element : result.values) {
                         element = storm::utility::one<ValueType>() - element;
+                    }
+                    for (auto& choice : result.choiceValues) {
+                        choice = storm::utility::one<ValueType>() - choice;
                     }
                     return result;
                 }
@@ -1080,7 +1136,7 @@ namespace storm {
                 
                 // Prepare resulting vector.
                 std::vector<ValueType> result(transitionMatrix.getRowGroupCount(), storm::utility::zero<ValueType>());
-                
+
                 // Determine which states have a reward that is infinity or less than infinity.
                 QualitativeStateSetsReachabilityRewards qualitativeStateSets = getQualitativeStateSetsReachabilityRewards(goal, transitionMatrix, backwardTransitions, targetStates, hint, zeroRewardStatesGetter, zeroRewardChoicesGetter);
                 
@@ -1172,8 +1228,9 @@ namespace storm {
                 STORM_LOG_ASSERT((!produceScheduler && !scheduler) || scheduler->isDeterministicScheduler(), "Expected a deterministic scheduler");
                 STORM_LOG_ASSERT((!produceScheduler && !scheduler) || scheduler->isMemorylessScheduler(), "Expected a memoryless scheduler");
 
+                std::vector<ValueType> choiceValues;
 
-                return MDPSparseModelCheckingHelperReturnType<ValueType>(std::move(result), std::move(scheduler));
+                return MDPSparseModelCheckingHelperReturnType<ValueType>(std::move(result), std::move(qualitativeStateSets.maybeStates), std::move(scheduler), std::move(choiceValues));
             }
             
             template<typename ValueType>
