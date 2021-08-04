@@ -97,25 +97,20 @@ namespace storm {
 
             template<typename ValueType>
             SMGSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeNextProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint) {
-                // create vector x for result, bitvector allStates with a true for each state and a vector b for the probability to get to state psi
+                // Create vector x for result, bitvector allStates with a true for each state and a vector b for the probability for each state to get to a psi state, choiceValues is to store choices for shielding.
                 std::vector<ValueType> x = std::vector<ValueType>(transitionMatrix.getRowGroupCount(), storm::utility::zero<ValueType>());
                 storm::storage::BitVector allStates = storm::storage::BitVector(transitionMatrix.getRowGroupCount(), true);
                 std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(allStates, psiStates);
-
+                std::vector<ValueType> choiceValues = std::vector<ValueType>(transitionMatrix.getRowCount(), storm::utility::zero<ValueType>());
                 statesOfCoalition.complement();
-
                 if (produceScheduler) {
                     STORM_LOG_WARN("Next formula does not expect that produceScheduler is set to true.");
                 }
-
-                // create multiplier and execute the calculation for 1 step
+                // Create a multiplier for reduction.
                 auto multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, transitionMatrix);
-                std::vector<ValueType> choiceValues = std::vector<ValueType>(transitionMatrix.getRowCount(), storm::utility::zero<ValueType>());
+                multiplier->reduce(env, goal.direction(), b, transitionMatrix.getRowGroupIndices(), x, &statesOfCoalition);
                 if (goal.isShieldingTask()) {
-                    multiplier->multiply(env, x, &b, choiceValues);
-                    multiplier->reduce(env, goal.direction(), choiceValues, transitionMatrix.getRowGroupIndices(), x, &statesOfCoalition);
-                } else {
-                    multiplier->multiplyAndReduce(env, goal.direction(), x, &b, x, nullptr, &statesOfCoalition);
+                    choiceValues = b;
                 }
                 return SMGSparseModelCheckingHelperReturnType<ValueType>(std::move(x), std::move(allStates), nullptr, std::move(choiceValues));
             }
