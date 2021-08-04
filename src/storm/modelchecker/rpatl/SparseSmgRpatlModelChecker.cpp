@@ -39,8 +39,6 @@ namespace storm {
             // Intentionally left empty.
         }
 
-
-
         template<typename SparseSmgModelType>
         bool SparseSmgRpatlModelChecker<SparseSmgModelType>::canHandleStatic(CheckTask<storm::logic::Formula, ValueType> const& checkTask, bool* requiresSingleInitialState) {
             storm::logic::Formula const& formula = checkTask.getFormula();
@@ -56,8 +54,6 @@ namespace storm {
                 return false;
             }
         }
-
-
 
         template<typename SparseSmgModelType>
         std::unique_ptr<CheckResult> SparseSmgRpatlModelChecker<SparseSmgModelType>::checkGameFormula(Environment const& env, CheckTask<storm::logic::GameFormula, ValueType> const& checkTask) {
@@ -97,7 +93,6 @@ namespace storm {
         std::unique_ptr<CheckResult> SparseSmgRpatlModelChecker<ModelType>::checkRewardOperatorFormula(Environment const& env, CheckTask<storm::logic::RewardOperatorFormula, ValueType> const& checkTask) {
             storm::logic::RewardOperatorFormula const& formula = checkTask.getFormula();
             std::unique_ptr<CheckResult> result = this->computeRewards(env, formula.getMeasureType(), checkTask.substituteFormula(formula.getSubformula()));
-
             return result;
         }
 
@@ -105,7 +100,6 @@ namespace storm {
 		std::unique_ptr<CheckResult> SparseSmgRpatlModelChecker<ModelType>::checkLongRunAverageOperatorFormula(Environment const& env, CheckTask<storm::logic::LongRunAverageOperatorFormula, ValueType> const& checkTask) {
             storm::logic::LongRunAverageOperatorFormula const& formula = checkTask.getFormula();
             std::unique_ptr<CheckResult> result = this->computeLongRunAverageProbabilities(env, checkTask.substituteFormula(formula.getSubformula().asStateFormula()));
-
             return result;
         }
 
@@ -216,7 +210,6 @@ namespace storm {
             } else if (checkTask.isProduceSchedulersSet()) {
                 result->asExplicitQuantitativeCheckResult<ValueType>().setScheduler(std::make_unique<storm::storage::Scheduler<ValueType>>(helper.extractScheduler()));
             }
-
             return result;
         }
 
