@@ -15,22 +15,22 @@ namespace storm {
 
                 template <typename ValueType>
                 GameViHelper<ValueType>::GameViHelper(storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::BitVector statesOfCoalition) : _transitionMatrix(transitionMatrix), _statesOfCoalition(statesOfCoalition) {
+                    // Intentionally left empty.
                 }
 
                 template <typename ValueType>
                 void GameViHelper<ValueType>::prepareSolversAndMultipliers(const Environment& env) {
                     _multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, _transitionMatrix);
-
                     _x1IsCurrent = false;
                 }
 
                 template <typename ValueType>
                 void GameViHelper<ValueType>::performValueIteration(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir) {
                     prepareSolversAndMultipliers(env);
+                    // Get precision for convergence check.
                     ValueType precision = storm::utility::convertNumber<ValueType>(env.solver().game().getPrecision());
                     uint64_t maxIter = env.solver().game().getMaximalNumberOfIterations();
                     _b = b;
-
                     _x1.assign(_transitionMatrix.getRowGroupCount(), storm::utility::zero<ValueType>());
                     _x2 = _x1;
 
@@ -111,6 +111,53 @@ namespace storm {
                         }
                     }
                     return true;
+                }
+
+                template <typename ValueType>
+                void GameViHelper<ValueType>::performValueIterationUpperBound(Environment const& env, std::vector<ValueType>& x, storm::solver::OptimizationDirection const dir, uint64_t upperBound, std::vector<ValueType>& constrainedChoiceValues) {
+                    prepareSolversAndMultipliers(env);
+                    _x = x;
+                    if (this->isProduceSchedulerSet()) {
+                        if (!this->_producedOptimalChoices.is_initialized()) {
+                            this->_producedOptimalChoices.emplace();
+                        }
+                        this->_producedOptimalChoices->resize(this->_transitionMatrix.getRowGroupCount());
+                    }
+                    for (uint64_t iter = 0; iter < upperBound; iter++) {
+                        if(iter == upperBound - 1) {
+                            _multiplier->multiply(env, _x, nullptr, constrainedChoiceValues);
+                        }
+                        performIterationStepUpperBound(env, dir);
+                    }
+                    x = _x;
+                }
+
+                template <typename ValueType>
+                void GameViHelper<ValueType>::performIterationStepUpperBound(Environment const& env, storm::solver::OptimizationDirection const dir, std::vector<uint64_t>* choices) {
+                    if (!_multiplier) {
+                        prepareSolversAndMultipliers(env);
+                    }
+                    // multiplyandreducegaussseidel
+                    // Ax = x'
+                    if (choices == nullptr) {
+                        _multiplier->multiplyAndReduce(env, dir, _x, nullptr, _x, nullptr, &_statesOfCoalition);
+                    } else {
+                        // Also keep track of the choices made.
+                        _multiplier->multiplyAndReduce(env, dir, _x, nullptr, _x, choices, &_statesOfCoalition);
+                    }
+                }
+
+                template <typename ValueType>
+                void GameViHelper<ValueType>::fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector relevantStates) {
+                    std::vector<ValueType> filledVector = std::vector<ValueType>(relevantStates.size(), storm::utility::zero<ValueType>());
+                    uint bitIndex = 0;
+                    for(uint i = 0; i < filledVector.size(); i++) {
+                        if (relevantStates.get(i)) {
+                            filledVector.at(i) = result.at(bitIndex);
+                            bitIndex++;
+                        }
+                    }
+                    result = filledVector;
                 }
 
                 template <typename ValueType>
