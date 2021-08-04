@@ -81,9 +81,8 @@ namespace storm {
 
             template<typename ValueType>
             SMGSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeGloballyProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint) {
-                // the idea is to implement the definition of globally as in the formula:
                 // G psi = not(F(not psi)) = not(true U (not psi))
-                // so the psiStates are flipped, then the true U part is calculated, at the end the result is flipped again
+                // The psiStates are flipped, then the true U part is calculated, at the end the result is flipped again.
                 storm::storage::BitVector notPsiStates = ~psiStates;
                 statesOfCoalition.complement();
                 auto result = computeUntilProbabilities(env, std::move(goal), transitionMatrix, backwardTransitions, storm::storage::BitVector(transitionMatrix.getRowGroupCount(), true), notPsiStates, qualitative, statesOfCoalition, produceScheduler, hint);
