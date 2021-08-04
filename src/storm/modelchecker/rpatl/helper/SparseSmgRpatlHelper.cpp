@@ -27,26 +27,32 @@ namespace storm {
                 std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(relevantStates, psiStates);
                 std::vector<ValueType> constrainedChoiceValues = std::vector<ValueType>(b.size(), storm::utility::zero<ValueType>());
 
-                // Reduce the matrix to relevant states
-                storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, relevantStates, relevantStates, false);
-
                 storm::storage::BitVector clippedStatesOfCoalition(relevantStates.getNumberOfSetBits());
                 clippedStatesOfCoalition.setClippedStatesOfCoalition(relevantStates, statesOfCoalition);
                 clippedStatesOfCoalition.complement();
 
-                storm::modelchecker::helper::internal::GameViHelper<ValueType> viHelper(submatrix, clippedStatesOfCoalition);
-                std::unique_ptr<storm::storage::Scheduler<ValueType>> scheduler;
-                if (produceScheduler) {
-                    viHelper.setProduceScheduler(true);
+                storm::modelchecker::helper::internal::GameViHelper<ValueType> viHelper(transitionMatrix, clippedStatesOfCoalition);
+                if(!relevantStates.empty()) {
+                    // Reduce the matrix to relevant states.
+                    storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, relevantStates, relevantStates, false);
+                    // Update the GameViHelper.
+                    viHelper = storm::modelchecker::helper::internal::GameViHelper<ValueType>(submatrix, clippedStatesOfCoalition);
+                    if (produceScheduler) {
+                        viHelper.setProduceScheduler(true);
+                    }
+                    // Perform value iteration.
+                    viHelper.performValueIteration(env, x, b, goal.direction());
+                    if(goal.isShieldingTask()) {
+                        viHelper.getChoiceValues(env, x, constrainedChoiceValues);
+                    }
                 }
 
-                viHelper.performValueIteration(env, x, b, goal.direction());
-                if(goal.isShieldingTask()) {
-                    viHelper.getChoiceValues(env, x, constrainedChoiceValues);
-                }
+                // Fill up the result x with 0s and 1s for not relevant states.
                 viHelper.fillResultVector(x, relevantStates, psiStates);
+                // Fill up the constrainedChoice Values to full size.
                 viHelper.fillChoiceValuesVector(constrainedChoiceValues, relevantStates, transitionMatrix.getRowGroupIndices());
 
+                std::unique_ptr<storm::storage::Scheduler<ValueType>> scheduler;
                 if (produceScheduler) {
                     scheduler = std::make_unique<storm::storage::Scheduler<ValueType>>(expandScheduler(viHelper.extractScheduler(), psiStates, ~phiStates));
                 }
