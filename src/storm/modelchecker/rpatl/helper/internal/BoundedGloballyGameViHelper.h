@@ -26,9 +26,9 @@ namespace storm {
                     void performValueIteration(Environment const& env, std::vector<ValueType>& x, storm::solver::OptimizationDirection const dir, uint64_t upperBound, std::vector<ValueType>& constrainedChoiceValues);
 
                     /*!
-                     * Fills the result vector to the original size with ones for being psiStates, zeros for being not phiStates
+                     * Fills the result vector to the original size with zeros for all states except the relevantStates
                      */
-                    void fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector psiStates);
+                    void fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector relevantStates);
 
                     /*!
                      * Fills the choice values vector to the original size with zeros for ~psiState choices.

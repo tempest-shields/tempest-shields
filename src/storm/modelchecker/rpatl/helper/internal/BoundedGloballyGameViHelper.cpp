@@ -60,12 +60,12 @@ namespace storm {
                 }
 
                 template <typename ValueType>
-                void BoundedGloballyGameViHelper<ValueType>::fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector psiStates)
+                void BoundedGloballyGameViHelper<ValueType>::fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector relevantStates)
                 {
-                    std::vector<ValueType> filledVector = std::vector<ValueType>(psiStates.size(), storm::utility::zero<ValueType>());
+                    std::vector<ValueType> filledVector = std::vector<ValueType>(relevantStates.size(), storm::utility::zero<ValueType>());
                     uint bitIndex = 0;
                     for(uint i = 0; i < filledVector.size(); i++) {
-                        if (psiStates.get(i)) {
+                        if (relevantStates.get(i)) {
                             filledVector.at(i) = result.at(bitIndex);
                             bitIndex++;
                         }
