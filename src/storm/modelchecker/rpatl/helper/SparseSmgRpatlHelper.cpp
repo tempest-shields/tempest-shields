@@ -131,33 +131,28 @@ namespace storm {
 
                 // Initialize the solution vector.
                 std::vector<ValueType> x = std::vector<ValueType>(relevantStates.getNumberOfSetBits(), storm::utility::one<ValueType>());
-
-                // Reduce the matrix to relevant states
-                storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, relevantStates, relevantStates, false);
-
-                std::vector<ValueType> constrainedChoiceValues = std::vector<ValueType>(submatrix.getRowCount(), storm::utility::zero<ValueType>());
+                std::vector<ValueType> constrainedChoiceValues = std::vector<ValueType>(transitionMatrix.getConstrainedRowGroupSumVector(relevantStates, psiStates).size(), storm::utility::zero<ValueType>());
 
                 storm::storage::BitVector clippedStatesOfCoalition(relevantStates.getNumberOfSetBits());
                 clippedStatesOfCoalition.setClippedStatesOfCoalition(relevantStates, statesOfCoalition);
                 clippedStatesOfCoalition.complement();
 
-                // Use the bounded globally game vi helper
-                storm::modelchecker::helper::internal::BoundedGloballyGameViHelper<ValueType> viHelper(submatrix, clippedStatesOfCoalition);
-                std::unique_ptr<storm::storage::Scheduler<ValueType>> scheduler;
-                if (produceScheduler) {
-                    viHelper.setProduceScheduler(true);
-                }
-
-                // in case of upperBound = 0 the states which are initially "safe" are filled with ones
-                if(upperBound > 0)
-                {
+                // Use the bounded globally game vi helper.
+                storm::modelchecker::helper::internal::BoundedGloballyGameViHelper<ValueType> viHelper(transitionMatrix, clippedStatesOfCoalition);
+                if(!relevantStates.empty() && upperBound > 0) {
+                    // Reduce the matrix to relevant states.
+                    storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, relevantStates, relevantStates, false);
+                    // Update the BoundedGloballyViHelper.
+                    storm::modelchecker::helper::internal::BoundedGloballyGameViHelper<ValueType> viHelper(submatrix, clippedStatesOfCoalition);
+                    if (produceScheduler) {
+                        viHelper.setProduceScheduler(true);
+                    }
                     viHelper.performValueIteration(env, x, goal.direction(), upperBound, constrainedChoiceValues);
                 }
-                viHelper.fillChoiceValuesVector(constrainedChoiceValues, relevantStates, transitionMatrix.getRowGroupIndices());
 
                 viHelper.fillResultVector(x, relevantStates);
                 viHelper.fillChoiceValuesVector(constrainedChoiceValues, relevantStates, transitionMatrix.getRowGroupIndices());
-
+                std::unique_ptr<storm::storage::Scheduler<ValueType>> scheduler;
                 if (produceScheduler) {
                     scheduler = std::make_unique<storm::storage::Scheduler<ValueType>>(expandScheduler(viHelper.extractScheduler(), relevantStates, ~relevantStates));
                 }
