@@ -132,16 +132,16 @@ namespace storm {
                 clippedStatesOfCoalition.complement();
 
                 // Use the bounded globally game vi helper.
-                storm::modelchecker::helper::internal::BoundedGloballyGameViHelper<ValueType> viHelper(transitionMatrix, clippedStatesOfCoalition);
+                storm::modelchecker::helper::internal::GameViHelper<ValueType> viHelper(transitionMatrix, clippedStatesOfCoalition);
                 if(!relevantStates.empty() && upperBound > 0) {
                     // Reduce the matrix to relevant states.
                     storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, relevantStates, relevantStates, false);
                     // Update the BoundedGloballyViHelper.
-                    storm::modelchecker::helper::internal::BoundedGloballyGameViHelper<ValueType> viHelper(submatrix, clippedStatesOfCoalition);
+                    storm::modelchecker::helper::internal::GameViHelper<ValueType> viHelper(submatrix, clippedStatesOfCoalition);
                     if (produceScheduler) {
                         viHelper.setProduceScheduler(true);
                     }
-                    viHelper.performValueIteration(env, x, goal.direction(), upperBound, constrainedChoiceValues);
+                    viHelper.performValueIterationUpperBound(env, x, goal.direction(), upperBound, constrainedChoiceValues);
                 }
 
                 viHelper.fillResultVector(x, relevantStates);
