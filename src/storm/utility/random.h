@@ -1,3 +1,5 @@
+#pragma once
+
 #include <random>
 #include <boost/random.hpp>
 #include "storm/adapters/RationalNumberAdapter.h"
@@ -41,6 +43,14 @@ namespace storm {
 
         };
 
+
+        class BernoulliDistributionGenerator {
+        public:
+            BernoulliDistributionGenerator(double prob);
+            bool random(boost::mt19937& engine);
+        private:
+            boost::random::bernoulli_distribution<> distribution;
+        };
 
         class ExponentialDistributionGenerator {
         public:

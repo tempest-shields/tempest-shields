@@ -128,6 +128,7 @@ namespace storm {
                 
         template<typename ValueType>
         void MinMaxLinearEquationSolver<ValueType>::setInitialScheduler(std::vector<uint_fast64_t>&& choices) {
+            assert (!this->choiceFixedForState || this->choiceFixedForState.get().size() == choices.size());
             initialScheduler = std::move(choices);
         }
         
@@ -155,7 +156,21 @@ namespace storm {
         bool MinMaxLinearEquationSolver<ValueType>::isRequirementsCheckedSet() const {
             return requirementsChecked;
         }
-        
+
+        template<class ValueType>
+        void MinMaxLinearEquationSolver<ValueType>::setChoiceFixedForStates(storm::storage::BitVector&& states) {
+            this->choiceFixedForState = std::move(states);
+            assert (this->choiceFixedForState);
+        }
+
+        template<class ValueType>
+        void MinMaxLinearEquationSolver<ValueType>::setFixedChoicesToFirst() {
+            assert (this->initialScheduler && this->choiceFixedForState);
+            for (auto state : this->choiceFixedForState.get()) {
+                this->initialScheduler.get()[state] = 0;
+            }
+        }
+
         template<typename ValueType>
         MinMaxLinearEquationSolverFactory<ValueType>::MinMaxLinearEquationSolverFactory() : requirementsChecked(false) {
             // Intentionally left empty

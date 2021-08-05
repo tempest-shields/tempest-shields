@@ -28,6 +28,7 @@ TEST(PrismParser, SimpleTest) {
     EXPECT_NO_THROW(result = storm::parser::PrismParser::parseFromString(testInput, "testfile"));
     EXPECT_EQ(1ul, result.getNumberOfModules());
     EXPECT_EQ(storm::prism::Program::ModelType::DTMC, result.getModelType());
+    EXPECT_FALSE(result.hasUnboundedVariables());
     
     testInput =
     R"(mdp
@@ -44,6 +45,7 @@ TEST(PrismParser, SimpleTest) {
     EXPECT_NO_THROW(result = storm::parser::PrismParser::parseFromString(testInput, "testfile"));
     EXPECT_EQ(1ul, result.getNumberOfModules());
     EXPECT_EQ(storm::prism::Program::ModelType::MDP, result.getModelType());
+    EXPECT_FALSE(result.hasUnboundedVariables());
 }
 
 TEST(PrismParser, ComplexTest) {
@@ -97,8 +99,23 @@ TEST(PrismParser, ComplexTest) {
     EXPECT_EQ(3ul, result.getNumberOfModules());
     EXPECT_EQ(2ul, result.getNumberOfRewardModels());
     EXPECT_EQ(1ul, result.getNumberOfLabels());
+    EXPECT_FALSE(result.hasUnboundedVariables());
 }
 
+TEST(PrismParser, UnboundedTest) {
+    std::string testInput =
+    R"(mdp
+    module main
+        b : int;
+        [a] true -> 1: (b'=b+1);
+    endmodule)";
+    
+    storm::prism::Program result;
+    EXPECT_NO_THROW(result = storm::parser::PrismParser::parseFromString(testInput, "testfile"));
+    EXPECT_EQ(1ul, result.getNumberOfModules());
+    EXPECT_EQ(storm::prism::Program::ModelType::MDP, result.getModelType());
+    EXPECT_TRUE(result.hasUnboundedVariables());
+}
 
 TEST(PrismParser, POMDPInputTest) {
     std::string testInput =
@@ -141,6 +158,27 @@ TEST(PrismParser, POMDPInputTest) {
     EXPECT_NO_THROW(result = storm::parser::PrismParser::parseFromString(testInput2, "testfile"));
 }
 
+TEST(PrismParser, NAryPredicates) {
+    std::string testInput =
+            R"(dtmc
+
+    module example
+    s : [0..4] init 0;
+    i : bool init true;
+    [] s=0 -> 0.5: (s'=1) & (i'=false) + 0.5: (s'=2) & (i'=false);
+    [] s=1 | s=2 -> 1: (s'=3) & (i'=true);
+    [r] s=1 -> 1: (s'=4) & (i'=true);
+    [r] s=2 -> 1: (s'=3) & (i'=true);
+    endmodule
+
+    label "test" = atMostOneOf(s=0, s=3, s=4);
+    label "test2" = exactlyOneOf(s=0, i, !i & s=3);
+    )";
+    storm::prism::Program result;
+
+
+    EXPECT_NO_THROW(result = storm::parser::PrismParser::parseFromString(testInput, "testfile"));
+}
 
 TEST(PrismParser, IllegalInputTest) {
     std::string testInput =

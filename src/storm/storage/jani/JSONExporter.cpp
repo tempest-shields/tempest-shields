@@ -680,8 +680,17 @@ namespace storm {
             opDecl["op"] = operatorTypeToJaniString(expression.getOperator());
             opDecl["left"] = anyToJson(expression.getOperand(0)->accept(*this, data));
             opDecl["right"] = anyToJson(expression.getOperand(1)->accept(*this, data));
-            return opDecl;
+            if (expression.getOperator() == storm::expressions::OperatorType::Power && expression.getType().isIntegerType()) {
+                // power expressions that have integer type need to be "type casted"
+                ExportJsonType trc;
+                trc["op"] = "trc";
+                trc["exp"] = std::move(opDecl);
+                return trc;
+            } else {
+                return opDecl;
+            }
         }
+        
         boost::any ExpressionToJson::visit(storm::expressions::BinaryRelationExpression const& expression, boost::any const& data) {
             ExportJsonType opDecl;
             opDecl["op"] = operatorTypeToJaniString(expression.getOperator());
@@ -718,6 +727,7 @@ namespace storm {
             opDecl["exp"] = anyToJson(expression.getOperand()->accept(*this, data));
             return opDecl;
         }
+
         boost::any ExpressionToJson::visit(storm::expressions::BooleanLiteralExpression const& expression, boost::any const&) {
             return ExportJsonType(expression.getValue());
         }

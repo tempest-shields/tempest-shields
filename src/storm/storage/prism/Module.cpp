@@ -15,6 +15,15 @@ namespace storm {
             this->createMappings();
         }
         
+        bool Module::hasUnboundedVariables() const {
+            for (auto const& integerVariable : this->integerVariables) {
+                if (!integerVariable.hasLowerBoundExpression() || !integerVariable.hasUpperBoundExpression()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         std::size_t Module::getNumberOfBooleanVariables() const {
             return this->booleanVariables.size();
         }
@@ -74,7 +83,9 @@ namespace storm {
         std::vector<storm::expressions::Expression> Module::getAllRangeExpressions() const {
             std::vector<storm::expressions::Expression> result;
             for (auto const& integerVariable : this->integerVariables) {
-                result.push_back(integerVariable.getRangeExpression());
+                if (integerVariable.hasLowerBoundExpression() || integerVariable.hasUpperBoundExpression()) {
+                    result.push_back(integerVariable.getRangeExpression());
+                }
             }
             return result;
         }
@@ -235,6 +246,59 @@ namespace storm {
             
             return Module(this->getName(), newBooleanVariables, newIntegerVariables, this->getClockVariables(), this->getInvariant(), newCommands, this->getFilename(), this->getLineNumber());
         }
+
+        Module Module::substituteNonStandardPredicates() const {
+            std::vector<BooleanVariable> newBooleanVariables;
+            newBooleanVariables.reserve(this->getNumberOfBooleanVariables());
+            for (auto const& booleanVariable : this->getBooleanVariables()) {
+                newBooleanVariables.emplace_back(booleanVariable.substituteNonStandardPredicates());
+            }
+
+            std::vector<IntegerVariable> newIntegerVariables;
+            newBooleanVariables.reserve(this->getNumberOfIntegerVariables());
+            for (auto const& integerVariable : this->getIntegerVariables()) {
+                newIntegerVariables.emplace_back(integerVariable.substituteNonStandardPredicates());
+            }
+
+            std::vector<Command> newCommands;
+            newCommands.reserve(this->getNumberOfCommands());
+            for (auto const& command : this->getCommands()) {
+                newCommands.emplace_back(command.substituteNonStandardPredicates());
+            }
+
+            return Module(this->getName(), newBooleanVariables, newIntegerVariables, this->getClockVariables(), this->getInvariant(), newCommands, this->getFilename(), this->getLineNumber());
+        }
+
+        Module Module::labelUnlabelledCommands(std::map<uint64_t, std::string> const& suggestions, uint64_t& newId, std::map<std::string, uint64_t>& nameToIdMapping) const {
+            std::vector<Command> newCommands;
+            newCommands.reserve(this->getNumberOfCommands());
+            for (auto const& command : this->getCommands()) {
+                if (command.isLabeled()) {
+                    newCommands.push_back(command);
+                } else {
+                    if(suggestions.count(command.getGlobalIndex())) {
+                        std::string newActionName = suggestions.at(command.getGlobalIndex());
+                        auto it = nameToIdMapping.find(newActionName);
+                        uint64_t actionId = newId;
+                        if (it == nameToIdMapping.end()) {
+                            nameToIdMapping[newActionName] = newId;
+                            newId++;
+                        } else {
+                            actionId = it->second;
+                        }
+                        newCommands.emplace_back(command.getGlobalIndex(), command.isMarkovian(), actionId, newActionName, command.getGuardExpression(), command.getUpdates(), command.getFilename(), command.getLineNumber());
+
+                    } else {
+                        std::string newActionName = getName() + "_cmd_" + std::to_string(command.getGlobalIndex());
+                        newCommands.emplace_back(command.getGlobalIndex(), command.isMarkovian(), newId, newActionName, command.getGuardExpression(), command.getUpdates(), command.getFilename(), command.getLineNumber());
+                        nameToIdMapping[newActionName] = newId;
+                        newId++;
+                    }
+
+                }
+            }
+            return Module(this->getName(), booleanVariables, integerVariables, clockVariables, invariant, newCommands, this->getFilename(), this->getLineNumber());
+        }
         
         bool Module::containsVariablesOnlyInUpdateProbabilities(std::set<storm::expressions::Variable> const& undefinedConstantVariables) const {
             for (auto const& booleanVariable : this->getBooleanVariables()) {
@@ -246,10 +310,10 @@ namespace storm {
                 if (integerVariable.hasInitialValue() && integerVariable.getInitialValueExpression().containsVariable(undefinedConstantVariables)) {
                     return false;
                 }
-                if (integerVariable.getLowerBoundExpression().containsVariable(undefinedConstantVariables)) {
+                if (integerVariable.hasLowerBoundExpression() && integerVariable.getLowerBoundExpression().containsVariable(undefinedConstantVariables)) {
                     return false;
                 }
-                if (integerVariable.getUpperBoundExpression().containsVariable(undefinedConstantVariables)) {
+                if (integerVariable.hasUpperBoundExpression() && integerVariable.getUpperBoundExpression().containsVariable(undefinedConstantVariables)) {
                     return false;
                 }
             }

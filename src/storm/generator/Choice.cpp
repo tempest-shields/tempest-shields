@@ -45,6 +45,11 @@ namespace storm {
         }
 
         template<typename ValueType, typename StateType>
+        StateType Choice<ValueType, StateType>::sampleFromDistribution(ValueType const& quantile) const {
+            return distribution.sampleFromDistribution(quantile);
+        }
+
+        template<typename ValueType, typename StateType>
         typename storm::storage::Distribution<ValueType, StateType>::iterator Choice<ValueType, StateType>::begin() {
             return distribution.begin();
         }

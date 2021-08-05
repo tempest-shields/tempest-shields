@@ -137,11 +137,14 @@ namespace storm {
                     ("floor", 20)
                     ("ceil", 21)
                     ("init", 22)
-                    ("endinit", 23)
-                    ("invariant", 24)
-                    ("endinvariant", 25)
-                    ("player", 26)
-                    ("endplayer", 27);
+                    ("atLeastOneOf", 23)
+                    ("atMostOneOf", 24)
+                    ("exactlyOneOf", 25)
+                    ("endinit", 26)
+                    ("invariant", 27)
+                    ("endinvariant", 28)
+                    ("player", 29)
+                    ("endplayer", 30);
                 }
             };
 
@@ -240,8 +243,6 @@ namespace storm {
 
             // Rules for global variable definitions.
             qi::rule<Iterator, qi::unused_type(GlobalProgramInformation&), Skipper> globalVariableDefinition;
-            qi::rule<Iterator, qi::unused_type(GlobalProgramInformation&), Skipper> globalBooleanVariableDefinition;
-            qi::rule<Iterator, qi::unused_type(GlobalProgramInformation&), Skipper> globalIntegerVariableDefinition;
 
             // Rules for modules definition.
             qi::rule<Iterator, std::string(), Skipper> knownModuleName;
@@ -254,6 +255,8 @@ namespace storm {
             qi::rule<Iterator, qi::unused_type(std::vector<storm::prism::BooleanVariable>&, std::vector<storm::prism::IntegerVariable>&, std::vector<storm::prism::ClockVariable>&), Skipper> variableDefinition;
             qi::rule<Iterator, storm::prism::BooleanVariable(), qi::locals<storm::expressions::Expression>, Skipper> booleanVariableDefinition;
             qi::rule<Iterator, storm::prism::IntegerVariable(), qi::locals<storm::expressions::Expression>, Skipper> integerVariableDefinition;
+            qi::rule<Iterator, storm::prism::IntegerVariable(), qi::locals<storm::expressions::Expression>, Skipper> boundedIntegerVariableDefinition;
+            qi::rule<Iterator, storm::prism::IntegerVariable(), qi::locals<storm::expressions::Expression>, Skipper> unboundedIntegerVariableDefinition;
             qi::rule<Iterator, storm::prism::ClockVariable(), qi::locals<storm::expressions::Expression>, Skipper> clockVariableDefinition;
 
             // Rules for command definitions.
