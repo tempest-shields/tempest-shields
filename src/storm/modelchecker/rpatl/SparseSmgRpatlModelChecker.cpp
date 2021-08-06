@@ -181,6 +181,11 @@ namespace storm {
         std::unique_ptr<CheckResult> SparseSmgRpatlModelChecker<ModelType>::computeBoundedGloballyProbabilities(Environment const& env, CheckTask<storm::logic::BoundedGloballyFormula, ValueType> const& checkTask) {
             storm::logic::BoundedGloballyFormula const& pathFormula = checkTask.getFormula();
             STORM_LOG_THROW(checkTask.isOptimizationDirectionSet(), storm::exceptions::InvalidPropertyException, "Formula needs to specify whether minimal or maximal values are to be computed on nondeterministic model.");
+            // check for upper and lower bounds
+            STORM_LOG_THROW(pathFormula.hasUpperBound(), storm::exceptions::InvalidPropertyException, "Formula needs to have (a single) upper step bound.");
+            STORM_LOG_THROW(!pathFormula.hasLowerBound(), storm::exceptions::InvalidPropertyException, "Formulas with lower bound are not supported.");
+            STORM_LOG_THROW(pathFormula.hasIntegerUpperBound(), storm::exceptions::InvalidPropertyException, "Formula needs to have discrete upper time bound.");
+
             std::unique_ptr<CheckResult> subResultPointer = this->check(env, pathFormula.getSubformula());
             ExplicitQualitativeCheckResult const& subResult = subResultPointer->asExplicitQualitativeCheckResult();
 
