@@ -32,10 +32,6 @@
 #include "storm/generator/VariableInformation.h"
 
 namespace storm {
-    namespace utility {
-        template<typename ValueType> class ConstantsComparator;
-    }
-
     namespace builder {
 
         using namespace storm::utility::prism;
@@ -53,7 +49,16 @@ namespace storm {
                 // intentionally left empty.
             }
 
+            /**
+             * Lookup state
+             * @param stateDescription A map describing the state
+             * @return The id of the state, or size() when no state is found
+             */
             StateType lookup(std::map<storm::expressions::Variable, storm::expressions::Expression> const& stateDescription) const;
+            /**
+             * How many states have been stored?
+             */
+            uint64_t size() const;
 
         private:
             VariableInformation varInfo;

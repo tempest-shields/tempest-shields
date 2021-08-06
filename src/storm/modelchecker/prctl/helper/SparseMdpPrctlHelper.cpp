@@ -103,7 +103,7 @@ namespace storm {
                 }
                 
                 std::map<storm::storage::sparse::state_type, ValueType> result;
-                for (auto const& initState : initialStates) {
+                for (auto initState : initialStates) {
                     result[initState] = rewardUnfolding.getInitialStateResult(initEpoch, initState);
                 }
                 
@@ -281,7 +281,7 @@ namespace storm {
                             // Compute the hint w.r.t. the given subsystem.
                             hintChoices.clear();
                             hintChoices.reserve(maybeStates.getNumberOfSetBits());
-                            for (auto const& state : maybeStates) {
+                            for (auto state : maybeStates) {
                                 uint_fast64_t hintChoice = schedulerHint.getChoice(state).getDeterministicChoice();
                                 if (selectedChoices) {
                                     uint_fast64_t firstChoice = transitionMatrix.getRowGroupIndices()[state];
@@ -470,7 +470,7 @@ namespace storm {
                 result.statesWithProbability1 = storm::storage::BitVector(result.maybeStates.size());
                 result.statesWithProbability0 = storm::storage::BitVector(result.maybeStates.size());
                 storm::storage::BitVector nonMaybeStates = ~result.maybeStates;
-                for (auto const& state : nonMaybeStates) {
+                for (auto state : nonMaybeStates) {
                     if (storm::utility::isOne(resultsForNonMaybeStates[state])) {
                         result.statesWithProbability1.set(state, true);
                     } else {
@@ -527,12 +527,12 @@ namespace storm {
                 // We also need to define some arbitrary choice for the remaining states to obtain a fully defined scheduler.
                 if (goal.minimize()) {
                     storm::utility::graph::computeSchedulerProb0E(qualitativeStateSets.statesWithProbability0, transitionMatrix, scheduler);
-                    for (auto const& prob1State : qualitativeStateSets.statesWithProbability1) {
+                    for (auto prob1State : qualitativeStateSets.statesWithProbability1) {
                         scheduler.setChoice(0, prob1State);
                     }
                 } else {
                     storm::utility::graph::computeSchedulerProb1E(qualitativeStateSets.statesWithProbability1, transitionMatrix, backwardTransitions, phiStates, psiStates, scheduler);
-                    for (auto const& prob0State : qualitativeStateSets.statesWithProbability0) {
+                    for (auto prob0State : qualitativeStateSets.statesWithProbability0) {
                         scheduler.setChoice(0, prob0State);
                     }
                 }
@@ -631,7 +631,7 @@ namespace storm {
                 std::vector<ValueType> maybeStateChoiceValues = std::vector<ValueType>(sizeMaybeStateChoiceValues, storm::utility::zero<ValueType>());
                 
                 // Check whether we need to compute exact probabilities for some states.
-                if (qualitative || maybeStatesNotRelevant || !goal.isShieldingTask()) {
+                if ((qualitative || maybeStatesNotRelevant) && !goal.isShieldingTask()) {
                     // Set the values for all maybe-states to 0.5 to indicate that their probability values are neither 0 nor 1.
                     storm::utility::vector::setVectorValues<ValueType>(result, qualitativeStateSets.maybeStates, storm::utility::convertNumber<ValueType>(0.5));
                 } else {
@@ -816,7 +816,7 @@ namespace storm {
                         storm::storage::BitVector choicesWithoutReward = rewardModel.getChoicesWithZeroReward(transitionMatrix);
                         auto ecElimResult = storm::transformer::EndComponentEliminator<ValueType>::transform(transitionMatrix, storm::storage::BitVector(transitionMatrix.getRowGroupCount(), true), choicesWithoutReward, rew0AStates, true);
                         storm::storage::BitVector newRew0AStates(ecElimResult.matrix.getRowGroupCount(), false);
-                        for (auto const& oldRew0AState : rew0AStates) {
+                        for (auto oldRew0AState : rew0AStates) {
                             newRew0AStates.set(ecElimResult.oldToNewStateMapping[oldRew0AState]);
                         }
                         
@@ -836,7 +836,7 @@ namespace storm {
                                                                 }, newRew0AStates, qualitative, false,
                                                                 [&] () {
                                                                     storm::storage::BitVector newStatesWithoutReward(ecElimResult.matrix.getRowGroupCount(), false);
-                                                                    for (auto const& oldStateWithoutRew : statesWithoutReward) {
+                                                                    for (auto oldStateWithoutRew : statesWithoutReward) {
                                                                         newStatesWithoutReward.set(ecElimResult.oldToNewStateMapping[oldStateWithoutRew]);
                                                                     }
                                                                     return newStatesWithoutReward;
@@ -940,7 +940,7 @@ namespace storm {
                 result.infinityStates = storm::storage::BitVector(result.maybeStates.size());
                 result.rewardZeroStates = storm::storage::BitVector(result.maybeStates.size());
                 storm::storage::BitVector nonMaybeStates = ~result.maybeStates;
-                for (auto const& state : nonMaybeStates) {
+                for (auto state : nonMaybeStates) {
                     if (storm::utility::isZero(resultsForNonMaybeStates[state])) {
                         result.rewardZeroStates.set(state, true);
                     } else {
@@ -990,12 +990,12 @@ namespace storm {
                 // the states with reward zero/infinity.
                 if (goal.minimize()) {
                     storm::utility::graph::computeSchedulerProb1E(qualitativeStateSets.rewardZeroStates, transitionMatrix, backwardTransitions, qualitativeStateSets.rewardZeroStates, targetStates, scheduler, zeroRewardChoicesGetter());
-                    for (auto const& state : qualitativeStateSets.infinityStates) {
+                    for (auto state : qualitativeStateSets.infinityStates) {
                         scheduler.setChoice(0, state);
                     }
                 } else {
                     storm::utility::graph::computeSchedulerRewInf(qualitativeStateSets.infinityStates, transitionMatrix, scheduler);
-                    for (auto const& state : qualitativeStateSets.rewardZeroStates) {
+                    for (auto state : qualitativeStateSets.rewardZeroStates) {
                         scheduler.setChoice(0, state);
                     }
                 }

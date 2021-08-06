@@ -6,12 +6,10 @@
 #include <boost/container/flat_map.hpp>
 
 #include "storm/storage/sparse/StateType.h"
+#include "storm/utility/ConstantsComparator.h"
 
 namespace storm {
-    namespace utility {
-        template <typename ValueType>
-        class ConstantsComparator;
-    }
+
     
     namespace storage {
         
@@ -148,6 +146,17 @@ namespace storm {
              * Normalizes the distribution such that the values sum up to one.
              */
             void normalize();
+
+            /**
+            * Given a value q, find the event in the ordered distribution that corresponds to this prob.
+            * Example: Given a (sub)distribution { x -> 0.4, y -> 0.3, z -> 0.2 },
+            * A value q in [0,0.4] yields x, q in [0.4, 0.7] yields y, and q in [0.7, 0.9] yields z.
+            * Any other value for q yields undefined behavior.
+            *
+            * @param quantile q, a value in the CDF.
+            * @return A state
+            */
+            StateType sampleFromDistribution(ValueType const& quantile) const;
             
         private:
             // A list of states and the probabilities that are assigned to them.

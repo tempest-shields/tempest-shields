@@ -98,7 +98,14 @@ namespace storm {
 
             // Resolve the nondeterminism according to the given scheduler.
             bool convertToEquationSystem = this->linearEquationSolverFactory->getEquationProblemFormat(env) == LinearEquationSolverProblemFormat::EquationSystem;
-            storm::storage::SparseMatrix<ValueType> submatrix = this->A->selectRowsFromRowGroups(scheduler, convertToEquationSystem);
+            storm::storage::SparseMatrix<ValueType> submatrix;
+//            if (this->choiceFixedForState) {
+//                for (auto state : this->choiceFixedForState.get()) {
+//                    assert (this->A->getRowGroupSize(state) == 1);
+//                }
+//            }
+
+            submatrix = this->A->selectRowsFromRowGroups(scheduler, convertToEquationSystem);
             if (convertToEquationSystem) {
                 submatrix.convertToEquationSystem();
             }
@@ -166,30 +173,33 @@ namespace storm {
 
                 // Go through the multiplication result and see whether we can improve any of the choices.
                 bool schedulerImproved = false;
+                // Group staat voor de states?
                 for (uint_fast64_t group = 0; group < this->A->getRowGroupCount(); ++group) {
                     uint_fast64_t currentChoice = scheduler[group];
-                    for (uint_fast64_t choice = this->A->getRowGroupIndices()[group]; choice < this->A->getRowGroupIndices()[group + 1]; ++choice) {
-                        // If the choice is the currently selected one, we can skip it.
-                        if (choice - this->A->getRowGroupIndices()[group] == currentChoice) {
-                            continue;
-                        }
+                    assert (!this->choiceFixedForState || (this->choiceFixedForState && (!(this->choiceFixedForState.get()[group]) || this->A->getRowGroupSize(group) == 1)));
+                        for (uint_fast64_t choice = this->A->getRowGroupIndices()[group];
+                             choice < this->A->getRowGroupIndices()[group + 1]; ++choice) {
+                            // If the choice is the currently selected one, we can skip it.
+                            if (choice - this->A->getRowGroupIndices()[group] == currentChoice) {
+                                continue;
+                            }
 
-                        // Create the value of the choice.
-                        ValueType choiceValue = storm::utility::zero<ValueType>();
-                        for (auto const& entry : this->A->getRow(choice)) {
-                            choiceValue += entry.getValue() * x[entry.getColumn()];
-                        }
-                        choiceValue += b[choice];
+                            // Create the value of the choice.
+                            ValueType choiceValue = storm::utility::zero<ValueType>();
+                            for (auto const &entry : this->A->getRow(choice)) {
+                                choiceValue += entry.getValue() * x[entry.getColumn()];
+                            }
+                            choiceValue += b[choice];
 
-                        // If the value is strictly better than the solution of the inner system, we need to improve the scheduler.
-                        // TODO: If the underlying solver is not precise, this might run forever (i.e. when a state has two choices where the (exact) values are equal).
-                        // only changing the scheduler if the values are not equal (modulo precision) would make this unsound.
-                        if (valueImproved(dir, x[group], choiceValue)) {
-                            schedulerImproved = true;
-                            scheduler[group] = choice - this->A->getRowGroupIndices()[group];
-                            x[group] = std::move(choiceValue);
+                            // If the value is strictly better than the solution of the inner system, we need to improve the scheduler.
+                            // TODO: If the underlying solver is not precise, this might run forever (i.e. when a state has two choices where the (exact) values are equal).
+                            // only changing the scheduler if the values are not equal (modulo precision) would make this unsound.
+                            if (valueImproved(dir, x[group], choiceValue)) {
+                                schedulerImproved = true;
+                                scheduler[group] = choice - this->A->getRowGroupIndices()[group];
+                                x[group] = std::move(choiceValue);
+                            }
                         }
-                    }
                 }
 
                 // If the scheduler did not improve, we are done.
@@ -205,6 +215,7 @@ namespace storm {
                 this->showProgressIterative(iterations);
             } while (status == SolverStatus::InProgress);
 
+            STORM_LOG_INFO("Number of iterations: " << iterations);
             this->reportStatus(status, iterations);
 
             // If requested, we store the scheduler for retrieval.
