@@ -139,7 +139,7 @@ namespace storm {
                     continue;
                 }
                 storm::expressions::Expression guard = expressionManager->boolean(true);
-                
+
                 std::vector<storm::jani::Assignment> assignments;
                 for (auto const& inPlaceEntry : trans.getInputPlaces()) {
                     guard = guard && (vars[inPlaceEntry.first]->getExpressionVariable() >= inPlaceEntry.second);
@@ -160,7 +160,7 @@ namespace storm {
 
                 std::shared_ptr<storm::jani::TemplateEdge> templateEdge = std::make_shared<storm::jani::TemplateEdge>(guard);
                 automaton.registerTemplateEdge(templateEdge);
-                
+
                 storm::expressions::Expression rate = expressionManager->rational(trans.getRate());
                 if (trans.hasInfiniteServerSemantics() || (trans.hasKServerSemantics() && !trans.hasSingleServerSemantics())) {
                     STORM_LOG_THROW(trans.hasKServerSemantics() || !trans.getInputPlaces().empty(), storm::exceptions::InvalidModelException, "Unclear semantics: Found a transition with infinite-server semantics and without input place.");
@@ -281,7 +281,7 @@ namespace storm {
             auto reachFormula = std::make_shared<storm::logic::ProbabilityOperatorFormula>(
                     std::make_shared<storm::logic::EventuallyFormula>(atomicFormula, storm::logic::FormulaContext::Probability),
                     storm::logic::OperatorInformation(optimizationDirection));
-            standardProperties.emplace_back(dirShort + "PrReach" + name, reachFormula, emptySet, "The " + dirLong + " probability to eventually reach " + description + ".");
+            standardProperties.emplace_back(dirShort + "PrReach" + name, reachFormula, emptySet, nullptr, "The " + dirLong + " probability to eventually reach " + description + ".");
 
             // Build time bounded reachability property
             // Add variable for time bound
@@ -295,7 +295,7 @@ namespace storm {
             auto reachTimeBoundFormula = std::make_shared<storm::logic::ProbabilityOperatorFormula>(
                     std::make_shared<storm::logic::BoundedUntilFormula>(trueFormula, atomicFormula, boost::none, tb, tbr),
                     storm::logic::OperatorInformation(optimizationDirection));
-            standardProperties.emplace_back(dirShort + "PrReach" + name + "TB", reachTimeBoundFormula, emptySet, "The " + dirLong + " probability to reach " + description + " within 'TIME_BOUND' steps.");
+            standardProperties.emplace_back(dirShort + "PrReach" + name + "TB", reachTimeBoundFormula, emptySet, nullptr, "The " + dirLong + " probability to reach " + description + " within 'TIME_BOUND' steps.");
 
             // Use complementary direction for expected time
             dirShort = maximal ? "Min" : "Max";
@@ -306,7 +306,7 @@ namespace storm {
             auto expTimeFormula = std::make_shared<storm::logic::TimeOperatorFormula>(
                     std::make_shared<storm::logic::EventuallyFormula>(atomicFormula, storm::logic::FormulaContext::Time),
                     storm::logic::OperatorInformation(optimizationDirection));
-            standardProperties.emplace_back(dirShort + "ExpTime" + name, expTimeFormula, emptySet, "The " + dirLong + " expected time to reach " + description + ".");
+            standardProperties.emplace_back(dirShort + "ExpTime" + name, expTimeFormula, emptySet, nullptr, "The " + dirLong + " expected time to reach " + description + ".");
             return standardProperties;
         }
 
