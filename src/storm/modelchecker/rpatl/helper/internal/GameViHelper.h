@@ -31,22 +31,7 @@ namespace storm {
                     /*!
                      * Perform value iteration until upper bound
                      */
-                    void performValueIterationUpperBound(Environment const& env, std::vector<ValueType>& x, storm::solver::OptimizationDirection const dir, uint64_t upperBound, std::vector<ValueType>& constrainedChoiceValues);
-
-                    /*!
-                      * Fills the result vector to the original size with zeros for all states except the relevantStates
-                      */
-                    void fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector relevantStates);
-
-                    /*!
-                     * Fills the result vector to the original size with ones for being psiStates, zeros for being not phiStates
-                     */
-                    void fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector relevantStates, storm::storage::BitVector psiStates);
-
-                    /*!
-                     * Fills the choice values vector to the original size with zeros for ~psiState choices.
-                     */
-                    void fillChoiceValuesVector(std::vector<ValueType>& choiceValues, storm::storage::BitVector psiStates, std::vector<storm::storage::SparseMatrix<double>::index_type> rowGroupIndices);
+                    void performValueIterationUpperBound(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir, uint64_t upperBound, std::vector<ValueType>& constrainedChoiceValues);
 
                     /*!
                      * Sets whether an optimal scheduler shall be constructed during the computation
@@ -58,9 +43,20 @@ namespace storm {
                      */
                     bool isProduceSchedulerSet() const;
 
+                    /*!
+                     * Changes the transitionMatrix of the gameViHelper to the given one.
+                     */
+                    void updateTransitionMatrix(storm::storage::SparseMatrix<ValueType> newTransitionMatrix);
+
                     storm::storage::Scheduler<ValueType> extractScheduler() const;
 
                     void getChoiceValues(Environment const& env, std::vector<ValueType> const& x, std::vector<ValueType>& choiceValues);
+
+                    /*!
+                     * Fills the choice values vector to the original size with zeros for ~psiState choices.
+                     */
+                    void fillChoiceValuesVector(std::vector<ValueType>& choiceValues, storm::storage::BitVector psiStates, std::vector<storm::storage::SparseMatrix<double>::index_type> rowGroupIndices);
+
                 private:
                     /*!
                      * Performs one iteration step for value iteration

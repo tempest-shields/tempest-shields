@@ -114,9 +114,11 @@ namespace storm {
                 }
 
                 template <typename ValueType>
-                void GameViHelper<ValueType>::performValueIterationUpperBound(Environment const& env, std::vector<ValueType>& x, storm::solver::OptimizationDirection const dir, uint64_t upperBound, std::vector<ValueType>& constrainedChoiceValues) {
+                void GameViHelper<ValueType>::performValueIterationUpperBound(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir, uint64_t upperBound, std::vector<ValueType>& constrainedChoiceValues) {
                     prepareSolversAndMultipliers(env);
                     _x = x;
+                    _b = b;
+
                     if (this->isProduceSchedulerSet()) {
                         if (!this->_producedOptimalChoices.is_initialized()) {
                             this->_producedOptimalChoices.emplace();
@@ -125,10 +127,21 @@ namespace storm {
                     }
                     for (uint64_t iter = 0; iter < upperBound; iter++) {
                         if(iter == upperBound - 1) {
-                            _multiplier->multiply(env, _x, nullptr, constrainedChoiceValues);
+                            STORM_LOG_DEBUG("before multipliing ...");
+                            STORM_LOG_DEBUG("_x = " << _x);
+                            STORM_LOG_DEBUG("_b = " << _b);
+                            STORM_LOG_DEBUG("constrainedChoiceValues = " << constrainedChoiceValues);
+
+                            _multiplier->multiply(env, _x, &_b, constrainedChoiceValues);
+                            STORM_LOG_DEBUG("before multipliing ...");
+                            STORM_LOG_DEBUG("_x = " << _x);
+                            STORM_LOG_DEBUG("_b = " << _b);
+                            STORM_LOG_DEBUG("constrainedChoiceValues = " << constrainedChoiceValues);
+
                         }
                         performIterationStepUpperBound(env, dir);
                     }
+
                     x = _x;
                 }
 
@@ -140,55 +153,11 @@ namespace storm {
                     // multiplyandreducegaussseidel
                     // Ax = x'
                     if (choices == nullptr) {
-                        _multiplier->multiplyAndReduce(env, dir, _x, nullptr, _x, nullptr, &_statesOfCoalition);
+                        _multiplier->multiplyAndReduce(env, dir, _x, &_b, _x, nullptr, &_statesOfCoalition);
                     } else {
                         // Also keep track of the choices made.
-                        _multiplier->multiplyAndReduce(env, dir, _x, nullptr, _x, choices, &_statesOfCoalition);
+                        _multiplier->multiplyAndReduce(env, dir, _x, &_b, _x, choices, &_statesOfCoalition);
                     }
-                }
-
-                template <typename ValueType>
-                void GameViHelper<ValueType>::fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector relevantStates) {
-                    std::vector<ValueType> filledVector = std::vector<ValueType>(relevantStates.size(), storm::utility::zero<ValueType>());
-                    uint bitIndex = 0;
-                    for(uint i = 0; i < filledVector.size(); i++) {
-                        if (relevantStates.get(i)) {
-                            filledVector.at(i) = result.at(bitIndex);
-                            bitIndex++;
-                        }
-                    }
-                    result = filledVector;
-                }
-
-                template <typename ValueType>
-                void GameViHelper<ValueType>::fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector relevantStates, storm::storage::BitVector psiStates) {
-                    std::vector<ValueType> filledVector = std::vector<ValueType>(relevantStates.size(), storm::utility::zero<ValueType>());
-                    uint bitIndex = 0;
-                    for(uint i = 0; i < filledVector.size(); i++) {
-                        if (relevantStates.get(i)) {
-                            filledVector.at(i) = result.at(bitIndex);
-                            bitIndex++;
-                        }
-                        else if (psiStates.get(i)) {
-                            filledVector.at(i) = 1;
-                        }
-                    }
-                    result = filledVector;
-                }
-
-                template <typename ValueType>
-                void GameViHelper<ValueType>::fillChoiceValuesVector(std::vector<ValueType>& choiceValues, storm::storage::BitVector psiStates, std::vector<storm::storage::SparseMatrix<double>::index_type> rowGroupIndices) {
-                    std::vector<ValueType> allChoices = std::vector<ValueType>(rowGroupIndices.at(rowGroupIndices.size() - 1), storm::utility::zero<ValueType>());
-                    auto choice_it = choiceValues.begin();
-                    for(uint state = 0; state < rowGroupIndices.size() - 1; state++) {
-                        uint rowGroupSize = rowGroupIndices[state + 1] - rowGroupIndices[state];
-                        if (psiStates.get(state)) {
-                            for(uint choice = 0; choice < rowGroupSize; choice++, choice_it++) {
-                                allChoices.at(rowGroupIndices.at(state) + choice) = *choice_it;
-                            }
-                        }
-                    }
-                    choiceValues = allChoices;
                 }
 
                 template <typename ValueType>
@@ -199,6 +168,11 @@ namespace storm {
                 template <typename ValueType>
                 bool GameViHelper<ValueType>::isProduceSchedulerSet() const {
                     return _produceScheduler;
+                }
+
+                template <typename ValueType>
+                void GameViHelper<ValueType>::updateTransitionMatrix(storm::storage::SparseMatrix<ValueType> newTransitionMatrix) {
+                    _transitionMatrix = newTransitionMatrix;
                 }
 
                 template <typename ValueType>
@@ -228,6 +202,21 @@ namespace storm {
                 template <typename ValueType>
                 void GameViHelper<ValueType>::getChoiceValues(Environment const& env, std::vector<ValueType> const& x, std::vector<ValueType>& choiceValues) {
                     _multiplier->multiply(env, x, &_b, choiceValues);
+                }
+
+                template <typename ValueType>
+                void GameViHelper<ValueType>::fillChoiceValuesVector(std::vector<ValueType>& choiceValues, storm::storage::BitVector psiStates, std::vector<storm::storage::SparseMatrix<double>::index_type> rowGroupIndices) {
+                    std::vector<ValueType> allChoices = std::vector<ValueType>(rowGroupIndices.at(rowGroupIndices.size() - 1), storm::utility::zero<ValueType>());
+                    auto choice_it = choiceValues.begin();
+                    for(uint state = 0; state < rowGroupIndices.size() - 1; state++) {
+                        uint rowGroupSize = rowGroupIndices[state + 1] - rowGroupIndices[state];
+                        if (psiStates.get(state)) {
+                            for(uint choice = 0; choice < rowGroupSize; choice++, choice_it++) {
+                                allChoices.at(rowGroupIndices.at(state) + choice) = *choice_it;
+                            }
+                        }
+                    }
+                    choiceValues = allChoices;
                 }
 
                 template <typename ValueType>
