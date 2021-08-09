@@ -621,7 +621,6 @@ namespace storm {
                         for (auto state : qualitativeStateSets.maybeStates) {
                             scheduler->setDontCare(state);
                         }
-
                     }
                 }
 
