@@ -1,7 +1,5 @@
 #include "storm/modelchecker/prctl/SparseMdpPrctlModelChecker.h"
 
-#include <sstream>
-
 #include "storm/utility/constants.h"
 #include "storm/utility/macros.h"
 #include "storm/utility/vector.h"
@@ -30,16 +28,9 @@
 
 #include "storm/shields/ShieldHandling.h"
 
-#include "storm/settings/SettingsManager.h"
-
-#include "storm/settings/modules/GeneralSettings.h"
-#include "storm/settings/modules/DebugSettings.h"
-
 #include "storm/exceptions/InvalidStateException.h"
 #include "storm/exceptions/InvalidPropertyException.h"
 #include "storm/storage/expressions/Expressions.h"
-
-#include "storm/storage/MaximalEndComponentDecomposition.h"
 
 #include "storm/exceptions/InvalidPropertyException.h"
 
@@ -168,14 +159,14 @@ namespace storm {
         template<typename SparseMdpModelType>
         std::unique_ptr<CheckResult> SparseMdpPrctlModelChecker<SparseMdpModelType>::computeHOAPathProbabilities(Environment const& env, CheckTask<storm::logic::HOAPathFormula, ValueType> const& checkTask) {
             storm::logic::HOAPathFormula const& pathFormula = checkTask.getFormula();
-            
+
             storm::modelchecker::helper::SparseLTLHelper<ValueType, false> helper(this->getModel().getTransitionMatrix());
             storm::modelchecker::helper::setInformationFromCheckTaskDeterministic(helper, checkTask, this->getModel());
-            
+
             auto formulaChecker = [&] (storm::logic::Formula const& formula) { return this->check(env, formula)->asExplicitQualitativeCheckResult().getTruthValuesVector(); };
             auto apSets = helper.computeApSets(pathFormula.getAPMapping(), formulaChecker);
             std::vector<ValueType> numericResult = helper.computeDAProductProbabilities(env, *pathFormula.readAutomaton(), apSets);
-            
+
             std::unique_ptr<CheckResult> result(new ExplicitQuantitativeCheckResult<ValueType>(std::move(numericResult)));
             if (checkTask.isProduceSchedulersSet()) {
                 result->asExplicitQuantitativeCheckResult<ValueType>().setScheduler(std::make_unique<storm::storage::Scheduler<ValueType>>(helper.extractScheduler(this->getModel())));
@@ -183,7 +174,7 @@ namespace storm {
 
             return result;
         }
-        
+
         template<typename SparseMdpModelType>
         std::unique_ptr<CheckResult> SparseMdpPrctlModelChecker<SparseMdpModelType>::computeLTLProbabilities(Environment const& env, CheckTask<storm::logic::PathFormula, ValueType> const& checkTask) {
             storm::logic::PathFormula const& pathFormula = checkTask.getFormula();
@@ -192,7 +183,7 @@ namespace storm {
 
             storm::modelchecker::helper::SparseLTLHelper<ValueType, true> helper(this->getModel().getTransitionMatrix());
             storm::modelchecker::helper::setInformationFromCheckTaskNondeterministic(helper, checkTask, this->getModel());
-            
+
             auto formulaChecker = [&] (storm::logic::Formula const& formula) { return this->check(env, formula)->asExplicitQualitativeCheckResult().getTruthValuesVector(); };
             std::vector<ValueType> numericResult = helper.computeLTLProbabilities(env, pathFormula, formulaChecker);
 
@@ -203,7 +194,7 @@ namespace storm {
 
             return result;
         }
-        
+
         template<typename SparseMdpModelType>
         std::unique_ptr<CheckResult> SparseMdpPrctlModelChecker<SparseMdpModelType>::computeConditionalProbabilities(Environment const& env, CheckTask<storm::logic::ConditionalFormula, ValueType> const& checkTask) {
             storm::logic::ConditionalFormula const& conditionalFormula = checkTask.getFormula();

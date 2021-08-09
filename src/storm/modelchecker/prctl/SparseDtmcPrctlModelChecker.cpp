@@ -19,17 +19,11 @@
 #include "storm/modelchecker/helper/utility/SetInformationFromCheckTask.h"
 
 #include "storm/logic/FragmentSpecification.h"
-#include "storm/logic/ExtractMaximalStateFormulasVisitor.h"
 
-#include "storm/automata/AcceptanceCondition.h"
+ #include "storm/solver/SolveGoal.h"
 
+#include "storm/models/sparse/Dtmc.h"
 #include "storm/models/sparse/StandardRewardModel.h"
-
-#include "storm/settings/SettingsManager.h"
-#include "storm/settings/modules/GeneralSettings.h"
-#include "storm/settings/modules/DebugSettings.h"
-
-#include "storm/exceptions/InvalidStateException.h"
 
 #include "storm/exceptions/InvalidPropertyException.h"
 

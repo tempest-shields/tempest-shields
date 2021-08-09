@@ -3,9 +3,6 @@
 
 #include "storm/modelchecker/propositional/SparsePropositionalModelChecker.h"
 #include "storm/models/sparse/Dtmc.h"
-#include "storm/utility/solver.h"
-#include "storm/solver/LinearEquationSolver.h"
-#include "storm/storage/StronglyConnectedComponent.h"
 
 namespace storm {
     namespace modelchecker {
