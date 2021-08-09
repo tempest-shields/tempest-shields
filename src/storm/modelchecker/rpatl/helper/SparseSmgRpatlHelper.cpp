@@ -22,18 +22,12 @@ namespace storm {
                 // Relevant states are those states which are phiStates and not PsiStates.
                 storm::storage::BitVector relevantStates = phiStates & ~psiStates;
 
-                // TODO: check if relevantStates should be used for the size of x
                 // Initialize the x vector and solution vector result.
-                //std::vector<ValueType> x = std::vector<ValueType>(transitionMatrix.getRowGroupCount() - psiStates.getNumberOfSetBits(), storm::utility::zero<ValueType>());
                 std::vector<ValueType> x = std::vector<ValueType>(relevantStates.getNumberOfSetBits(), storm::utility::zero<ValueType>());
-
                 std::vector<ValueType> result = std::vector<ValueType>(transitionMatrix.getRowGroupCount(), storm::utility::zero<ValueType>());
-
                 std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(relevantStates, psiStates);
                 std::vector<ValueType> constrainedChoiceValues = std::vector<ValueType>(b.size(), storm::utility::zero<ValueType>());
                 std::unique_ptr<storm::storage::Scheduler<ValueType>> scheduler;
-
-                STORM_LOG_DEBUG("statesOfCoalition: " << statesOfCoalition);
 
                 storm::storage::BitVector clippedStatesOfCoalition(relevantStates.getNumberOfSetBits());
                 clippedStatesOfCoalition.setClippedStatesOfCoalition(relevantStates, statesOfCoalition);
@@ -177,31 +171,18 @@ namespace storm {
 
             template<typename ValueType>
             SMGSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeBoundedUntilProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& phiStates, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint,uint64_t lowerBound, uint64_t upperBound) {
-                STORM_LOG_DEBUG("lowerBound = " << lowerBound);
-                STORM_LOG_DEBUG("upperBound = " << upperBound);
-
                 auto solverEnv = env;
                 solverEnv.solver().minMax().setMethod(storm::solver::MinMaxMethod::ValueIteration, false);
 
-                // relevantStates are default all set
-                // if the upper bound is 0 a psiState cannot be passed between 0 and the lower bound - we can reduce the relevant states and fill the psi states in the result with 1s.
-                //storm::storage::BitVector relevantStates(transitionMatrix.getRowGroupCount(), true);
-                storm::storage::BitVector relevantStates = phiStates & ~psiStates;
-                storm::storage::BitVector makeZeroColumns;
-/*                if (goal.minimize()) {
-                    relevantStates = storm::utility::graph::performProbGreater0A(transitionMatrix, transitionMatrix.getRowGroupIndices(), backwardTransitions, phiStates, psiStates, true, upperBound);
-                } else {
-                    relevantStates = storm::utility::graph::performProbGreater0E(backwardTransitions, phiStates, psiStates, true, upperBound);
-                }*/
-/*                if(lowerBound == 0) {
-                    STORM_LOG_DEBUG("LOWER BOUND = 0, relevant states are the not-psiStates");
-                    relevantStates = phiStates & ~psiStates;
-                }*/ /*else {
-                    STORM_LOG_DEBUG("LOWER BOUND !=0, relevant states are all states, makeZeroColumns = psiStates");
-                    makeZeroColumns = psiStates;
-                }*/
+                // boundedUntil formulas look like:
+                // phi U [lowerBound, upperBound] psi
+                // --
+                // We solve this by look at psiStates, finding phiStates which have paths to psiStates in the given step bounds,
+                // then we find all states which have a path to those phiStates in the given lower bound
+                // (which states the paths pass before the lower bound does not matter).
 
-                STORM_LOG_DEBUG("relevantStates = " << relevantStates);
+                // First initialization of relevantStates between the step bounds.
+                storm::storage::BitVector relevantStates = phiStates & ~psiStates;
 
                 // Initializations.
                 std::vector<ValueType> x = std::vector<ValueType>(relevantStates.getNumberOfSetBits(), storm::utility::zero<ValueType>());
@@ -212,65 +193,47 @@ namespace storm {
 
                 storm::storage::BitVector clippedStatesOfCoalition(relevantStates.getNumberOfSetBits());
                 clippedStatesOfCoalition.setClippedStatesOfCoalition(relevantStates, statesOfCoalition);
-                //clippedStatesOfCoalition.complement();
-                STORM_LOG_DEBUG(clippedStatesOfCoalition);
 
+                // If there are no relevantStates or the upperBound is 0, no computation is needed.
                 if(!relevantStates.empty() && upperBound > 0) {
-                    // Reduce the matrix to relevant states. - relevant states are all states
-                    storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, relevantStates, relevantStates, false, makeZeroColumns);
+                    // Reduce the matrix to relevant states. - relevant states are all states.
+                    storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, relevantStates, relevantStates, false);
                     // Create GameViHelper for computations.
                     storm::modelchecker::helper::internal::GameViHelper<ValueType> viHelper(submatrix, clippedStatesOfCoalition);
                     if (produceScheduler) {
                         viHelper.setProduceScheduler(true);
                     }
+                    // If the lowerBound = 0, value iteration is done until the upperBound.
                     if(lowerBound == 0) {
-                        STORM_LOG_DEBUG("LOWER BOUND = 0 ...");
-                        STORM_LOG_DEBUG("Just peform Value Iteration with an UPPER BOUND.");
                         viHelper.performValueIterationUpperBound(env, x, b, goal.direction(), upperBound, constrainedChoiceValues);
                     } else {
-                        STORM_LOG_DEBUG("LOWER BOUND != 0 ...");
+                        // The lowerBound != 0, the first computation between the given bound steps is done.
+                        viHelper.performValueIterationUpperBound(env, x, b, goal.direction(), upperBound - lowerBound, constrainedChoiceValues);
 
-                        // TODO: change the computation: first the diff, then till the lowerBound
+                        // Initialization of subResult, fill it with the result of the first computation and 1s for the psiStates in full range.
+                        std::vector<ValueType> subResult = std::vector<ValueType>(transitionMatrix.getRowGroupCount(), storm::utility::zero<ValueType>());
+                        storm::utility::vector::setVectorValues(subResult, relevantStates, x);
+                        storm::utility::vector::setVectorValues(subResult, psiStates, storm::utility::one<ValueType>());
 
-                        STORM_LOG_DEBUG("first multiplication ...");
-                        viHelper.performValueIterationUpperBound(env, x, b, goal.direction(), upperBound - lowerBound + 1, constrainedChoiceValues);
-                        STORM_LOG_DEBUG("x = " << x);
-                        STORM_LOG_DEBUG("b = " << b);
-                        STORM_LOG_DEBUG("constrainedChoiceValues = " << constrainedChoiceValues);
+                        // The newPsiStates are those states which can reach the psiStates in the steps between the bounds - the !=0 values in subResult.
+                        storm::storage::BitVector newPsiStates(subResult.size(), false);
+                        storm::utility::vector::setNonzeroIndices(subResult, newPsiStates);
 
-                        STORM_LOG_DEBUG("Reduction for ~phiStates ...");
- /*                       for(uint rowGroupIndex = 0; rowGroupIndex < submatrix.getRowGroupCount(); rowGroupIndex++) {
-                            for(uint rowIndex = 0; rowIndex < submatrix.getRowGroupSize(rowGroupIndex); rowIndex++) {
-                                if(!phiStates.get(rowGroupIndex)) {
-                                    constrainedChoiceValues.at(rowGroupIndex) = storm::utility::zero<ValueType>();
-                                }
-                            }
-                        }*/
-                        STORM_LOG_DEBUG("constrainedChoiceValues = " << constrainedChoiceValues);
-
-                        //storm::storage::BitVector newRelevantStates(x.size(), false);
-                        //storm::utility::vector::setNonzeroIndices(x, newRelevantStates);
-                        //storm::utility::vector::setVectorValues(x, ~phiStates, storm::utility::zero<ValueType>());
-
-                        STORM_LOG_DEBUG("reset x ...");
-                        x = std::vector<ValueType>(x.size(), storm::utility::zero<ValueType>());
-                        STORM_LOG_DEBUG("x = " << x);
-
-                        STORM_LOG_DEBUG("second multiplication ...");
-                        viHelper.performValueIterationUpperBound(env, x, constrainedChoiceValues, goal.direction(), lowerBound, constrainedChoiceValues);
-                        STORM_LOG_DEBUG("x = " << x);
-                        STORM_LOG_DEBUG("b = " << b);
-                        STORM_LOG_DEBUG("constrainedChoiceValues = " << constrainedChoiceValues);
-
-
-/*
-                        viHelper.performValueIterationUpperBound(env, x, b, goal.direction(), upperBound - lowerBound + 1, constrainedChoiceValues);
+                        // The relevantStates for the second part of the computation are all states.
+                        relevantStates = storm::storage::BitVector(phiStates.size(), true);
                         submatrix = transitionMatrix.getSubmatrix(true, relevantStates, relevantStates, false);
-                        viHelper.updateTransitionMatrix(submatrix);
-                        b = std::vector<ValueType>(b.size(), storm::utility::zero<ValueType>());
-                        viHelper.performValueIterationUpperBound(env, x, b, goal.direction(), lowerBound - 1, constrainedChoiceValues);
-*/
 
+                        // Update the viHelper for the (full-size) submatrix and statesOfCoalition.
+                        viHelper.updateTransitionMatrix(submatrix);
+                        viHelper.updateStatesOfCoaltion(statesOfCoalition);
+
+                        // Reset constrainedChoiceValues and b to 0-vector in the correct dimension.
+                        constrainedChoiceValues = std::vector<ValueType>(transitionMatrix.getConstrainedRowGroupSumVector(relevantStates, newPsiStates).size(), storm::utility::zero<ValueType>());
+                        b = std::vector<ValueType>(transitionMatrix.getConstrainedRowGroupSumVector(relevantStates, newPsiStates).size(), storm::utility::zero<ValueType>());
+
+                        // The second computation is done between step 0 and the lowerBound
+                        viHelper.performValueIterationUpperBound(env, subResult, b, goal.direction(), lowerBound, constrainedChoiceValues);
+                        x = subResult;
                     }
                     viHelper.fillChoiceValuesVector(constrainedChoiceValues, relevantStates, transitionMatrix.getRowGroupIndices());
                     if (produceScheduler) {
@@ -278,9 +241,8 @@ namespace storm {
                     }
                     storm::utility::vector::setVectorValues(result, relevantStates, x);
                 }
-                if(lowerBound == 0) {
-                    storm::utility::vector::setVectorValues(result, psiStates, storm::utility::one<ValueType>());
-                }
+
+                storm::utility::vector::setVectorValues(result, psiStates, storm::utility::one<ValueType>());
                 STORM_LOG_DEBUG(result);
                 return SMGSparseModelCheckingHelperReturnType<ValueType>(std::move(result), std::move(relevantStates), std::move(scheduler), std::move(constrainedChoiceValues));
             }
