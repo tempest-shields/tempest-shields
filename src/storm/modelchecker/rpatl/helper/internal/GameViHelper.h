@@ -44,9 +44,14 @@ namespace storm {
                     bool isProduceSchedulerSet() const;
 
                     /*!
-                     * Changes the transitionMatrix of the gameViHelper to the given one.
+                     * Changes the transitionMatrix to the given one.
                      */
                     void updateTransitionMatrix(storm::storage::SparseMatrix<ValueType> newTransitionMatrix);
+
+                    /*!
+                     * Changes the statesOfCoalition to the given one.
+                     */
+                    void updateStatesOfCoaltion(storm::storage::BitVector newStatesOfCoaltion);
 
                     storm::storage::Scheduler<ValueType> extractScheduler() const;
 

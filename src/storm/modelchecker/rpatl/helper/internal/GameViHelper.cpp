@@ -176,6 +176,11 @@ namespace storm {
                 }
 
                 template <typename ValueType>
+                void GameViHelper<ValueType>::updateStatesOfCoaltion(storm::storage::BitVector newStatesOfCoaltion) {
+                    _statesOfCoalition = newStatesOfCoaltion;
+                }
+
+                template <typename ValueType>
                 std::vector<uint64_t> const& GameViHelper<ValueType>::getProducedOptimalChoices() const {
                     STORM_LOG_ASSERT(this->isProduceSchedulerSet(), "Trying to get the produced optimal choices although no scheduler was requested.");
                     STORM_LOG_ASSERT(this->_producedOptimalChoices.is_initialized(), "Trying to get the produced optimal choices but none were available. Was there a computation call before?");
