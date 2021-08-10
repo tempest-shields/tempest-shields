@@ -218,6 +218,7 @@ namespace storm {
                     storm::utility::vector::setVectorValues(result, relevantStates, x);
                 }
 
+                // In bounded-globally formulas we not only to reach a psiState on the path but also want to stay in a set of psiStates in the given step bounds.
                 if(!computeBoundedGlobally){
                     storm::utility::vector::setVectorValues(result, psiStates, storm::utility::one<ValueType>());
                 }
