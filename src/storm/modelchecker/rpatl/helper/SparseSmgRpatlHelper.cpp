@@ -129,48 +129,24 @@ namespace storm {
 
             template<typename ValueType>
             SMGSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeBoundedGloballyProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint,uint64_t lowerBound, uint64_t upperBound) {
-                auto solverEnv = env;
-                solverEnv.solver().minMax().setMethod(storm::solver::MinMaxMethod::ValueIteration, false);
+                // G psi = not(F(not psi)) = not(true U (not psi))
+                // The psiStates are flipped, then the true U part is calculated, at the end the result is flipped again.
+                storm::storage::BitVector notPsiStates = ~psiStates;
+                statesOfCoalition.complement();
 
-                // Relevant states are safe states - the psiStates.
-                storm::storage::BitVector relevantStates = psiStates;
-
-                // Initializations.
-                std::vector<ValueType> x = std::vector<ValueType>(relevantStates.getNumberOfSetBits(), storm::utility::one<ValueType>());
-                std::vector<ValueType> b = std::vector<ValueType>(transitionMatrix.getConstrainedRowGroupSumVector(relevantStates, psiStates).size(), storm::utility::zero<ValueType>());
-                std::vector<ValueType> result = std::vector<ValueType>(transitionMatrix.getRowGroupCount(), storm::utility::zero<ValueType>());
-                std::vector<ValueType> constrainedChoiceValues = std::vector<ValueType>(transitionMatrix.getConstrainedRowGroupSumVector(relevantStates, psiStates).size(), storm::utility::zero<ValueType>());
-                std::unique_ptr<storm::storage::Scheduler<ValueType>> scheduler;
-
-                storm::storage::BitVector clippedStatesOfCoalition(relevantStates.getNumberOfSetBits());
-                clippedStatesOfCoalition.setClippedStatesOfCoalition(relevantStates, statesOfCoalition);
-                //clippedStatesOfCoalition.complement();
-                STORM_LOG_DEBUG(clippedStatesOfCoalition);
-
-                if(!relevantStates.empty() && upperBound > 0) {
-                    // Reduce the matrix to relevant states.
-                    storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, relevantStates, relevantStates, false);
-                    // Create GameViHelper for computations.
-                    storm::modelchecker::helper::internal::GameViHelper<ValueType> viHelper(submatrix, clippedStatesOfCoalition);
-                    if (produceScheduler) {
-                        viHelper.setProduceScheduler(true);
-                    }
-
-                    viHelper.performValueIterationUpperBound(env, x, b, goal.direction(), upperBound, constrainedChoiceValues);
-                    viHelper.fillChoiceValuesVector(constrainedChoiceValues, relevantStates, transitionMatrix.getRowGroupIndices());
-                    if (produceScheduler) {
-                        scheduler = std::make_unique<storm::storage::Scheduler<ValueType>>(expandScheduler(viHelper.extractScheduler(), relevantStates, ~relevantStates));
-                    }
+                auto result = computeBoundedUntilProbabilities(env, std::move(goal), transitionMatrix, backwardTransitions, storm::storage::BitVector(transitionMatrix.getRowGroupCount(), true), notPsiStates, qualitative, statesOfCoalition, produceScheduler, hint, lowerBound, upperBound, true);
+                for (auto& element : result.values) {
+                    element = storm::utility::one<ValueType>() - element;
                 }
-
-                // Fill up the result vector with the values of x for the relevant states (0 is default)
-                storm::utility::vector::setVectorValues(result, relevantStates, x);
-                STORM_LOG_DEBUG(result);
-                return SMGSparseModelCheckingHelperReturnType<ValueType>(std::move(result), std::move(relevantStates), std::move(scheduler), std::move(constrainedChoiceValues));
+                for (auto& element : result.choiceValues) {
+                    element = storm::utility::one<ValueType>() - element;
+                }
+                STORM_LOG_DEBUG(result.values);
+                return result;
             }
 
             template<typename ValueType>
-            SMGSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeBoundedUntilProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& phiStates, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint,uint64_t lowerBound, uint64_t upperBound) {
+            SMGSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeBoundedUntilProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& phiStates, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint,uint64_t lowerBound, uint64_t upperBound, bool computeBoundedGlobally) {
                 auto solverEnv = env;
                 solverEnv.solver().minMax().setMethod(storm::solver::MinMaxMethod::ValueIteration, false);
 
@@ -242,7 +218,9 @@ namespace storm {
                     storm::utility::vector::setVectorValues(result, relevantStates, x);
                 }
 
-                storm::utility::vector::setVectorValues(result, psiStates, storm::utility::one<ValueType>());
+                if(!computeBoundedGlobally){
+                    storm::utility::vector::setVectorValues(result, psiStates, storm::utility::one<ValueType>());
+                }
                 STORM_LOG_DEBUG(result);
                 return SMGSparseModelCheckingHelperReturnType<ValueType>(std::move(result), std::move(relevantStates), std::move(scheduler), std::move(constrainedChoiceValues));
             }
