@@ -127,17 +127,7 @@ namespace storm {
                     }
                     for (uint64_t iter = 0; iter < upperBound; iter++) {
                         if(iter == upperBound - 1) {
-                            STORM_LOG_DEBUG("before multipliing ...");
-                            STORM_LOG_DEBUG("_x = " << _x);
-                            STORM_LOG_DEBUG("_b = " << _b);
-                            STORM_LOG_DEBUG("constrainedChoiceValues = " << constrainedChoiceValues);
-
                             _multiplier->multiply(env, _x, &_b, constrainedChoiceValues);
-                            STORM_LOG_DEBUG("before multipliing ...");
-                            STORM_LOG_DEBUG("_x = " << _x);
-                            STORM_LOG_DEBUG("_b = " << _b);
-                            STORM_LOG_DEBUG("constrainedChoiceValues = " << constrainedChoiceValues);
-
                         }
                         performIterationStepUpperBound(env, dir);
                     }

@@ -32,11 +32,6 @@ namespace storm {
                 storm::storage::BitVector clippedStatesOfCoalition(relevantStates.getNumberOfSetBits());
                 clippedStatesOfCoalition.setClippedStatesOfCoalition(relevantStates, statesOfCoalition);
 
-                STORM_LOG_DEBUG("clippedStatesOfCoalition" << clippedStatesOfCoalition);
-
-                //clippedStatesOfCoalition.complement();
-                //STORM_LOG_DEBUG("clippedStatesOfCoalition" << clippedStatesOfCoalition);
-
                 if(!relevantStates.empty()) {
                     // Reduce the matrix to relevant states.
                     storm::storage::SparseMatrix<ValueType> submatrix = transitionMatrix.getSubmatrix(true, relevantStates, relevantStates, false);
@@ -57,11 +52,9 @@ namespace storm {
                         scheduler = std::make_unique<storm::storage::Scheduler<ValueType>>(expandScheduler(viHelper.extractScheduler(), psiStates, ~phiStates));
                     }
                 }
-
                 // Fill up the result vector with the values of x for the relevant states, with 1s for psi states (0 is default)
                 storm::utility::vector::setVectorValues(result, relevantStates, x);
                 storm::utility::vector::setVectorValues(result, psiStates, storm::utility::one<ValueType>());
-                STORM_LOG_DEBUG(result);
                 return SMGSparseModelCheckingHelperReturnType<ValueType>(std::move(result), std::move(relevantStates), std::move(scheduler), std::move(constrainedChoiceValues));
             }
 
@@ -91,7 +84,6 @@ namespace storm {
                 // The psiStates are flipped, then the true U part is calculated, at the end the result is flipped again.
                 storm::storage::BitVector notPsiStates = ~psiStates;
                 statesOfCoalition.complement();
-                STORM_LOG_DEBUG(statesOfCoalition);
 
                 auto result = computeUntilProbabilities(env, std::move(goal), transitionMatrix, backwardTransitions, storm::storage::BitVector(transitionMatrix.getRowGroupCount(), true), notPsiStates, qualitative, statesOfCoalition, produceScheduler, hint);
                 for (auto& element : result.values) {
@@ -100,7 +92,6 @@ namespace storm {
                 for (auto& element : result.choiceValues) {
                     element = storm::utility::one<ValueType>() - element;
                 }
-                STORM_LOG_DEBUG(result.values);
                 return result;
             }
 
@@ -112,7 +103,6 @@ namespace storm {
                 std::vector<ValueType> b = transitionMatrix.getConstrainedRowGroupSumVector(allStates, psiStates);
                 std::vector<ValueType> choiceValues = std::vector<ValueType>(transitionMatrix.getRowCount(), storm::utility::zero<ValueType>());
                 statesOfCoalition.complement();
-                STORM_LOG_DEBUG(statesOfCoalition);
 
                 if (produceScheduler) {
                     STORM_LOG_WARN("Next formula does not expect that produceScheduler is set to true.");
@@ -123,7 +113,6 @@ namespace storm {
                 if (goal.isShieldingTask()) {
                     choiceValues = b;
                 }
-                STORM_LOG_DEBUG(result);
                 return SMGSparseModelCheckingHelperReturnType<ValueType>(std::move(result), std::move(allStates), nullptr, std::move(choiceValues));
             }
 
@@ -141,7 +130,6 @@ namespace storm {
                 for (auto& element : result.choiceValues) {
                     element = storm::utility::one<ValueType>() - element;
                 }
-                STORM_LOG_DEBUG(result.values);
                 return result;
             }
 
@@ -217,12 +205,10 @@ namespace storm {
                     }
                     storm::utility::vector::setVectorValues(result, relevantStates, x);
                 }
-
                 // In bounded-globally formulas we not only to reach a psiState on the path but also want to stay in a set of psiStates in the given step bounds.
                 if(!computeBoundedGlobally){
                     storm::utility::vector::setVectorValues(result, psiStates, storm::utility::one<ValueType>());
                 }
-                STORM_LOG_DEBUG(result);
                 return SMGSparseModelCheckingHelperReturnType<ValueType>(std::move(result), std::move(relevantStates), std::move(scheduler), std::move(constrainedChoiceValues));
             }
 
