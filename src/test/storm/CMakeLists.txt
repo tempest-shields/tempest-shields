@@ -13,6 +13,7 @@ include_directories(${GTEST_INCLUDE_DIR})
 set(NON_SPLIT_TESTS abstraction adapter automata builder logic model parser permissiveschedulers simulator solver storage transformer utility)
 set(MODELCHECKER_TEST_SPLITS abstraction csl exploration multiobjective reachability)
 set(MODELCHECKER_PRCTL_TEST_SPLITS dtmc mdp)
+set(MODELCHECKER_RPATL_TEST_SPLITS smg)
 
 function(configure_testsuite_target testsuite)
 	#message(CONFIGURING TESTSUITE '${testsuite}') #DEBUG
@@ -42,4 +43,11 @@ foreach(prctl_split ${MODELCHECKER_PRCTL_TEST_SPLITS})
 	file(GLOB_RECURSE TEST_MODELCHECKER_PRCTL_${prctl_split}_FILES ${STORM_TESTS_BASE_PATH}/modelchecker/prctl/${prctl_split}/*.h ${STORM_TESTS_BASE_PATH}/modelchecker/prctl/${prctl_split}/*.cpp)
 	add_executable(test-modelchecker-prctl-${prctl_split} ${TEST_MODELCHECKER_PRCTL_${prctl_split}_FILES} ${STORM_TESTS_BASE_PATH}/storm-test.cpp)
 	configure_testsuite_target(modelchecker-prctl-${prctl_split})
+endforeach()
+
+# Modelchecker-Rpatl testsuite split
+foreach(rpatl_split ${MODELCHECKER_RPATL_TEST_SPLITS})
+	file(GLOB_RECURSE TEST_MODELCHECKER_RPATL_${rpatl_split}_FILES ${STORM_TESTS_BASE_PATH}/modelchecker/rpatl/${rpatl_split}/*.h ${STORM_TESTS_BASE_PATH}/modelchecker/rpatl/${rpatl_split}/*.cpp)
+	add_executable(test-modelchecker-rpatl-${rpatl_split} ${TEST_MODELCHECKER_RPATL_${rpatl_split}_FILES} ${STORM_TESTS_BASE_PATH}/storm-test.cpp)
+	configure_testsuite_target(modelchecker-rpatl-${rpatl_split})
 endforeach()
