@@ -18,6 +18,15 @@ namespace storm {
                 // TODO add Kwiatkowska original reference
                 auto solverEnv = env;
                 solverEnv.solver().minMax().setMethod(storm::solver::MinMaxMethod::ValueIteration, false);
+                //solverEnv.solver().multiplier().setType(storm::solver::MultiplierType::Native);
+
+                if(solverEnv.solver().multiplier().getType() == storm::solver::MultiplierType::Native) {
+                    STORM_LOG_DEBUG("Multiplier type = Native");
+                } else if(solverEnv.solver().multiplier().getType() == storm::solver::MultiplierType::Gmmxx) {
+                    STORM_LOG_DEBUG("Multiplier type = Gmmxx");
+                } else {
+                    STORM_LOG_DEBUG("Multiplier type unknown");
+                }
 
                 // Relevant states are those states which are phiStates and not PsiStates.
                 storm::storage::BitVector relevantStates = phiStates & ~psiStates;
@@ -52,6 +61,15 @@ namespace storm {
                         scheduler = std::make_unique<storm::storage::Scheduler<ValueType>>(expandScheduler(viHelper.extractScheduler(), psiStates, ~phiStates));
                     }
                 }
+
+                if(solverEnv.solver().multiplier().getType() == storm::solver::MultiplierType::Native) {
+                    STORM_LOG_DEBUG("Multiplier type = Native");
+                } else if(solverEnv.solver().multiplier().getType() == storm::solver::MultiplierType::Gmmxx) {
+                    STORM_LOG_DEBUG("Multiplier type = Gmmxx");
+                } else {
+                    STORM_LOG_DEBUG("Multiplier type unknown");
+                }
+
                 // Fill up the result vector with the values of x for the relevant states, with 1s for psi states (0 is default)
                 storm::utility::vector::setVectorValues(result, relevantStates, x);
                 storm::utility::vector::setVectorValues(result, psiStates, storm::utility::one<ValueType>());
