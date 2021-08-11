@@ -167,9 +167,12 @@ namespace {
     TYPED_TEST(SmgRpatlModelCheckerTest, Walker) {
         std::string formulasString = "<<walker>> Pmax=? [X \"s2\"]";
         formulasString += "; <<walker>> Pmin=? [X \"s2\"]";
+        formulasString += "; <<walker>> Pmax=? [G !\"s3\"]";
+        formulasString += "; <<walker>> Pmin=? [G !\"s3\"]";
+        formulasString += "; <<walker>> Pmax=? [G a=0 ]";
+        formulasString += "; <<walker>> Pmin=? [G a=0 ]";
 
-        // TODO: bounded eventually causes wrong compuations for native multipliers
-        // TODO: do some more checks for comutation
+        // TODO: check why computation with nativeMultiplier does not work
 /*        formulasString += "; <<walker>> Pmax=? [F \"s3\"]";
         formulasString += "; <<walker>> Pmin=? [F \"s3\"]";
 
@@ -190,6 +193,18 @@ namespace {
 
         result = checker->check(this->env(), tasks[1]);
         EXPECT_NEAR(this->parseNumber("0"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+
+        result = checker->check(this->env(), tasks[2]);
+        EXPECT_NEAR(this->parseNumber("1"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+
+        result = checker->check(this->env(), tasks[3]);
+        EXPECT_NEAR(this->parseNumber("0.65454565"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+
+        result = checker->check(this->env(), tasks[4]);
+        EXPECT_NEAR(this->parseNumber("1"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+
+        result = checker->check(this->env(), tasks[5]);
+        EXPECT_NEAR(this->parseNumber("0.48"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
 
 /*        result = checker->check(this->env(), tasks[2]);
         EXPECT_NEAR(this->parseNumber("0.345454"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
