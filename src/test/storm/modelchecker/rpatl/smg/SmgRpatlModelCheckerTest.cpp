@@ -165,19 +165,26 @@ namespace {
     TYPED_TEST_SUITE(SmgRpatlModelCheckerTest, TestingTypes,);
 
     TYPED_TEST(SmgRpatlModelCheckerTest, Walker) {
+        // NEXT tests
         std::string formulasString = "<<walker>> Pmax=? [X \"s2\"]";
         formulasString += "; <<walker>> Pmin=? [X \"s2\"]";
+        formulasString += "; <<walker>> Pmax=? [X !\"s1\"]";
+        formulasString += "; <<walker>> Pmin=? [X !\"s1\"]";
+        // UNTIL tests
+        formulasString += "; <<walker>> Pmax=? [ a=0 U a=1 ]";
+        formulasString += "; <<walker>> Pmin=? [ a=0 U a=1 ]";
+        formulasString += "; <<walker>> Pmax=? [ b=0 U b=1 ]";
+        formulasString += "; <<walker>> Pmin=? [ b=0 U b=1 ]";
+        // GLOBALLY tests
         formulasString += "; <<walker>> Pmax=? [G !\"s3\"]";
         formulasString += "; <<walker>> Pmin=? [G !\"s3\"]";
         formulasString += "; <<walker>> Pmax=? [G a=0 ]";
         formulasString += "; <<walker>> Pmin=? [G a=0 ]";
-
-        // TODO: check why computation with nativeMultiplier does not work
-/*        formulasString += "; <<walker>> Pmax=? [F \"s3\"]";
+        // EVENTUALLY tests
+        formulasString += "; <<walker>> Pmax=? [F \"s3\"]";
         formulasString += "; <<walker>> Pmin=? [F \"s3\"]";
-
         formulasString += "; <<walker>> Pmax=? [F [3,4] \"s4\"]";
-        formulasString += "; <<walker>> Pmax=? [F [3,5] \"s4\"]";*/
+        formulasString += "; <<walker>> Pmax=? [F [3,5] \"s4\"]";
 
         auto modelFormulas = this->buildModelFormulas(STORM_TEST_RESOURCES_DIR "/smg/walker.nm", formulasString);
         auto model = std::move(modelFormulas.first);
@@ -188,36 +195,46 @@ namespace {
         auto checker = this->createModelChecker(model);
         std::unique_ptr<storm::modelchecker::CheckResult> result;
 
-        result = checker->check(this->env(), tasks[0]);
+        // NEXT results
+        result = checker->check(this->env(), tasks[0]); //OK
+        EXPECT_NEAR(this->parseNumber("0.6"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[1]); //OK
+        EXPECT_NEAR(this->parseNumber("0"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[2]); //OK
+        EXPECT_NEAR(this->parseNumber("1"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[3]); //OK
         EXPECT_NEAR(this->parseNumber("0.6"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
 
-        result = checker->check(this->env(), tasks[1]);
+        // UNTIL results
+        result = checker->check(this->env(), tasks[4]); //FAIL -> 0.99999922964892118 this may happen if the walker does not get caught in s4
+        EXPECT_NEAR(this->parseNumber("0.52"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[5]); //OK
+        EXPECT_NEAR(this->parseNumber("0"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[6]); //OK
+        EXPECT_NEAR(this->parseNumber("0.9999996417"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[7]); //OK
         EXPECT_NEAR(this->parseNumber("0"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
 
-        result = checker->check(this->env(), tasks[2]);
+        // GLOBALLY tests
+        result = checker->check(this->env(), tasks[8]); //FAIL -> 2.686012256170045e-06 this may happen if the walker does not stay in s0
         EXPECT_NEAR(this->parseNumber("1"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
-
-        result = checker->check(this->env(), tasks[3]);
+        result = checker->check(this->env(), tasks[9]); //FAIL -> 1 this is maybe exactly the other way round (by minimizing leaving)
         EXPECT_NEAR(this->parseNumber("0.65454565"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
-
-        result = checker->check(this->env(), tasks[4]);
+        result = checker->check(this->env(), tasks[10]); //FAIL -> 7.7035107881595621e-07
         EXPECT_NEAR(this->parseNumber("1"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
-
-        result = checker->check(this->env(), tasks[5]);
+        result = checker->check(this->env(), tasks[11]); //FAIL -> 1
         EXPECT_NEAR(this->parseNumber("0.48"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
 
-/*        result = checker->check(this->env(), tasks[2]);
-        EXPECT_NEAR(this->parseNumber("0.345454"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
-
-        result = checker->check(this->env(), tasks[3]);
+        // EVENTUALLY tests
+        result = checker->check(this->env(), tasks[12]); //FAIL -> 0.99999731398774383
+        EXPECT_NEAR(this->parseNumber("0.34545435"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[13]); //OK
         EXPECT_NEAR(this->parseNumber("0"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
-
-        result = checker->check(this->env(), tasks[4]);
+        result = checker->check(this->env(), tasks[14]); //FAIL -> 0.63359999999999994 here is maybe an offset of 1 step
         EXPECT_NEAR(this->parseNumber("0.576"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
-
-        result = checker->check(this->env(), tasks[5]);
-        EXPECT_NEAR(this->parseNumber("0.6336"), this->getQuantitativeResultAtInitialState(model, result), this->precision());*/
+        result = checker->check(this->env(), tasks[15]); //FAIL -> 0.64511999999999992
+        EXPECT_NEAR(this->parseNumber("0.6336"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
     }
 
-    // TODO: create more test cases
+    // TODO: create more test cases (files)
 }
