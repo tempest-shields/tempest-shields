@@ -62,12 +62,13 @@ namespace storm {
 
             /*!
              * Set the combination of model state and memoryStructure state to dontCare.
-             * Set an arbitrary choice an arbitrary choice if no choice exists.
+             * If not specified otherwise, an arbitrary choice is set if no choice exists.
              *
              * @param modelState The state of the model.
              * @param memoryState The state of the memoryStructure.
+             * @param memoryState A flag indicating whether to set an arbitrary choice.
              */
-            void setDontCare(uint_fast64_t modelState, uint_fast64_t memoryState = 0);
+            void setDontCare(uint_fast64_t modelState, uint_fast64_t memoryState = 0, bool setArbitraryChoice = true);
 
             /*!
              * Unset the combination of model state and memoryStructure state to dontCare.
@@ -152,8 +153,8 @@ namespace storm {
             bool printUndefinedChoices = false;
 
             std::vector<storm::storage::BitVector> reachableStates;
-            uint_fast64_t numOfUndefinedChoices; // Only consider reachable ones
-            std::vector<storm::storage::BitVector> dontCareStates; // Their choices are neither considered deterministic nor undefined
+            std::vector<storm::storage::BitVector> dontCareStates;
+            uint_fast64_t numOfUndefinedChoices;
             uint_fast64_t numOfDeterministicChoices;
             uint_fast64_t numOfDontCareStates;
         };
