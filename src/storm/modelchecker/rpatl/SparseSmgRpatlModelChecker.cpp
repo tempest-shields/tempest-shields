@@ -63,7 +63,7 @@ namespace storm {
             storm::logic::Formula const& subFormula = gameFormula.getSubformula();
 
             statesOfCoalition = this->getModel().computeStatesOfCoalition(gameFormula.getCoalition());
-            std::cout << "Found " << statesOfCoalition.getNumberOfSetBits() << " states in coalition." << std::endl;
+            STORM_LOG_INFO("Found " << statesOfCoalition.getNumberOfSetBits() << " states in coalition.");
             statesOfCoalition.complement();
 
             if (subFormula.isRewardOperatorFormula()) {
