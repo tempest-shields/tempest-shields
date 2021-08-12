@@ -193,6 +193,6 @@ TEST(FragmentCheckerTest, Rpatl) {
     ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString("<<player1>> R=? [C<=3]"));
     EXPECT_FALSE(checker.conformsToSpecification(*formula, rpatl));
 
-    ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString("<<1,2,3>> Pmin=? [F \"label\"]"));
+    ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString("<<1,2,3>> Pmin=? [F [2,5] \"label\"]"));
     EXPECT_TRUE(checker.conformsToSpecification(*formula, rpatl));
 }
