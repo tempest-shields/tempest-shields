@@ -201,4 +201,22 @@ TEST(GameFormulaParserTest, UntilOperatorTest) {
     EXPECT_EQ(9, rawFormula3.asBoundedUntilFormula().getUpperBound().evaluateAsInt());
 }
 
+TEST(GameFormulaParserTest, RewardOperatorTest) {
+    storm::parser::FormulaParser formulaParser;
 
+    std::string input = "<<p1, p2>> Rmin<0.9 [F \"a\"]";
+    std::shared_ptr<storm::logic::Formula const> formula(nullptr);
+    ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
+    EXPECT_TRUE(formula->isGameFormula());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().isRewardOperatorFormula());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().asRewardOperatorFormula().hasBound());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().asRewardOperatorFormula().hasOptimalityType());
+
+    input = "<<p1, p2>> R=? [I=10]";
+    ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
+    EXPECT_TRUE(formula->isGameFormula());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().isRewardOperatorFormula());
+    EXPECT_FALSE(formula->asGameFormula().getSubformula().asRewardOperatorFormula().hasBound());
+    EXPECT_FALSE(formula->asGameFormula().getSubformula().asRewardOperatorFormula().hasOptimalityType());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().asRewardOperatorFormula().getSubformula().isInstantaneousRewardFormula());
+}
