@@ -244,3 +244,15 @@ TEST(GameFormulaParserTest, NestedPathFormulaTest) {
     ASSERT_TRUE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().isEventuallyFormula());
     ASSERT_TRUE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().asEventuallyFormula().getSubformula().isNextFormula());
 }
+
+TEST(GameFormulaParserTest, CommentTest) {
+    storm::parser::FormulaParser formulaParser;
+
+    std::string input = "// This is a comment. And this is a commented out formula: <<p>> P<=0.5 [ F \"a\" ] The next line contains the actual formula. \n<<p>> P<=0.5 [ X \"b\" ] // Another comment \n // And again: another comment.";
+    std::shared_ptr<storm::logic::Formula const> formula(nullptr);
+    ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
+    EXPECT_TRUE(formula->isGameFormula());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().isProbabilityOperatorFormula());
+    ASSERT_TRUE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().isNextFormula());
+    ASSERT_TRUE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().asNextFormula().getSubformula().isAtomicLabelFormula());
+}
