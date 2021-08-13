@@ -220,3 +220,15 @@ TEST(GameFormulaParserTest, RewardOperatorTest) {
     EXPECT_FALSE(formula->asGameFormula().getSubformula().asRewardOperatorFormula().hasOptimalityType());
     EXPECT_TRUE(formula->asGameFormula().getSubformula().asRewardOperatorFormula().getSubformula().isInstantaneousRewardFormula());
 }
+
+TEST(GameFormulaParserTest, ConditionalProbabilityTest) {
+    storm::parser::FormulaParser formulaParser;
+
+    std::string input = "<<p1, p2>> P<0.9 [F \"a\" || F \"b\"]";
+    std::shared_ptr<storm::logic::Formula const> formula(nullptr);
+    ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
+    EXPECT_TRUE(formula->isGameFormula());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().isProbabilityOperatorFormula());
+    storm::logic::ProbabilityOperatorFormula const& probFormula = formula->asGameFormula().getSubformula().asProbabilityOperatorFormula();
+    EXPECT_TRUE(probFormula.getSubformula().isConditionalProbabilityFormula());
+}
