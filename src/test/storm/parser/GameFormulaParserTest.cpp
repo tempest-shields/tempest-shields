@@ -232,3 +232,15 @@ TEST(GameFormulaParserTest, ConditionalProbabilityTest) {
     storm::logic::ProbabilityOperatorFormula const& probFormula = formula->asGameFormula().getSubformula().asProbabilityOperatorFormula();
     EXPECT_TRUE(probFormula.getSubformula().isConditionalProbabilityFormula());
 }
+
+TEST(GameFormulaParserTest, NestedPathFormulaTest) {
+    storm::parser::FormulaParser formulaParser;
+
+    std::string input = "<<p1, p2, p3>> P<0.9 [F X \"a\"]";
+    std::shared_ptr<storm::logic::Formula const> formula(nullptr);
+    ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
+    EXPECT_TRUE(formula->isGameFormula());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().isProbabilityOperatorFormula());
+    ASSERT_TRUE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().isEventuallyFormula());
+    ASSERT_TRUE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().asEventuallyFormula().getSubformula().isNextFormula());
+}
