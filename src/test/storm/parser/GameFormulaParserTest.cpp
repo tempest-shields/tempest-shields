@@ -256,3 +256,26 @@ TEST(GameFormulaParserTest, CommentTest) {
     ASSERT_TRUE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().isNextFormula());
     ASSERT_TRUE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().asNextFormula().getSubformula().isAtomicLabelFormula());
 }
+
+TEST(GameFormulaParserTest, WrongFormatTest) {
+    std::shared_ptr<storm::expressions::ExpressionManager> manager(new storm::expressions::ExpressionManager());
+    manager->declareBooleanVariable("x");
+    manager->declareIntegerVariable("y");
+
+    storm::parser::FormulaParser formulaParser(manager);
+    std::string input = "<<p1,p2>> P>0.5 [ a ]";
+    std::shared_ptr<storm::logic::Formula const> formula(nullptr);
+    STORM_SILENT_EXPECT_THROW(formula = formulaParser.parseSingleFormulaFromString(input), storm::exceptions::WrongFormatException);
+
+    input = "<<p>> P=0.5 [F \"a\"]";
+    STORM_SILENT_EXPECT_THROW(formula = formulaParser.parseSingleFormulaFromString(input), storm::exceptions::WrongFormatException);
+
+    input = "<<p1, p2>> P>0.5 [F !(x = 0)]";
+    STORM_SILENT_EXPECT_THROW(formula = formulaParser.parseSingleFormulaFromString(input), storm::exceptions::WrongFormatException);
+
+    input = "<< p1, p2 >> P>0.5 [F !y]";
+    STORM_SILENT_EXPECT_THROW(formula = formulaParser.parseSingleFormulaFromString(input), storm::exceptions::WrongFormatException);
+
+    input = "<< 1,2,3 >> P>0.5 [F y!=0)]";
+    STORM_SILENT_EXPECT_THROW(formula = formulaParser.parseSingleFormulaFromString(input), storm::exceptions::WrongFormatException);
+}
