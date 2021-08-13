@@ -1754,7 +1754,6 @@ namespace storm {
 
         template<typename ValueType>
         void SparseMatrix<ValueType>::multiplyAndReduceForward(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector const* dirOverride) const {
-            std::cout << *dirOverride << std::endl;
             if(dirOverride && !dirOverride->empty()) {
                 if (dir == OptimizationDirection::Minimize) {
                     multiplyAndReduceForward<storm::utility::ElementLess<ValueType>, true>(rowGroupIndices, vector, summand, result, choices, dirOverride);
