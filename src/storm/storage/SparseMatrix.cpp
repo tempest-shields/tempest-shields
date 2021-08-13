@@ -1754,6 +1754,7 @@ namespace storm {
 
         template<typename ValueType>
         void SparseMatrix<ValueType>::multiplyAndReduceForward(OptimizationDirection const& dir, std::vector<uint64_t> const& rowGroupIndices, std::vector<ValueType> const& vector, std::vector<ValueType> const* summand, std::vector<ValueType>& result, std::vector<uint_fast64_t>* choices, storm::storage::BitVector const* dirOverride) const {
+            std::cout << *dirOverride << std::endl;
             if(dirOverride && !dirOverride->empty()) {
                 if (dir == OptimizationDirection::Minimize) {
                     multiplyAndReduceForward<storm::utility::ElementLess<ValueType>, true>(rowGroupIndices, vector, summand, result, choices, dirOverride);
@@ -1848,11 +1849,11 @@ namespace storm {
                     // Finally write value to target vector.
                     *resultIt = currentValue;
                     if(dirOverridden) {
-                        if (choices && dirOverride->get(currentRowGroup) ? compare(oldSelectedChoiceValue, currentValue) : compare(currentValue, oldSelectedChoiceValue)) {
+                        if (choices && (dirOverride->get(currentRowGroup) ? compare(oldSelectedChoiceValue, currentValue) : compare(currentValue, oldSelectedChoiceValue))) {
                             *choiceIt = selectedChoice;
                         }
                     } else {
-                        if (choices && compare(currentValue, oldSelectedChoiceValue)) {
+                        if (choices && (compare(currentValue, oldSelectedChoiceValue))) {
                             *choiceIt = selectedChoice;
                         }
                     }
@@ -2129,8 +2130,7 @@ namespace storm {
             } else {
                 target = &result;
             }
-
-            this->multiplyAndReduceForward(dir, rowGroupIndices, vector, summand, *target, choices);
+            this->multiplyAndReduceForward(dir, rowGroupIndices, vector, summand, *target, choices, dirOverride);
 
             if (target == &temporary) {
                 std::swap(temporary, result);
