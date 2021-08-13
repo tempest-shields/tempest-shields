@@ -105,9 +105,7 @@ TEST(GameFormulaParserTest, PlayersCoalitionTest) {
     std::ostringstream stream;
     stream << playerCoalition;
     std::string playerCoalitionString = stream.str();
-
     std::string playerWithoutWhiteSpace = "p1,p2,p3,p4,p5";
-
     EXPECT_EQ(playerWithoutWhiteSpace, playerCoalitionString);
 }
 
@@ -134,30 +132,39 @@ TEST(GameFormulaParserTest, UntilOperatorTest) {
     std::string input = "<<p>> Pmax=? [\"a\" U \"b\"]";
     std::shared_ptr<storm::logic::Formula const> formula(nullptr);
     ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
+    EXPECT_TRUE(formula->isGameFormula());
     auto const& gameFormula1 = formula->asGameFormula();
     auto const& probFormula1 = gameFormula1.getSubformula();
+    EXPECT_TRUE(probFormula1.isProbabilityOperatorFormula());
     auto const& rawFormula1 = probFormula1.asProbabilityOperatorFormula().getSubformula();
     EXPECT_TRUE(rawFormula1.isUntilFormula());
     EXPECT_FALSE(rawFormula1.isBoundedUntilFormula());
 
-    input = "<<p>> Pmax=? [\"a\" U <= 4 \"b\"]";
+    input = "<<p>> Pmax=? [ \"a\" U <= 4 \"b\" ]";
     ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
+    EXPECT_TRUE(formula->isGameFormula());
     auto const& gameFormula2 = formula->asGameFormula();
     auto const& probFormula2 = gameFormula2.getSubformula();
+    EXPECT_TRUE(probFormula2.isProbabilityOperatorFormula());
     auto const& rawFormula2 = probFormula2.asProbabilityOperatorFormula().getSubformula();
     EXPECT_TRUE(rawFormula2.isBoundedUntilFormula());
     EXPECT_TRUE(rawFormula2.asBoundedUntilFormula().getTimeBoundReference().isTimeBound());
-    EXPECT_EQ(0, rawFormula2.asBoundedUntilFormula().getLowerBound().evaluateAsInt());
+    EXPECT_FALSE(rawFormula2.asBoundedUntilFormula().hasLowerBound());
+    EXPECT_TRUE(rawFormula2.asBoundedUntilFormula().hasUpperBound());
     EXPECT_EQ(4, rawFormula2.asBoundedUntilFormula().getUpperBound().evaluateAsInt());
 
-    input = "<<p1,p2>> Pmin=? [ (a&b) U [5,9] (b|c) ]";
+    input = "<<p1, p2>> Pmin=?  [ \"a\" & \"b\" U [5,9] \"c\" ] ";
     ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
+    EXPECT_TRUE(formula->isGameFormula());
     auto const& gameFormula3 = formula->asGameFormula();
     auto const& probFormula3 = gameFormula3.getSubformula();
+    EXPECT_TRUE(probFormula3.isProbabilityOperatorFormula());
     auto const& rawFormula3 = probFormula3.asProbabilityOperatorFormula().getSubformula();
     EXPECT_TRUE(rawFormula3.isBoundedUntilFormula());
     EXPECT_TRUE(rawFormula3.asBoundedUntilFormula().getTimeBoundReference().isTimeBound());
+    EXPECT_TRUE(rawFormula3.asBoundedUntilFormula().hasLowerBound());
     EXPECT_EQ(5, rawFormula3.asBoundedUntilFormula().getLowerBound().evaluateAsInt());
+    EXPECT_TRUE(rawFormula3.asBoundedUntilFormula().hasUpperBound());
     EXPECT_EQ(9, rawFormula3.asBoundedUntilFormula().getUpperBound().evaluateAsInt());
 }
 
