@@ -12,10 +12,8 @@ TEST(GameFormulaParserTest, OnePlayerCoalitionTest) {
     std::shared_ptr<storm::logic::Formula const> formula(nullptr);
     ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
 
-    auto const& gameFormula = formula->asGameFormula();
-    auto const& playerCoalition = gameFormula.getCoalition();
-    //ASSERT_NO_THROW(auto const& players = playerCoalition.getPlayers());
-
+    EXPECT_TRUE(formula->isGameFormula());
+    auto const& playerCoalition = formula->asGameFormula().getCoalition();
     std::ostringstream stream;
     stream << playerCoalition;
     std::string playerCoalitionString = stream.str();
@@ -32,8 +30,8 @@ TEST(GameFormulaParserTest, PlayersCoalitionTest) {
     std::shared_ptr<storm::logic::Formula const> formula(nullptr);
     ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
 
-    auto const& gameFormula = formula->asGameFormula();
-    auto const& playerCoalition = gameFormula.getCoalition();
+    EXPECT_TRUE(formula->isGameFormula());
+    auto const& playerCoalition = formula->asGameFormula().getCoalition();
     EXPECT_EQ(5ul, playerCoalition.getPlayers().size());
 
     std::ostringstream stream;
@@ -50,12 +48,11 @@ TEST(GameFormulaParserTest, ProbabilityOperatorTest) {
     std::shared_ptr<storm::logic::Formula const> formula(nullptr);
     ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
 
-    auto const& gameFormula = formula->asGameFormula();
-    auto const& probFormula = gameFormula.getSubformula();
-
-    EXPECT_TRUE(probFormula.isProbabilityOperatorFormula());
-    EXPECT_FALSE(probFormula.asProbabilityOperatorFormula().hasBound());
-    EXPECT_TRUE(probFormula.asProbabilityOperatorFormula().hasOptimalityType());
+    EXPECT_TRUE(formula->isGameFormula());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().isInFragment(storm::logic::rpatl()));
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().isProbabilityOperatorFormula());
+    EXPECT_FALSE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().hasBound());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().hasOptimalityType());
 }
 
 TEST(GameFormulaParserTest, NextOperatorTest) {
@@ -68,29 +65,23 @@ TEST(GameFormulaParserTest, NextOperatorTest) {
     std::shared_ptr<storm::logic::Formula const> formula(nullptr);
     ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
     EXPECT_TRUE(formula->isGameFormula());
-    auto const& gameFormula1 = formula->asGameFormula();
-    auto const& probFormula1 = gameFormula1.getSubformula();
-    EXPECT_TRUE(probFormula1.isProbabilityOperatorFormula());
-    auto const& rawFormula1 = probFormula1.asProbabilityOperatorFormula().getSubformula();
-    EXPECT_TRUE(rawFormula1.isNextFormula());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().isInFragment(storm::logic::rpatl()));
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().isProbabilityOperatorFormula());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().isNextFormula());
 
     input = "<<p1, p2, p3>> Pmin=?  [X !x ]";
     ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
     EXPECT_TRUE(formula->isGameFormula());
-    auto const& gameFormula2 = formula->asGameFormula();
-    auto const& probFormula2 = gameFormula2.getSubformula();
-    EXPECT_TRUE(probFormula2.isProbabilityOperatorFormula());
-    auto const& rawFormula2 = probFormula2.asProbabilityOperatorFormula().getSubformula();
-    EXPECT_TRUE(rawFormula2.isNextFormula());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().isInFragment(storm::logic::rpatl()));
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().isProbabilityOperatorFormula());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().isNextFormula());
 
     input = "<<player1, player2, 3,4,5>> Pmax=? [ X a>5 ]";
     ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
     EXPECT_TRUE(formula->isGameFormula());
-    auto const& gameFormula3 = formula->asGameFormula();
-    auto const& probFormula3 = gameFormula3.getSubformula();
-    EXPECT_TRUE(probFormula3.isProbabilityOperatorFormula());
-    auto const& rawFormula3 = probFormula3.asProbabilityOperatorFormula().getSubformula();
-    EXPECT_TRUE(rawFormula3.isNextFormula());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().isInFragment(storm::logic::rpatl()));
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().isProbabilityOperatorFormula());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().isNextFormula());
 }
 
 TEST(GameFormulaParserTest, UntilOperatorTest) {
@@ -100,39 +91,33 @@ TEST(GameFormulaParserTest, UntilOperatorTest) {
     std::shared_ptr<storm::logic::Formula const> formula(nullptr);
     ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
     EXPECT_TRUE(formula->isGameFormula());
-    auto const& gameFormula1 = formula->asGameFormula();
-    auto const& probFormula1 = gameFormula1.getSubformula();
-    EXPECT_TRUE(probFormula1.isProbabilityOperatorFormula());
-    auto const& rawFormula1 = probFormula1.asProbabilityOperatorFormula().getSubformula();
-    EXPECT_TRUE(rawFormula1.isUntilFormula());
-    EXPECT_FALSE(rawFormula1.isBoundedUntilFormula());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().isInFragment(storm::logic::rpatl()));
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().isProbabilityOperatorFormula());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().isUntilFormula());
+    EXPECT_FALSE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().isBoundedUntilFormula());
 
     input = "<<p>> Pmax=? [ \"a\" U <= 4 \"b\" ]";
     ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
     EXPECT_TRUE(formula->isGameFormula());
-    auto const& gameFormula2 = formula->asGameFormula();
-    auto const& probFormula2 = gameFormula2.getSubformula();
-    EXPECT_TRUE(probFormula2.isProbabilityOperatorFormula());
-    auto const& rawFormula2 = probFormula2.asProbabilityOperatorFormula().getSubformula();
-    EXPECT_TRUE(rawFormula2.isBoundedUntilFormula());
-    EXPECT_TRUE(rawFormula2.asBoundedUntilFormula().getTimeBoundReference().isTimeBound());
-    EXPECT_FALSE(rawFormula2.asBoundedUntilFormula().hasLowerBound());
-    EXPECT_TRUE(rawFormula2.asBoundedUntilFormula().hasUpperBound());
-    EXPECT_EQ(4, rawFormula2.asBoundedUntilFormula().getUpperBound().evaluateAsInt());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().isInFragment(storm::logic::rpatl()));
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().isProbabilityOperatorFormula());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().isBoundedUntilFormula());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().asBoundedUntilFormula().getTimeBoundReference().isTimeBound());
+    EXPECT_FALSE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().asBoundedUntilFormula().hasLowerBound());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().asBoundedUntilFormula().hasUpperBound());
+    EXPECT_EQ(4, formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().asBoundedUntilFormula().getUpperBound().evaluateAsInt());
 
     input = "<<p1, p2>> Pmin=?  [ \"a\" & \"b\" U [5,9] \"c\" ] ";
     ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
     EXPECT_TRUE(formula->isGameFormula());
-    auto const& gameFormula3 = formula->asGameFormula();
-    auto const& probFormula3 = gameFormula3.getSubformula();
-    EXPECT_TRUE(probFormula3.isProbabilityOperatorFormula());
-    auto const& rawFormula3 = probFormula3.asProbabilityOperatorFormula().getSubformula();
-    EXPECT_TRUE(rawFormula3.isBoundedUntilFormula());
-    EXPECT_TRUE(rawFormula3.asBoundedUntilFormula().getTimeBoundReference().isTimeBound());
-    EXPECT_TRUE(rawFormula3.asBoundedUntilFormula().hasLowerBound());
-    EXPECT_EQ(5, rawFormula3.asBoundedUntilFormula().getLowerBound().evaluateAsInt());
-    EXPECT_TRUE(rawFormula3.asBoundedUntilFormula().hasUpperBound());
-    EXPECT_EQ(9, rawFormula3.asBoundedUntilFormula().getUpperBound().evaluateAsInt());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().isInFragment(storm::logic::rpatl()));
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().isProbabilityOperatorFormula());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().isBoundedUntilFormula());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().asBoundedUntilFormula().getTimeBoundReference().isTimeBound());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().asBoundedUntilFormula().hasLowerBound());
+    EXPECT_EQ(5, formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().asBoundedUntilFormula().getLowerBound().evaluateAsInt());
+    EXPECT_TRUE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().asBoundedUntilFormula().hasUpperBound());
+    EXPECT_EQ(9, formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().asBoundedUntilFormula().getUpperBound().evaluateAsInt());
 }
 
 TEST(GameFormulaParserTest, RewardOperatorTest) {
@@ -145,6 +130,7 @@ TEST(GameFormulaParserTest, RewardOperatorTest) {
     EXPECT_TRUE(formula->asGameFormula().getSubformula().isRewardOperatorFormula());
     EXPECT_TRUE(formula->asGameFormula().getSubformula().asRewardOperatorFormula().hasBound());
     EXPECT_TRUE(formula->asGameFormula().getSubformula().asRewardOperatorFormula().hasOptimalityType());
+    EXPECT_FALSE(formula->asGameFormula().getSubformula().isInFragment(storm::logic::rpatl()));
 
     input = "<<p1, p2>> R=? [I=10]";
     ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
@@ -153,6 +139,7 @@ TEST(GameFormulaParserTest, RewardOperatorTest) {
     EXPECT_FALSE(formula->asGameFormula().getSubformula().asRewardOperatorFormula().hasBound());
     EXPECT_FALSE(formula->asGameFormula().getSubformula().asRewardOperatorFormula().hasOptimalityType());
     EXPECT_TRUE(formula->asGameFormula().getSubformula().asRewardOperatorFormula().getSubformula().isInstantaneousRewardFormula());
+    EXPECT_FALSE(formula->asGameFormula().getSubformula().isInFragment(storm::logic::rpatl()));
 }
 
 TEST(GameFormulaParserTest, ConditionalProbabilityTest) {
@@ -165,6 +152,7 @@ TEST(GameFormulaParserTest, ConditionalProbabilityTest) {
     EXPECT_TRUE(formula->asGameFormula().getSubformula().isProbabilityOperatorFormula());
     storm::logic::ProbabilityOperatorFormula const& probFormula = formula->asGameFormula().getSubformula().asProbabilityOperatorFormula();
     EXPECT_TRUE(probFormula.getSubformula().isConditionalProbabilityFormula());
+    EXPECT_FALSE(formula->asGameFormula().getSubformula().isInFragment(storm::logic::rpatl()));
 }
 
 TEST(GameFormulaParserTest, NestedPathFormulaTest) {
@@ -177,6 +165,7 @@ TEST(GameFormulaParserTest, NestedPathFormulaTest) {
     EXPECT_TRUE(formula->asGameFormula().getSubformula().isProbabilityOperatorFormula());
     ASSERT_TRUE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().isEventuallyFormula());
     ASSERT_TRUE(formula->asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().asEventuallyFormula().getSubformula().isNextFormula());
+    EXPECT_FALSE(formula->asGameFormula().getSubformula().isInFragment(storm::logic::rpatl()));
 }
 
 TEST(GameFormulaParserTest, CommentTest) {
@@ -222,6 +211,7 @@ TEST(GameFormulaParserTest, MultiObjectiveFormulaTest) {
     ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
     ASSERT_TRUE(formula->isMultiObjectiveFormula());
     storm::logic::MultiObjectiveFormula mof = formula->asMultiObjectiveFormula();
+    EXPECT_FALSE(formula->isInFragment(storm::logic::rpatl()));
     ASSERT_EQ(3ull, mof.getNumberOfSubformulas());
 
     ASSERT_TRUE(mof.getSubformula(0).isGameFormula());
