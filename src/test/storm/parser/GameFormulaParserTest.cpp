@@ -124,7 +124,40 @@ TEST(GameFormulaParserTest, ProbabilityOperatorTest) {
     EXPECT_TRUE(probFormula.asProbabilityOperatorFormula().hasOptimalityType());
 }
 
-// TODO: NextOperatorTest
+TEST(GameFormulaParserTest, NextOperatorTest) {
+    std::shared_ptr<storm::expressions::ExpressionManager> manager(new storm::expressions::ExpressionManager());
+    manager->declareBooleanVariable("x");
+    manager->declareIntegerVariable("a");
+    storm::parser::FormulaParser formulaParser(manager);
+
+    std::string input = "<<p>> Pmax=? [X \"a\"]";
+    std::shared_ptr<storm::logic::Formula const> formula(nullptr);
+    ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
+    EXPECT_TRUE(formula->isGameFormula());
+    auto const& gameFormula1 = formula->asGameFormula();
+    auto const& probFormula1 = gameFormula1.getSubformula();
+    EXPECT_TRUE(probFormula1.isProbabilityOperatorFormula());
+    auto const& rawFormula1 = probFormula1.asProbabilityOperatorFormula().getSubformula();
+    EXPECT_TRUE(rawFormula1.isNextFormula());
+
+    input = "<<p1, p2, p3>> Pmin=?  [X !x ]";
+    ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
+    EXPECT_TRUE(formula->isGameFormula());
+    auto const& gameFormula2 = formula->asGameFormula();
+    auto const& probFormula2 = gameFormula2.getSubformula();
+    EXPECT_TRUE(probFormula2.isProbabilityOperatorFormula());
+    auto const& rawFormula2 = probFormula2.asProbabilityOperatorFormula().getSubformula();
+    EXPECT_TRUE(rawFormula2.isNextFormula());
+
+    input = "<<player1, player2, 3,4,5>> Pmax=? [ X a>5 ]";
+    ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
+    EXPECT_TRUE(formula->isGameFormula());
+    auto const& gameFormula3 = formula->asGameFormula();
+    auto const& probFormula3 = gameFormula3.getSubformula();
+    EXPECT_TRUE(probFormula3.isProbabilityOperatorFormula());
+    auto const& rawFormula3 = probFormula3.asProbabilityOperatorFormula().getSubformula();
+    EXPECT_TRUE(rawFormula3.isNextFormula());
+}
 
 TEST(GameFormulaParserTest, UntilOperatorTest) {
     storm::parser::FormulaParser formulaParser;
