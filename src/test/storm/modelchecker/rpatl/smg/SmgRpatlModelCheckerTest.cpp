@@ -196,43 +196,43 @@ namespace {
         std::unique_ptr<storm::modelchecker::CheckResult> result;
 
         // NEXT results
-        result = checker->check(this->env(), tasks[0]); //OK
+        result = checker->check(this->env(), tasks[0]);
         EXPECT_NEAR(this->parseNumber("0.6"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
-        result = checker->check(this->env(), tasks[1]); //OK
+        result = checker->check(this->env(), tasks[1]);
         EXPECT_NEAR(this->parseNumber("0"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
-        result = checker->check(this->env(), tasks[2]); //OK
+        result = checker->check(this->env(), tasks[2]);
         EXPECT_NEAR(this->parseNumber("1"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
-        result = checker->check(this->env(), tasks[3]); //OK
+        result = checker->check(this->env(), tasks[3]);
         EXPECT_NEAR(this->parseNumber("0.6"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
 
         // UNTIL results
-        result = checker->check(this->env(), tasks[4]); //FAIL -> 0.99999922964892118 this may happen if the walker does not get caught in s4
+        result = checker->check(this->env(), tasks[4]);
         EXPECT_NEAR(this->parseNumber("0.52"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
-        result = checker->check(this->env(), tasks[5]); //OK
+        result = checker->check(this->env(), tasks[5]);
         EXPECT_NEAR(this->parseNumber("0"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
-        result = checker->check(this->env(), tasks[6]); //OK
+        result = checker->check(this->env(), tasks[6]);
         EXPECT_NEAR(this->parseNumber("0.9999996417"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
-        result = checker->check(this->env(), tasks[7]); //OK
+        result = checker->check(this->env(), tasks[7]);
         EXPECT_NEAR(this->parseNumber("0"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
 
         // GLOBALLY tests
-        result = checker->check(this->env(), tasks[8]); //FAIL -> 2.686012256170045e-06 this may happen if the walker does not stay in s0
+        result = checker->check(this->env(), tasks[8]);
         EXPECT_NEAR(this->parseNumber("1"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
-        result = checker->check(this->env(), tasks[9]); //FAIL -> 1 this is maybe exactly the other way round (by minimizing leaving)
+        result = checker->check(this->env(), tasks[9]);
         EXPECT_NEAR(this->parseNumber("0.65454565"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
-        result = checker->check(this->env(), tasks[10]); //FAIL -> 7.7035107881595621e-07
+        result = checker->check(this->env(), tasks[10]);
         EXPECT_NEAR(this->parseNumber("1"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
-        result = checker->check(this->env(), tasks[11]); //FAIL -> 1
+        result = checker->check(this->env(), tasks[11]);
         EXPECT_NEAR(this->parseNumber("0.48"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
 
         // EVENTUALLY tests
-        result = checker->check(this->env(), tasks[12]); //FAIL -> 0.99999731398774383
+        result = checker->check(this->env(), tasks[12]);
         EXPECT_NEAR(this->parseNumber("0.34545435"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
-        result = checker->check(this->env(), tasks[13]); //OK
+        result = checker->check(this->env(), tasks[13]);
         EXPECT_NEAR(this->parseNumber("0"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
-        result = checker->check(this->env(), tasks[14]); //FAIL -> 0.63359999999999994 here is maybe an offset of 1 step
+        result = checker->check(this->env(), tasks[14]);
         EXPECT_NEAR(this->parseNumber("0.576"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
-        result = checker->check(this->env(), tasks[15]); //FAIL -> 0.64511999999999992
+        result = checker->check(this->env(), tasks[15]);
         EXPECT_NEAR(this->parseNumber("0.6336"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
     }
 
