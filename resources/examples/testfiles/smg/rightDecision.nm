@@ -1,0 +1,42 @@
+// PRISM Model of a decision for a shortcut
+// - A hiker has to make a decision of taking a shortcut.
+// - On the shortcut a native can be asked for getting to the target waypoint.
+// - The native can lead the hiker to the goal or can give a proposal for getting to 0.9 to the target.
+
+smg
+
+player hiker
+  [startShortcut], [startWay], [waypoint1], [waypoint2target], [waypoint2start], [target], [lost]
+endplayer
+
+player native
+  [wait], [shortcutBad], [shortcutGood]
+endplayer
+
+// 0 bob, 1 native,
+global move : [0..1] init 0;
+
+global shortcut : [0..1] init 0;
+global target : [0..1] init 0;
+global lost : [0..1] init 0;
+
+label "target" = target=1;
+
+module hikerModule
+  startpoint : [0..1] init 1;
+  waypoints  : [0..2] init 0;
+
+  [startShortcut]    move=0 & startpoint=1 -> (shortcut'=1) & (startpoint'=0) & (move'=1);
+  [startWay]    move=0 & startpoint=1 -> (waypoints'=1) & (startpoint'=0) & (move'=1);
+  [waypoint1] move=0 & waypoints=1  -> (waypoints'=2) & (move'=1);
+  [waypoint2target] move=0 & waypoints=2 -> (waypoints'=0) & (target'=1) & (move'=1);
+  [waypoint2start] move=0 & waypoints=2 -> (waypoints'=0) & (startpoint'=1) & (move'=1);
+  [target] move=0 & target=1 -> (move'=1);
+  [lost]   move=0 & lost=1 -> (move'=1);
+endmodule
+
+module nativeModule
+  [wait]      move=1 & !(shortcut=1) -> (move'=0);
+  [shortcutBad] move=1 & shortcut=1 -> 0.9: (shortcut'=0) & (target'=1) & (move'=0) + 0.1: (shortcut'=0) & (lost'=1) & (move'=0);
+  [shortcutGood] move=1 & shortcut=1 -> (shortcut'=0) & (target'=1) & (move'=0);
+endmodule
