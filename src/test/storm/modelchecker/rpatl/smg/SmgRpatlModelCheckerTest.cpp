@@ -130,12 +130,6 @@ namespace {
             }
         }
 
-/*        bool getQualitativeResultAtInitialState(std::shared_ptr<storm::models::Model<ValueType>> const& model, std::unique_ptr<storm::modelchecker::CheckResult>& result) {
-            auto filter = getInitialStateFilter(model);
-            result->filter(*filter);
-            return result->asQualitativeCheckResult().forallTrue();
-        }*/
-
         ValueType getQuantitativeResultAtInitialState(std::shared_ptr<storm::models::Model<ValueType>> const& model, std::unique_ptr<storm::modelchecker::CheckResult>& result) {
             auto filter = getInitialStateFilter(model);
             result->filter(*filter);
