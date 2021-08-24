@@ -235,6 +235,71 @@ namespace {
         result = checker->check(this->env(), tasks[15]);
         EXPECT_NEAR(this->parseNumber("0.6336"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
     }
+    TYPED_TEST(SmgRpatlModelCheckerTest, MessageHack) {
+        // This test is for borders of bounded U with conversations from G and F
+        // bounded G
+        std::string formulasString = "<<bob, alice>> Pmax=? [ G !\"hacked\" ]";
+        formulasString += "; <<bob, alice>> Pmax=? [ G <=1 !\"hacked\" ]";
+        formulasString += "; <<bob, alice>> Pmax=? [ G <=2 !\"hacked\" ]";
+        formulasString += "; <<bob, alice>> Pmax=? [ G <=10 !\"hacked\" ]";
+        formulasString += "; <<bob, alice>> Pmax=? [ G <=17 !\"hacked\" ]";
+        formulasString += "; <<bob, alice>> Pmax=? [ G <=32 !\"hacked\" ]";
+        formulasString += "; <<bob, alice>> Pmax=? [ G <=47 !\"hacked\" ]";
+        formulasString += "; <<bob, alice>> Pmax=? [ G <=61 !\"hacked\" ]";
+        formulasString += "; <<bob, alice>> Pmax=? [ G <=62 !\"hacked\" ]";
+
+        // bounded F
+        formulasString += "; <<bob, alice>> Pmin=? [ F \"hacked\" ]";
+        formulasString += "; <<bob, alice>> Pmin=? [ F [1,2] \"hacked\" ]";
+        formulasString += "; <<bob, alice>> Pmin=? [ F [3,16] \"hacked\" ]";
+        formulasString += "; <<bob, alice>> Pmin=? [ F [0,17] \"hacked\" ]";
+        formulasString += "; <<bob, alice>> Pmin=? [ F [17,31] \"hacked\" ]";
+        formulasString += "; <<bob, alice>> Pmin=? [ F [17,32] \"hacked\" ]";
+
+        auto modelFormulas = this->buildModelFormulas(STORM_TEST_RESOURCES_DIR "/smg/messageHack.nm", formulasString);
+        auto model = std::move(modelFormulas.first);
+        auto tasks = this->getTasks(modelFormulas.second);
+        EXPECT_EQ(30ul, model->getNumberOfStates());
+        EXPECT_EQ(31ul, model->getNumberOfTransitions());
+        ASSERT_EQ(model->getType(), storm::models::ModelType::Smg);
+        auto checker = this->createModelChecker(model);
+        std::unique_ptr<storm::modelchecker::CheckResult> result;
+
+        // bounded G results
+        result = checker->check(this->env(), tasks[0]);
+        EXPECT_NEAR(this->parseNumber("1.99379598e-05"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[1]);
+        EXPECT_NEAR(this->parseNumber("1"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[2]);
+        EXPECT_NEAR(this->parseNumber("0.95"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[3]);
+        EXPECT_NEAR(this->parseNumber("0.95"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[4]);
+        EXPECT_NEAR(this->parseNumber("0.9025"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[5]);
+        EXPECT_NEAR(this->parseNumber("0.857375"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[6]);
+        EXPECT_NEAR(this->parseNumber("0.81450625"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[7]);
+        EXPECT_NEAR(this->parseNumber("0.81450625"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[8]);
+        EXPECT_NEAR(this->parseNumber("0.7737809375"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+
+        // bounded F results
+        result = checker->check(this->env(), tasks[9]);
+        EXPECT_NEAR(this->parseNumber("0.999980062"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[10]);
+        EXPECT_NEAR(this->parseNumber("0.05"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[11]);
+        EXPECT_NEAR(this->parseNumber("0.05"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[12]);
+        EXPECT_NEAR(this->parseNumber("0.0975"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[13]);
+        EXPECT_NEAR(this->parseNumber("0.0975"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[14]);
+        EXPECT_NEAR(this->parseNumber("0.142625"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+    }
+
 
     // TODO: create more test cases (files)
 }
