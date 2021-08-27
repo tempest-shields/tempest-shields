@@ -295,22 +295,12 @@ namespace {
     }
 
     TYPED_TEST(SmgRpatlModelCheckerTest, RightDecision) {
-        // This test is for making decisions and creating shields
+        // This test is for making decisions
         // testing probabilities for decisions
         std::string formulasString = "<<hiker>> Pmax=? [ F <=3 \"target\" ]";
         formulasString += "; <<hiker>> Pmax=? [ F <=5 \"target\" ]";
         formulasString += "; <<hiker, native>> Pmax=? [ F <=3 \"target\" ]";
         formulasString += "; <<hiker>> Pmin=? [ F \"target\" ]";
-
-        // testing create shielding expressions
-        formulasString += "; <preSafetyShieldLambda1, PreSafety, lambda=0.9> <<hiker>> Pmax=? [ F <=3 \"target\" ]";
-        formulasString += "; <postSafetyShieldGamma1, PostSafety, gamma=0.9> <<hiker>> Pmax=? [ F <=3 \"target\" ]";
-        formulasString += "; <preSafetyShieldLambda2, PreSafety, lambda=0.5> <<hiker>> Pmax=? [ F <=5 \"target\" ]";
-        formulasString += "; <postSafetyShieldGamma2, PostSafety, gamma=0.5> <<hiker>> Pmax=? [ F <=5 \"target\" ]";
-        formulasString += "; <preSafetyShieldLambda3, PreSafety, lambda=0> <<hiker, native>> Pmax=? [ F <=3 \"target\" ]";
-        formulasString += "; <postSafetyShieldGamma3, PostSafety, gamma=0> <<hiker, native>> Pmax=? [ F <=3 \"target\" ]";
-        formulasString += "; <preSafetyShieldLambda4, PreSafety, lambda=0.9> <<hiker>> Pmin=? [ F \"target\" ]";
-        formulasString += "; <postSafetyShieldGamma4, PostSafety, gamma=0.9> <<hiker>> Pmin=? [ F \"target\" ]";
 
         auto modelFormulas = this->buildModelFormulas(STORM_TEST_RESOURCES_DIR "/smg/rightDecision.nm", formulasString);
         auto model = std::move(modelFormulas.first);
@@ -330,18 +320,6 @@ namespace {
         EXPECT_NEAR(this->parseNumber("1"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
         result = checker->check(this->env(), tasks[3]);
         EXPECT_NEAR(this->parseNumber("0"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
-
-        // shielding results
-        result = checker->check(this->env(), tasks[4]);
-        result = checker->check(this->env(), tasks[5]);
-        result = checker->check(this->env(), tasks[6]);
-        result = checker->check(this->env(), tasks[7]);
-        result = checker->check(this->env(), tasks[8]);
-        result = checker->check(this->env(), tasks[9]);
-        result = checker->check(this->env(), tasks[10]);
-        result = checker->check(this->env(), tasks[11]);
-
-        //TODO: check the shields
     }
 
     // TODO: create more test cases (files)
