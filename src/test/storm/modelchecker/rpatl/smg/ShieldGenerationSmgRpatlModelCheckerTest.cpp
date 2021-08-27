@@ -69,18 +69,43 @@ namespace {
     TYPED_TEST(ShieldGenerationSmgRpatlModelCheckerTest, RightDecision) {
         typedef typename TestFixture::ValueType ValueType;
 
-        // testing that no shield is created
-        std::string formulasString = "<<hiker>> Pmax=? [ F <=3 \"target\" ]";
+        // definition of shield file names
+        std::vector<std::string> fileNames;
+        fileNames.push_back("rightDecisionPreSafetyLambda09PmaxF3");
+        fileNames.push_back("rightDecisionPreSafetyLambda09PminF3");
+        fileNames.push_back("rightDecisionPreSafetyGamma09PmaxF3");
+        fileNames.push_back("rightDecisionPreSafetyGamma09PminF3");
+        fileNames.push_back("rightDecisionPostSafetyLambda09PmaxF3");
+        fileNames.push_back("rightDecisionPostSafetyLambda09PminF3");
+        fileNames.push_back("rightDecisionPostSafetyGamma09PmaxF3");
+        fileNames.push_back("rightDecisionPostSafetyGamma09PminF3");
+        fileNames.push_back("rightDecisionPreSafetyLambda05PmaxF5");
+        fileNames.push_back("rightDecisionPreSafetyLambda05PminF5");
+        fileNames.push_back("rightDecisionPreSafetyGamma05PmaxF5");
+        fileNames.push_back("rightDecisionPreSafetyGamma05PminF5");
+        fileNames.push_back("rightDecisionPostSafetyLambda05PmaxF5");
+        fileNames.push_back("rightDecisionPostSafetyLambda05PminF5");
+        fileNames.push_back("rightDecisionPostSafetyGamma05PmaxF5");
+        fileNames.push_back("rightDecisionPostSafetyGamma05PminF5");
 
         // testing create shielding expressions
-        formulasString += "; <preSafetyShieldLambda1, PreSafety, lambda=0.9> <<hiker>> Pmax=? [ F <=3 \"target\" ]";
-        formulasString += "; <postSafetyShieldGamma1, PostSafety, gamma=0.9> <<hiker>> Pmax=? [ F <=3 \"target\" ]";
-        formulasString += "; <preSafetyShieldLambda2, PreSafety, lambda=0.5> <<hiker>> Pmax=? [ F <=5 \"target\" ]";
-        formulasString += "; <postSafetyShieldGamma2, PostSafety, gamma=0.5> <<hiker>> Pmax=? [ F <=5 \"target\" ]";
-        formulasString += "; <preSafetyShieldLambda3, PreSafety, lambda=0> <<hiker, native>> Pmax=? [ F <=3 \"target\" ]";
-        formulasString += "; <postSafetyShieldGamma3, PostSafety, gamma=0> <<hiker, native>> Pmax=? [ F <=3 \"target\" ]";
-        formulasString += "; <preSafetyShieldLambda4, PreSafety, lambda=0.9> <<hiker>> Pmin=? [ F \"target\" ]";
-        formulasString += "; <postSafetyShieldGamma4, PostSafety, gamma=0.9> <<hiker>> Pmin=? [ F \"target\" ]";
+        std::string formulasString = "<" + fileNames[0] + ", PreSafety, lambda=0.9> <<hiker>> Pmax=? [ F <=3 \"target\" ]";
+        formulasString += "; <" + fileNames[1] + ", PreSafety, lambda=0.9> <<hiker>> Pmin=? [ F <=3 \"target\" ]";
+        formulasString += "; <" + fileNames[2] + ", PreSafety, gamma=0.9> <<hiker>> Pmax=? [ F <=3 \"target\" ]";
+        formulasString += "; <" + fileNames[3] + ", PreSafety, gamma=0.9> <<hiker>> Pmin=? [ F <=3 \"target\" ]";
+        formulasString += "; <" + fileNames[4] + ", PostSafety, lambda=0.9> <<hiker>> Pmax=? [ F <=3 \"target\" ]";
+        formulasString += "; <" + fileNames[5] + ", PostSafety, lambda=0.9> <<hiker>> Pmin=? [ F <=3 \"target\" ]";
+        formulasString += "; <" + fileNames[6] + ", PostSafety, gamma=0.9> <<hiker>> Pmax=? [ F <=3 \"target\" ]";
+        formulasString += "; <" + fileNames[7] + ", PostSafety, gamma=0.9> <<hiker>> Pmin=? [ F <=3 \"target\" ]";
+
+        formulasString += "; <" + fileNames[8] + ", PreSafety, lambda=0.5> <<hiker>> Pmax=? [ F <=5 \"target\" ]";
+        formulasString += "; <" + fileNames[9] + ", PreSafety, lambda=0.5> <<hiker>> Pmin=? [ F <=5 \"target\" ]";
+        formulasString += "; <" + fileNames[10] + ", PreSafety, gamma=0.5> <<hiker>> Pmax=? [ F <=5 \"target\" ]";
+        formulasString += "; <" + fileNames[11] + ", PreSafety, gamma=0.5> <<hiker>> Pmin=? [ F <=5 \"target\" ]";
+        formulasString += "; <" + fileNames[12] + ", PostSafety, lambda=0.5> <<hiker>> Pmax=? [ F <=5 \"target\" ]";
+        formulasString += "; <" + fileNames[13] + ", PostSafety, lambda=0.5> <<hiker>> Pmin=? [ F <=5 \"target\" ]";
+        formulasString += "; <" + fileNames[14] + ", PostSafety, gamma=0.5> <<hiker>> Pmax=? [ F <=5 \"target\" ]";
+        formulasString += "; <" + fileNames[15] + ", PostSafety, gamma=0.5> <<hiker>> Pmin=? [ F <=5 \"target\" ]";
 
         auto modelFormulas = this->buildModelFormulas(STORM_TEST_RESOURCES_DIR "/smg/rightDecision.nm", formulasString);
         auto smg = std::move(modelFormulas.first);
@@ -93,44 +118,144 @@ namespace {
         //std::unique_ptr<storm::modelchecker::CheckResult> result;
         storm::modelchecker::SparseSmgRpatlModelChecker<storm::models::sparse::Smg<ValueType>> checker(*smg);
 
-        // first result must not be a shielding result
-        auto result = checker.check(this->env(), tasks[0]);
-        EXPECT_FALSE(      tasks[1].isShieldingTask());
+        // definitions
+        storm::logic::ShieldingType typePreSafety = storm::logic::ShieldingType::PreSafety;
+        storm::logic::ShieldingType typePostSafety = storm::logic::ShieldingType::PostSafety;
+        storm::logic::ShieldComparison comparisonRelative = storm::logic::ShieldComparison::Relative;
+        storm::logic::ShieldComparison comparisonAbsolute = storm::logic::ShieldComparison::Absolute;
+        double value09 = 0.9;
+        double value05 = 0.5;
+        std::string filename, shieldingString, compareFileString;
 
         // shielding results
-        storm::logic::ShieldingType type = storm::logic::ShieldingType::PreSafety;
-        std::string filename = "preSafetyShieldLambda1";
-        storm::logic::ShieldComparison comparison = storm::logic::ShieldComparison::Relative;
-        double value = 0.9;
-        auto preSafetyShieldingExpression = std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(type, filename, comparison, value));
+        filename = fileNames[0];
+        auto preSafetyShieldingExpression = std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(typePreSafety, filename, comparisonRelative, value09));
+        tasks[0].setShieldingExpression(preSafetyShieldingExpression);
+        EXPECT_TRUE(tasks[0].isShieldingTask());
+        auto result = checker.check(this->env(), tasks[0]);
+        this->getStringsToCompare(filename, shieldingString, compareFileString);
+        EXPECT_EQ(shieldingString, compareFileString);
+
+        filename = fileNames[1];
+        preSafetyShieldingExpression = std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(typePreSafety, filename, comparisonRelative, value09));
         tasks[1].setShieldingExpression(preSafetyShieldingExpression);
         EXPECT_TRUE(tasks[1].isShieldingTask());
-
         result = checker.check(this->env(), tasks[1]);
+        this->getStringsToCompare(filename, shieldingString, compareFileString);
+        EXPECT_EQ(shieldingString, compareFileString);
 
-        filename += ".shield";
-        std::ifstream resultFile(filename);
-        std::stringstream resultBuffer;
-        resultBuffer << resultFile.rdbuf();
-        std::string resultString = resultBuffer.str();
-        std::cout << resultString << std::endl;
-        std::remove(filename.c_str());
-        // THIS WORKS!!
-
-        //TODO: EXPECT_EQUAL: string from solution and string from comparison-file
-
-        // TODO: build back the values, e.g. we do not need a method for computing string-shields
-        //  - testfiles for comparison, make an folder for that and name it like the test case names
-        //  - this also would work fine fith mdps, so finish this example, add it to mdp folder
-        //  - then we can go to solve examples, we have to integrate a lot of examples...
-
+        filename = fileNames[2];
+        preSafetyShieldingExpression = std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(typePreSafety, filename, comparisonAbsolute, value09));
+        tasks[2].setShieldingExpression(preSafetyShieldingExpression);
+        EXPECT_TRUE(tasks[2].isShieldingTask());
         result = checker.check(this->env(), tasks[2]);
+        this->getStringsToCompare(filename, shieldingString, compareFileString);
+        EXPECT_EQ(shieldingString, compareFileString);
+
+        filename = fileNames[3];
+        preSafetyShieldingExpression = std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(typePreSafety, filename, comparisonAbsolute, value09));
+        tasks[3].setShieldingExpression(preSafetyShieldingExpression);
+        EXPECT_TRUE(tasks[3].isShieldingTask());
         result = checker.check(this->env(), tasks[3]);
+        this->getStringsToCompare(filename, shieldingString, compareFileString);
+        EXPECT_EQ(shieldingString, compareFileString);
+
+        filename = fileNames[4];
+        auto postSafetyShieldingExpression = std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(typePostSafety, filename, comparisonRelative, value09));
+        tasks[4].setShieldingExpression(postSafetyShieldingExpression);
+        EXPECT_TRUE(tasks[4].isShieldingTask());
         result = checker.check(this->env(), tasks[4]);
+        this->getStringsToCompare(filename, shieldingString, compareFileString);
+        EXPECT_EQ(shieldingString, compareFileString);
+
+        filename = fileNames[5];
+        postSafetyShieldingExpression = std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(typePostSafety, filename, comparisonRelative, value09));
+        tasks[5].setShieldingExpression(postSafetyShieldingExpression);
+        EXPECT_TRUE(tasks[5].isShieldingTask());
         result = checker.check(this->env(), tasks[5]);
+        this->getStringsToCompare(filename, shieldingString, compareFileString);
+        EXPECT_EQ(shieldingString, compareFileString);
+
+        filename = fileNames[6];
+        postSafetyShieldingExpression = std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(typePostSafety, filename, comparisonAbsolute, value09));
+        tasks[6].setShieldingExpression(postSafetyShieldingExpression);
+        EXPECT_TRUE(tasks[6].isShieldingTask());
         result = checker.check(this->env(), tasks[6]);
+        this->getStringsToCompare(filename, shieldingString, compareFileString);
+        EXPECT_EQ(shieldingString, compareFileString);
+
+        filename = fileNames[7];
+        postSafetyShieldingExpression = std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(typePostSafety, filename, comparisonAbsolute, value09));
+        tasks[7].setShieldingExpression(postSafetyShieldingExpression);
+        EXPECT_TRUE(tasks[7].isShieldingTask());
         result = checker.check(this->env(), tasks[7]);
+        this->getStringsToCompare(filename, shieldingString, compareFileString);
+        EXPECT_EQ(shieldingString, compareFileString);
+
+
+        filename = fileNames[8];
+        preSafetyShieldingExpression = std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(typePreSafety, filename, comparisonRelative, value05));
+        tasks[8].setShieldingExpression(preSafetyShieldingExpression);
+        EXPECT_TRUE(tasks[8].isShieldingTask());
         result = checker.check(this->env(), tasks[8]);
+        this->getStringsToCompare(filename, shieldingString, compareFileString);
+        EXPECT_EQ(shieldingString, compareFileString);
+
+        filename = fileNames[9];
+        preSafetyShieldingExpression = std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(typePreSafety, filename, comparisonRelative, value05));
+        tasks[9].setShieldingExpression(preSafetyShieldingExpression);
+        EXPECT_TRUE(tasks[9].isShieldingTask());
+        result = checker.check(this->env(), tasks[9]);
+        this->getStringsToCompare(filename, shieldingString, compareFileString);
+        EXPECT_EQ(shieldingString, compareFileString);
+
+        filename = fileNames[10];
+        preSafetyShieldingExpression = std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(typePreSafety, filename, comparisonAbsolute, value05));
+        tasks[10].setShieldingExpression(preSafetyShieldingExpression);
+        EXPECT_TRUE(tasks[10].isShieldingTask());
+        result = checker.check(this->env(), tasks[10]);
+        this->getStringsToCompare(filename, shieldingString, compareFileString);
+        EXPECT_EQ(shieldingString, compareFileString);
+
+        filename = fileNames[11];
+        preSafetyShieldingExpression = std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(typePreSafety, filename, comparisonAbsolute, value05));
+        tasks[11].setShieldingExpression(preSafetyShieldingExpression);
+        EXPECT_TRUE(tasks[11].isShieldingTask());
+        result = checker.check(this->env(), tasks[11]);
+        this->getStringsToCompare(filename, shieldingString, compareFileString);
+        EXPECT_EQ(shieldingString, compareFileString);
+
+        filename = fileNames[12];
+        postSafetyShieldingExpression = std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(typePostSafety, filename, comparisonRelative, value05));
+        tasks[12].setShieldingExpression(postSafetyShieldingExpression);
+        EXPECT_TRUE(tasks[12].isShieldingTask());
+        result = checker.check(this->env(), tasks[12]);
+        this->getStringsToCompare(filename, shieldingString, compareFileString);
+        EXPECT_EQ(shieldingString, compareFileString);
+
+        filename = fileNames[13];
+        postSafetyShieldingExpression = std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(typePostSafety, filename, comparisonRelative, value05));
+        tasks[13].setShieldingExpression(postSafetyShieldingExpression);
+        EXPECT_TRUE(tasks[13].isShieldingTask());
+        result = checker.check(this->env(), tasks[13]);
+        this->getStringsToCompare(filename, shieldingString, compareFileString);
+        EXPECT_EQ(shieldingString, compareFileString);
+
+        filename = fileNames[14];
+        postSafetyShieldingExpression = std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(typePostSafety, filename, comparisonAbsolute, value05));
+        tasks[14].setShieldingExpression(postSafetyShieldingExpression);
+        EXPECT_TRUE(tasks[14].isShieldingTask());
+        result = checker.check(this->env(), tasks[14]);
+        this->getStringsToCompare(filename, shieldingString, compareFileString);
+        EXPECT_EQ(shieldingString, compareFileString);
+
+        filename = fileNames[15];
+        postSafetyShieldingExpression = std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(typePostSafety, filename, comparisonAbsolute, value05));
+        tasks[15].setShieldingExpression(postSafetyShieldingExpression);
+        EXPECT_TRUE(tasks[15].isShieldingTask());
+        result = checker.check(this->env(), tasks[15]);
+        this->getStringsToCompare(filename, shieldingString, compareFileString);
+        EXPECT_EQ(shieldingString, compareFileString);
     }
 
     // TODO: create more test cases (files)
