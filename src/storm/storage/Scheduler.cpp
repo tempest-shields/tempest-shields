@@ -224,6 +224,18 @@ namespace storm {
                             continue;
                         }
 
+                        // Indent if this is not the first memory state
+                        if (firstMemoryState) {
+                            firstMemoryState = false;
+                        } else {
+                            out << std::setw(widthOfStates) << "";
+                            out << "    ";
+                        }
+                        // Print the memory state info
+                        if (!isMemorylessScheduler()) {
+                            out << "m="<< memoryState << std::setw(8) << "";
+                        }
+
                     // Print choice info
                     SchedulerChoice<ValueType> const& choice = schedulerChoices[memoryState][state];
                     if (choice.isDefined()) {
@@ -282,7 +294,28 @@ namespace storm {
                             }
                         }
 
-                    stateString << std::endl;
+                        // Print memory updates
+                        if(!isMemorylessScheduler()) {
+                            out << std::setw(widthOfStates) << "";
+                            // The memory updates do not depend on the actual choice, they only depend on the current model- and memory state as well as the successor model state.
+                            for (auto const& choiceProbPair : choice.getChoiceAsDistribution()) {
+                                uint64_t row = model->getTransitionMatrix().getRowGroupIndices()[state] + choiceProbPair.first;
+                                bool firstUpdate = true;
+                                for (auto entryIt = model->getTransitionMatrix().getRow(row).begin(); entryIt < model->getTransitionMatrix().getRow(row).end(); ++entryIt) {
+                                    if (firstUpdate) {
+                                        firstUpdate = false;
+                                    } else {
+                                        out << ", ";
+                                    }
+                                    out << "model state' = " << entryIt->getColumn() << ": -> " << "(m' = "<<this->memoryStructure->getSuccessorMemoryState(memoryState, entryIt - model->getTransitionMatrix().begin()) <<")";
+                                    // out << "model state' = " << entryIt->getColumn() << ": (transition = " << entryIt - model->getTransitionMatrix().begin() << ") -> " << "(m' = "<<this->memoryStructure->getSuccessorMemoryState(memoryState, entryIt - model->getTransitionMatrix().begin()) <<")";
+                                }
+
+                            }
+
+                        }
+
+                        out << std::endl;
                     }
 
                     stateString << stateString.str();

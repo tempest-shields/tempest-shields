@@ -149,6 +149,9 @@ namespace storm {
             HOAPathFormula& asHOAPathFormula();
             HOAPathFormula const& asHOAPathFormula() const;
 
+            HOAPathFormula& asHOAPathFormula();
+            HOAPathFormula const& asHOAPathFormula() const;
+
             BoundedUntilFormula& asBoundedUntilFormula();
             BoundedUntilFormula const& asBoundedUntilFormula() const;
 

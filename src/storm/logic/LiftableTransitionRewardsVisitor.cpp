@@ -30,7 +30,6 @@ namespace storm {
             return boost::any_cast<bool>(f.getLeftSubformula().accept(*this, data)) && boost::any_cast<bool>(f.getRightSubformula().accept(*this, data));
         }
 
-
         boost::any LiftableTransitionRewardsVisitor::visit(BooleanLiteralFormula const&, boost::any const&) const {
             return true;
         }

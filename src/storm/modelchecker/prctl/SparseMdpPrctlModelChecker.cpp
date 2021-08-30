@@ -28,6 +28,7 @@
 
 #include "storm/shields/ShieldHandling.h"
 
+#include "storm/settings/modules/GeneralSettings.h"
 #include "storm/exceptions/InvalidStateException.h"
 #include "storm/exceptions/InvalidPropertyException.h"
 #include "storm/storage/expressions/Expressions.h"

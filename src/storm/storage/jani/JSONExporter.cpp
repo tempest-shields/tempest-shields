@@ -711,7 +711,7 @@ namespace storm {
                 return opDecl;
             }
         }
-        
+
         boost::any ExpressionToJson::visit(storm::expressions::BinaryRelationExpression const& expression, boost::any const& data) {
             ExportJsonType opDecl;
             opDecl["op"] = operatorTypeToJaniString(expression.getOperator());

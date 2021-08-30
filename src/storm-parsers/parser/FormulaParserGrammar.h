@@ -10,7 +10,6 @@
 #include "storm/storage/jani/Property.h"
 #include "storm/logic/Formulas.h"
 #include "storm-parsers/parser/ExpressionParser.h"
-#include "storm-parsers/parser/ConstantDataType.h"
 
 #include "storm/modelchecker/results/FilterType.h"
 
@@ -242,9 +241,6 @@ namespace storm {
 
             storm::logic::PlayerCoalition createPlayerCoalition(std::vector<boost::variant<std::string, storm::storage::PlayerIndex>> const& playerIds) const;
             std::shared_ptr<storm::logic::Formula const> createGameFormula(storm::logic::PlayerCoalition const& coalition, std::shared_ptr<storm::logic::Formula const> const& subformula) const;
-
-            std::pair<storm::logic::ShieldComparison, double> createShieldComparisonStruct(storm::logic::ShieldComparison comparisonType, double value);
-            std::shared_ptr<storm::logic::ShieldExpression const> createShieldExpression(storm::logic::ShieldingType type, std::string name, boost::optional<std::pair<storm::logic::ShieldComparison, double>> comparisonStruct);
 
             bool areConstantDefinitionsAllowed() const;
             void addConstant(std::string const& name, ConstantDataType type, boost::optional<storm::expressions::Expression> const& expression);

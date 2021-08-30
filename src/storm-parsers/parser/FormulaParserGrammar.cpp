@@ -176,8 +176,6 @@ namespace storm {
             formulaName = qi::lit("\"") >> identifier >> qi::lit("\"") >> qi::lit(":");
             formulaName.name("formula name");
 
-
-
             constantDefinition = (qi::lit("const") > -(qi::lit("int")[qi::_a = ConstantDataType::Integer] | qi::lit("bool")[qi::_a = ConstantDataType::Bool] | qi::lit("double")[qi::_a = ConstantDataType::Rational]) >> identifier >> -(qi::lit("=") > expressionParser))[phoenix::bind(&FormulaParserGrammar::addConstant, phoenix::ref(*this), qi::_1, qi::_a, qi::_2)];
             constantDefinition.name("constant definition");
 
