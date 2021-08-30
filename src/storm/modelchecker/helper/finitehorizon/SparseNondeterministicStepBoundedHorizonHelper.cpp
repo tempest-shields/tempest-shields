@@ -87,7 +87,7 @@ namespace storm {
 
                     std::vector<uint64_t> rowGroupIndices = transitionMatrix.getRowGroupIndices();
                     std::vector<uint64_t> maybeStatesRowGroupSizes;
-                    uint choiceValuesCounter;
+                    uint choiceValuesCounter = 0;
                     getMaybeStatesRowGroupSizes(transitionMatrix, maybeStates, maybeStatesRowGroupSizes, choiceValuesCounter);
                     choiceValues = std::vector<ValueType>(choiceValuesCounter, storm::utility::zero<ValueType>());
 
