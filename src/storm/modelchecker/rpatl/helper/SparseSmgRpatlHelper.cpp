@@ -110,7 +110,9 @@ namespace storm {
                 }
                 // Create a multiplier for reduction.
                 auto multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, transitionMatrix);
-                multiplier->reduce(env, goal.direction(), b, transitionMatrix.getRowGroupIndices(), result, &statesOfCoalition);
+                auto rowGroupIndices = transitionMatrix.getRowGroupIndices();
+                rowGroupIndices.erase(rowGroupIndices.begin());
+                multiplier->reduce(env, goal.direction(), b, rowGroupIndices, result, &statesOfCoalition);
                 if (goal.isShieldingTask()) {
                     choiceValues = b;
                 }

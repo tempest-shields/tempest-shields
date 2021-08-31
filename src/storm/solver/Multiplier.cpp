@@ -92,8 +92,13 @@ namespace storm {
         template<typename ValueType>
         void Multiplier<ValueType>::reduce(Environment const& env, OptimizationDirection const& dir, std::vector<ValueType> const& choiceValues, std::vector<storm::storage::SparseMatrix<double>::index_type> rowGroupIndices, std::vector<ValueType>& result, storm::storage::BitVector const* dirOverride) const {
             auto choice_it = choiceValues.begin();
-            for(uint state = 0; state < rowGroupIndices.size() - 1; state++) {
-                uint rowGroupSize = rowGroupIndices[state + 1] - rowGroupIndices[state];
+            for(uint state = 0; state < rowGroupIndices.size(); state++) {
+                uint rowGroupSize;
+                if(state == 0) {
+                    rowGroupSize = rowGroupIndices[state];
+                } else {
+                    rowGroupSize = rowGroupIndices[state] - rowGroupIndices[state-1];
+                }
                 if(dirOverride != nullptr) {
                     if((dir == storm::OptimizationDirection::Minimize && !dirOverride->get(state)) || (dir == storm::OptimizationDirection::Maximize && dirOverride->get(state))) {
                         result.at(state) = *std::min_element(choice_it, choice_it + rowGroupSize);
