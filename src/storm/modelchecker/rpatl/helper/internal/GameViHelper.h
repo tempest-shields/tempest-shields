@@ -26,12 +26,7 @@ namespace storm {
                     /*!
                      * Perform value iteration until convergence
                      */
-                    void performValueIteration(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir);
-
-                    /*!
-                     * Perform value iteration until upper bound
-                     */
-                    void performValueIterationUpperBound(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir, uint64_t upperBound, std::vector<ValueType>& constrainedChoiceValues);
+                    void performValueIteration(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir, std::vector<ValueType>& constrainedChoiceValues);
 
                     /*!
                      * Sets whether an optimal scheduler shall be constructed during the computation
@@ -67,11 +62,6 @@ namespace storm {
                      * Performs one iteration step for value iteration
                      */
                     void performIterationStep(Environment const& env, storm::solver::OptimizationDirection const dir, std::vector<uint64_t>* choices = nullptr);
-
-                    /*!
-                     * Performs one iteration step for value iteration with upper bound
-                     */
-                    void performIterationStepUpperBound(Environment const& env, storm::solver::OptimizationDirection const dir, std::vector<uint64_t>* choices = nullptr);
 
                     /*!
                      * Checks whether the curently computed value achieves the desired precision

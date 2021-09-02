@@ -25,13 +25,14 @@ namespace storm {
                 }
 
                 template <typename ValueType>
-                void GameViHelper<ValueType>::performValueIteration(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir) {
+                void GameViHelper<ValueType>::performValueIteration(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir, std::vector<ValueType>& constrainedChoiceValues) {
                     prepareSolversAndMultipliers(env);
                     // Get precision for convergence check.
                     ValueType precision = storm::utility::convertNumber<ValueType>(env.solver().game().getPrecision());
                     uint64_t maxIter = env.solver().game().getMaximalNumberOfIterations();
                     _b = b;
-                    _x1.assign(_transitionMatrix.getRowGroupCount(), storm::utility::zero<ValueType>());
+                    //_x1.assign(_transitionMatrix.getRowGroupCount(), storm::utility::zero<ValueType>());
+                    _x1 = x;
                     _x2 = _x1;
 
                     if (this->isProduceSchedulerSet()) {
@@ -42,17 +43,25 @@ namespace storm {
                     }
 
                     uint64_t iter = 0;
-                    std::vector<ValueType> result = x;
-                    while (iter < maxIter) {
-                        ++iter;
-                        performIterationStep(env, dir);
+                    constrainedChoiceValues = std::vector<ValueType>(b.size(), storm::utility::zero<ValueType>());
 
+                    while (iter < maxIter) {
+                        if(iter == maxIter - 1) {
+                            _multiplier->multiply(env, xNew(), &_b, constrainedChoiceValues);
+                            auto rowGroupIndices = this->_transitionMatrix.getRowGroupIndices();
+                            rowGroupIndices.erase(rowGroupIndices.begin());
+                            _multiplier->reduce(env, dir, constrainedChoiceValues, rowGroupIndices, xNew());
+                            break;
+                        }
+                        performIterationStep(env, dir);
                         if (checkConvergence(precision)) {
+                            _multiplier->multiply(env, xNew(), &_b, constrainedChoiceValues);
                             break;
                         }
                         if (storm::utility::resources::isTerminate()) {
                             break;
                         }
+                        ++iter;
                     }
                     x = xNew();
 
@@ -74,18 +83,11 @@ namespace storm {
                     } else {
                         _multiplier->multiplyAndReduce(env, dir, xOld(), &_b, xNew(), choices, &_statesOfCoalition);
                     }
-
-                    // compare applyPointwise
-                    storm::utility::vector::applyPointwise<ValueType, ValueType, ValueType>(xOld(), xNew(), xNew(), [&dir] (ValueType const& a, ValueType const& b) -> ValueType {
-                       if(a > b) return a;
-                       else return b;
-                    });
                 }
 
                 template <typename ValueType>
                 bool GameViHelper<ValueType>::checkConvergence(ValueType threshold) const {
                     STORM_LOG_ASSERT(_multiplier, "tried to check for convergence without doing an iteration first.");
-
                     // Now check whether the currently produced results are precise enough
                     STORM_LOG_ASSERT(threshold > storm::utility::zero<ValueType>(), "Did not expect a non-positive threshold.");
                     auto x1It = xOld().begin();
@@ -111,43 +113,6 @@ namespace storm {
                         }
                     }
                     return true;
-                }
-
-                template <typename ValueType>
-                void GameViHelper<ValueType>::performValueIterationUpperBound(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir, uint64_t upperBound, std::vector<ValueType>& constrainedChoiceValues) {
-                    prepareSolversAndMultipliers(env);
-                    _x = x;
-                    _b = b;
-
-                    if (this->isProduceSchedulerSet()) {
-                        if (!this->_producedOptimalChoices.is_initialized()) {
-                            this->_producedOptimalChoices.emplace();
-                        }
-                        this->_producedOptimalChoices->resize(this->_transitionMatrix.getRowGroupCount());
-                    }
-                    for (uint64_t iter = 0; iter < upperBound; iter++) {
-                        if(iter == upperBound - 1) {
-                            _multiplier->multiply(env, _x, &_b, constrainedChoiceValues);
-                        }
-                        performIterationStepUpperBound(env, dir);
-                    }
-
-                    x = _x;
-                }
-
-                template <typename ValueType>
-                void GameViHelper<ValueType>::performIterationStepUpperBound(Environment const& env, storm::solver::OptimizationDirection const dir, std::vector<uint64_t>* choices) {
-                    if (!_multiplier) {
-                        prepareSolversAndMultipliers(env);
-                    }
-                    // multiplyandreducegaussseidel
-                    // Ax = x'
-                    if (choices == nullptr) {
-                        _multiplier->multiplyAndReduce(env, dir, _x, &_b, _x, nullptr, &_statesOfCoalition);
-                    } else {
-                        // Also keep track of the choices made.
-                        _multiplier->multiplyAndReduce(env, dir, _x, &_b, _x, choices, &_statesOfCoalition);
-                    }
                 }
 
                 template <typename ValueType>
