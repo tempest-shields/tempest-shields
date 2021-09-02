@@ -29,7 +29,7 @@ namespace storm {
             rewardMeasureType_.name("reward measure");
             operatorKeyword_.name("Operator keyword");
             filterType_.name("filter type");
-            
+
             // Auxiliary helpers
             isPathFormula = qi::eps(qi::_r1 == FormulaKind::Path);
             noAmbiguousNonAssociativeOperator = !(qi::lit(qi::_r2)[qi::_pass = phoenix::bind(&FormulaParserGrammar::raiseAmbiguousNonAssociativeOperatorError, phoenix::ref(*this), qi::_r1, qi::_r2)]);
@@ -40,7 +40,7 @@ namespace storm {
             label.name("label");
             quotedString %= qi::as_string[qi::lexeme[qi::omit[qi::char_('"')] > qi::raw[*(!qi::char_('"') >> qi::char_)] > qi::omit[qi::lit('"')]]];
             quotedString.name("quoted string");
-            
+
             // PCTL-like Operator Formulas
             operatorInformation = (-optimalityOperator_)[qi::_a = qi::_1] >>
                                   ((qi::lit("=") > qi::lit("?"))[qi::_val = phoenix::bind(&FormulaParserGrammar::createOperatorInformation, phoenix::ref(*this), qi::_a, boost::none, boost::none)]
@@ -61,7 +61,7 @@ namespace storm {
             operatorFormula = (operatorKeyword_[qi::_a = qi::_1] > -rewardMeasureType(qi::_a) > -rewardModelName(qi::_a) > operatorInformation > qi::lit("[") > operatorSubFormula(qi::_a) > qi::lit("]"))
                                       [qi::_val = phoenix::bind(&FormulaParserGrammar::createOperatorFormula, phoenix::ref(*this), qi::_a, qi::_2, qi::_3, qi::_4, qi::_5)];
             operatorFormula.name("operator formula");
-            
+
 
             // Atomic propositions
             labelFormula = (qi::lit("\"") >> label >> qi::lit("\""))[qi::_val = phoenix::bind(&FormulaParserGrammar::createAtomicLabelFormula, phoenix::ref(*this), qi::_1)];
@@ -72,7 +72,7 @@ namespace storm {
             expressionFormula.name("expression formula");
             atomicPropositionFormula = (booleanLiteralFormula | labelFormula | expressionFormula);
             atomicPropositionFormula.name("atomic proposition");
-            
+
             // Propositional Logic operators
             // To correctly parse the operator precedences (! binds stronger than & binds stronger than |), we run through different "precedence levels" starting with the weakest binding operator.
             basicPropositionalFormula = (qi::lit("(") >> (formula(qi::_r1, qi::_r2) > qi::lit(")")))
@@ -94,7 +94,7 @@ namespace storm {
                                                > andLevelPropositionalFormula(qi::_r1, qi::_r2)[qi::_val = phoenix::bind(&FormulaParserGrammar::createBinaryBooleanStateOrPathFormula, phoenix::ref(*this), qi::_val, qi::_1, storm::logic::BinaryBooleanStateFormula::OperatorType::Or)]);
             orLevelPropositionalFormula.name("or precedence level propositional formula");
             propositionalFormula = orLevelPropositionalFormula(qi::_r1, qi::_r2);
-            
+
             // Path operators
             // Again need to parse precedences correctly. Propositional formulae bind stronger than temporal operators.
             basicPathFormula = propositionalFormula(FormulaKind::Path, qi::_r1) // Bracketed case is handled here as well
@@ -139,7 +139,7 @@ namespace storm {
             untilLevelPathFormula.name("until precedence level path formula");
             pathFormula = untilLevelPathFormula(qi::_r1);
             pathFormula.name("path formula");
-            
+
             // Quantitative path formulae (reward)
             longRunAverageRewardFormula = (qi::lit("LRA") | qi::lit("S") | qi::lit("MP"))[qi::_val = phoenix::bind(&FormulaParserGrammar::createLongRunAverageRewardFormula, phoenix::ref(*this))];
             longRunAverageRewardFormula.name("long run average reward formula");
@@ -149,13 +149,13 @@ namespace storm {
             cumulativeRewardFormula.name("cumulative reward formula");
             totalRewardFormula = (qi::lit("C"))[qi::_val = phoenix::bind(&FormulaParserGrammar::createTotalRewardFormula, phoenix::ref(*this))];
             totalRewardFormula.name("total reward formula");
-            
+
             // Game Formulae
             playerCoalition = (-((identifier[phoenix::push_back(qi::_a, qi::_1)] | qi::uint_[phoenix::push_back(qi::_a, qi::_1)]) % ','))[qi::_val = phoenix::bind(&FormulaParserGrammar::createPlayerCoalition, phoenix::ref(*this), qi::_a)];
             playerCoalition.name("player coalition");
             gameFormula = (qi::lit("<<") > playerCoalition > qi::lit(">>") > operatorFormula)[qi::_val = phoenix::bind(&FormulaParserGrammar::createGameFormula, phoenix::ref(*this), qi::_1, qi::_2)];
             gameFormula.name("game formula");
-            
+
             // Multi-objective, quantiles
             multiOperatorFormula = (qi::lit("multi") > qi::lit("(")
                                     > (operatorFormula % qi::lit(","))
@@ -165,14 +165,14 @@ namespace storm {
             quantileBoundVariable.name("quantile bound variable");
             quantileFormula = (qi::lit("quantile") > qi::lit("(") > *(quantileBoundVariable) > operatorFormula[qi::_pass = phoenix::bind(&FormulaParserGrammar::isBooleanReturnType, phoenix::ref(*this), qi::_1, true)] > qi::lit(")"))[qi::_val = phoenix::bind(&FormulaParserGrammar::createQuantileFormula, phoenix::ref(*this), qi::_1, qi::_2)];
             quantileFormula.name("Quantile formula");
-            
+
             // General formulae
             formula = (isPathFormula(qi::_r1) >> pathFormula(qi::_r2) | propositionalFormula(qi::_r1, qi::_r2));
             formula.name("formula");
 
             topLevelFormula = formula(FormulaKind::State, storm::logic::FormulaContext::Undefined);
             topLevelFormula.name("top-level formula");
-            
+
             formulaName = qi::lit("\"") >> identifier >> qi::lit("\"") >> qi::lit(":");
             formulaName.name("formula name");
 
@@ -183,7 +183,7 @@ namespace storm {
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Woverloaded-shift-op-parentheses"
-            
+
             filterProperty = (-formulaName >> qi::lit("filter") > qi::lit("(") > filterType_ > qi::lit(",") > topLevelFormula > qi::lit(",") > formula(FormulaKind::State, storm::logic::FormulaContext::Undefined)> qi::lit(")"))[qi::_val = phoenix::bind(&FormulaParserGrammar::createProperty, phoenix::ref(*this), qi::_1, qi::_2, qi::_3, qi::_4)] |
                              (-formulaName >> topLevelFormula)[qi::_val = phoenix::bind(&FormulaParserGrammar::createPropertyWithDefaultFilterTypeAndStates, phoenix::ref(*this), qi::_1, qi::_2)];
             filterProperty.name("filter property");
@@ -236,7 +236,7 @@ namespace storm {
 //            debug(filterProperty)
 //            debug(constantDefinition )
 //            debug(start)
-            
+
             // Enable error reporting.
             qi::on_error<qi::fail>(rewardModelName, handler(qi::_1, qi::_2, qi::_3, qi::_4));
             qi::on_error<qi::fail>(rewardMeasureType, handler(qi::_1, qi::_2, qi::_3, qi::_4));
@@ -388,20 +388,8 @@ namespace storm {
             }
         }
 
-        std::shared_ptr<storm::logic::Formula const> FormulaParserGrammar::createGloballyFormula(boost::optional<std::vector<std::tuple<boost::optional<storm::logic::TimeBound>, boost::optional<storm::logic::TimeBound>, std::shared_ptr<storm::logic::TimeBoundReference>>>> const& timeBounds, std::shared_ptr<storm::logic::Formula const> const& subformula) const {
-            if (timeBounds && !timeBounds.get().empty()) {
-                std::vector<boost::optional<storm::logic::TimeBound>> lowerBounds, upperBounds;
-                std::vector<storm::logic::TimeBoundReference> timeBoundReferences;
-                for (auto const& timeBound : timeBounds.get()) {
-                    STORM_LOG_ASSERT(!std::get<0>(timeBound), "Cannot use lower time bounds (or intervals) in globally formulas.");
-                    lowerBounds.push_back(std::get<0>(timeBound));
-                    upperBounds.push_back(std::get<1>(timeBound));
-                    timeBoundReferences.emplace_back(*std::get<2>(timeBound));
-                }
-                return std::shared_ptr<storm::logic::Formula const>(new storm::logic::BoundedGloballyFormula(subformula, lowerBounds, upperBounds, timeBoundReferences));
-            } else {
-                return std::shared_ptr<storm::logic::Formula const>(new storm::logic::GloballyFormula(subformula));
-            }
+        std::shared_ptr<storm::logic::Formula const> FormulaParserGrammar::createGloballyFormula(std::shared_ptr<storm::logic::Formula const> const& subformula) const {
+            return std::shared_ptr<storm::logic::Formula const>(new storm::logic::GloballyFormula(subformula));
         }
 
         std::shared_ptr<storm::logic::Formula const> FormulaParserGrammar::createNextFormula(std::shared_ptr<storm::logic::Formula const> const& subformula) const {
@@ -451,7 +439,7 @@ namespace storm {
                 return storm::logic::OperatorInformation(optimizationDirection, boost::none);
             }
         }
-        
+
         std::shared_ptr<storm::logic::Formula const> FormulaParserGrammar::createOperatorFormula(storm::logic::FormulaContext const& context, boost::optional<storm::logic::RewardMeasureType> const& rewardMeasureType, boost::optional<std::string> const& rewardModelName, storm::logic::OperatorInformation const& operatorInformation, std::shared_ptr<storm::logic::Formula const> const& subformula) {
             switch(context) {
                 case storm::logic::FormulaContext::Probability:
@@ -469,7 +457,7 @@ namespace storm {
                     STORM_LOG_THROW(false, storm::exceptions::WrongFormatException, "Unexpected formula context.");
             }
         }
-        
+
         std::shared_ptr<storm::logic::Formula const> FormulaParserGrammar::createLongRunAverageOperatorFormula(storm::logic::OperatorInformation const& operatorInformation, std::shared_ptr<storm::logic::Formula const> const& subformula) const {
             return std::shared_ptr<storm::logic::Formula const>(new storm::logic::LongRunAverageOperatorFormula(subformula, operatorInformation));
         }
@@ -570,7 +558,7 @@ namespace storm {
             }
             return std::shared_ptr<storm::logic::Formula const>(new storm::logic::BoundedUntilFormula(leftSubformulas, rightSubformulas, lowerBounds, upperBounds, timeBoundReferences));
         }
-        
+
         std::shared_ptr<storm::logic::Formula const> FormulaParserGrammar::createMultiOperatorFormula(std::vector<std::shared_ptr<storm::logic::Formula const>> const& subformulas) {
             return std::shared_ptr<storm::logic::Formula const>(new storm::logic::MultiObjectiveFormula(subformulas));
         }
@@ -620,7 +608,7 @@ namespace storm {
                 return storm::jani::Property(std::to_string(propertyCount), formula, this->getUndefinedConstants(formula));
             }
         }
-        
+
         storm::logic::PlayerCoalition FormulaParserGrammar::createPlayerCoalition(std::vector<boost::variant<std::string, storm::storage::PlayerIndex>> const& playerIds) const {
             return storm::logic::PlayerCoalition(playerIds);
         }
@@ -628,7 +616,7 @@ namespace storm {
         std::shared_ptr<storm::logic::Formula const> FormulaParserGrammar::createGameFormula(storm::logic::PlayerCoalition const& coalition, std::shared_ptr<storm::logic::Formula const> const& subformula) const {
             return std::shared_ptr<storm::logic::Formula const>(new storm::logic::GameFormula(coalition, subformula));
         }
-        
+
         bool FormulaParserGrammar::isBooleanReturnType(std::shared_ptr<storm::logic::Formula const> const& formula, bool raiseErrorMessage) {
             if (formula->hasQualitativeResult()) {
                 return true;
@@ -636,7 +624,7 @@ namespace storm {
             STORM_LOG_ERROR_COND(!raiseErrorMessage, "Formula " << *formula << " does not have a Boolean return type.");
             return false;
         }
-        
+
         bool FormulaParserGrammar::raiseAmbiguousNonAssociativeOperatorError(std::shared_ptr<storm::logic::Formula const> const& formula, std::string const& op) {
             STORM_LOG_ERROR( "Ambiguous use of non-associative operator '" << op << "' in formula '" << *formula << " U ... '");
             return true;

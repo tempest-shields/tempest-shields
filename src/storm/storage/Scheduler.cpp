@@ -274,7 +274,8 @@ namespace storm {
                                 }
                                 stateString << "model state' = " << entryIt->getColumn() << ": -> " << "(m' = "<<this->memoryStructure->getSuccessorMemoryState(memoryState, entryIt - model->getTransitionMatrix().begin()) <<")";
                                 // out << "model state' = " << entryIt->getColumn() << ": (transition = " << entryIt - model->getTransitionMatrix().begin() << ") -> " << "(m' = "<<this->memoryStructure->getSuccessorMemoryState(memoryState, entryIt - model->getTransitionMatrix().begin()) <<")";
-                    }
+                            }
+                        }
 
                     stateString << std::endl;
                     }

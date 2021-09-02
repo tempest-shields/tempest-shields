@@ -433,6 +433,15 @@ namespace storm {
             return *this;
         }
 
+        bool FragmentSpecification::areBinaryBooleanStateFormulasAllowed() const {
+            return binaryBooleanStateFormula;
+        }
+
+        FragmentSpecification& FragmentSpecification::setBinaryBooleanStateFormulasAllowed(bool newValue) {
+            this->binaryBooleanStateFormula = newValue;
+            return *this;
+        }
+
         bool FragmentSpecification::areBinaryBooleanPathFormulasAllowed() const {
             return binaryBooleanPathFormula;
         }

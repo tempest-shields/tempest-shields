@@ -154,7 +154,6 @@ namespace storm {
             std::vector<storm::storage::BitVector> reachableStates;
             uint_fast64_t numOfUndefinedChoices; // Only consider reachable ones
             std::vector<storm::storage::BitVector> dontCareStates; // Their choices are neither considered deterministic nor undefined
-            uint_fast64_t numOfUndefinedChoices;
             uint_fast64_t numOfDeterministicChoices;
             uint_fast64_t numOfDontCareStates;
         };

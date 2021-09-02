@@ -60,10 +60,7 @@ namespace storm {
             template<typename ValueType>
             ValueType getNonStrictLowerBound(unsigned i = 0) const;
 
-
-
-            virtual std::ostream &writeToStream(std::ostream &out) const override;
-
+            virtual std::ostream &writeToStream(std::ostream &out, bool allowParentheses = false) const override;
         private:
             static void checkNoVariablesInBound(storm::expressions::Expression const& bound);
 

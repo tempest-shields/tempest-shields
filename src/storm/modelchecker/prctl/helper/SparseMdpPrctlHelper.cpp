@@ -635,6 +635,8 @@ namespace storm {
                     }
                 }
 
+                std::vector<ValueType> maybeStateChoiceValues = std::vector<ValueType>(sizeMaybeStateChoiceValues, storm::utility::zero<ValueType>());
+
                 // Check whether we need to compute exact probabilities for some states.
                 if ((qualitative || maybeStatesNotRelevant) && !goal.isShieldingTask()) {
                     // Set the values for all maybe-states to 0.5 to indicate that their probability values are neither 0 nor 1.

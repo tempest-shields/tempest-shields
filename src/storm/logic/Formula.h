@@ -74,6 +74,7 @@ namespace storm {
             virtual bool isGloballyFormula() const;
             virtual bool isEventuallyFormula() const;
             virtual bool isReachabilityProbabilityFormula() const;
+            virtual bool isHOAPathFormula() const;
             virtual bool isBoundedGloballyFormula() const;
 
             // Reward formulas.
@@ -244,7 +245,7 @@ namespace storm {
              * @return
              */
             virtual std::ostream& writeToStream(std::ostream& out, bool allowParentheses = false) const = 0;
-            
+
             std::string toPrefixString() const;
 
             virtual void gatherAtomicExpressionFormulas(std::vector<std::shared_ptr<AtomicExpressionFormula const>>& atomicExpressionFormulas) const;
