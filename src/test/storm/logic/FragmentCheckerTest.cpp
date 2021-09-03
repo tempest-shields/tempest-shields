@@ -169,6 +169,7 @@ TEST(FragmentCheckerTest, MultiObjective) {
     EXPECT_FALSE(checker.conformsToSpecification(*formula, multiobjective));
 }
 
+
 TEST(FragmentCheckerTest, Rpatl) {
     auto expManager = std::make_shared<storm::expressions::ExpressionManager>();
     storm::logic::FragmentChecker checker;
