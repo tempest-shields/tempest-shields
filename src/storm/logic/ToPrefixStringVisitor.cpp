@@ -59,6 +59,11 @@ namespace storm {
             return result;
         }
 
+        boost::any ToPrefixStringVisitor::visit(BoundedGloballyFormula const&, boost::any const&) const {
+            STORM_LOG_THROW(false, storm::exceptions::InvalidOperationException, "Can not convert to prefix string");
+        }
+
+
         boost::any ToPrefixStringVisitor::visit(BoundedUntilFormula const&, boost::any const&) const {
             STORM_LOG_THROW(false, storm::exceptions::InvalidOperationException, "Can not convert to prefix string");
         }
