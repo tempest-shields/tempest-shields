@@ -46,7 +46,7 @@ namespace storm {
                     /*!
                      * Changes the statesOfCoalition to the given one.
                      */
-                    void updateStatesOfCoaltion(storm::storage::BitVector newStatesOfCoaltion);
+                    void updateStatesOfCoalition(storm::storage::BitVector newStatesOfCoalition);
 
                     storm::storage::Scheduler<ValueType> extractScheduler() const;
 

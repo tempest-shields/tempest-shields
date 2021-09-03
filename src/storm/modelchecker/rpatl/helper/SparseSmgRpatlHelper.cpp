@@ -194,7 +194,7 @@ namespace storm {
 
                         // Update the viHelper for the (full-size) submatrix and statesOfCoalition.
                         viHelper.updateTransitionMatrix(submatrix);
-                        viHelper.updateStatesOfCoaltion(statesOfCoalition);
+                        viHelper.updateStatesOfCoalition(statesOfCoalition);
 
                         // Reset constrainedChoiceValues and b to 0-vector in the correct dimension.
                         constrainedChoiceValues = std::vector<ValueType>(transitionMatrix.getConstrainedRowGroupSumVector(relevantStates, newPsiStates).size(), storm::utility::zero<ValueType>());

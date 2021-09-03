@@ -131,8 +131,8 @@ namespace storm {
                 }
 
                 template <typename ValueType>
-                void GameViHelper<ValueType>::updateStatesOfCoaltion(storm::storage::BitVector newStatesOfCoaltion) {
-                    _statesOfCoalition = newStatesOfCoaltion;
+                void GameViHelper<ValueType>::updateStatesOfCoalition(storm::storage::BitVector newStatesOfCoalition) {
+                    _statesOfCoalition = newStatesOfCoalition;
                 }
 
                 template <typename ValueType>
