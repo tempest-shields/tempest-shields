@@ -221,7 +221,7 @@ namespace storm {
             STORM_LOG_THROW(this->hasScheduler(), storm::exceptions::InvalidOperationException, "Unable to retrieve non-existing scheduler.");
             return *scheduler.get();
         }
-        
+
         template<typename ValueType>
         void print(std::ostream& out, ValueType const& value) {
             if (value == storm::utility::infinity<ValueType>()) {
