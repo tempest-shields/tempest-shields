@@ -57,7 +57,7 @@ namespace {
         ValueType parseNumber(std::string const& input) const { return storm::utility::convertNumber<ValueType>(input);}
 
         void convertShieldingFileToString(std::string filename, std::string &shieldingString) {
-            filename += shieldEnding;
+            filename += shieldFiletype;
             std::ifstream resultFile(filename);
             std::stringstream resultBuffer;
             resultBuffer << resultFile.rdbuf();
@@ -68,13 +68,13 @@ namespace {
             this->convertShieldingFileToString(filename, shieldingString);
             std::string compareFileName = STORM_TEST_RESOURCES_DIR "/mdp-shields/" + filename;
             this->convertShieldingFileToString(compareFileName, compareFileString);
-            filename += shieldEnding;
+            filename += shieldFiletype;
             std::remove(filename.c_str());
         }
 
     private:
         storm::Environment _environment;
-        std::string shieldEnding = ".shield";
+        std::string shieldFiletype = ".shield";
     };
 
     typedef ::testing::Types<
