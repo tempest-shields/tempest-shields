@@ -66,7 +66,7 @@ namespace {
 
         void getStringsToCompare(std::string filename, std::string &shieldingString, std::string &compareFileString) {
             this->convertShieldingFileToString(filename, shieldingString);
-            std::string compareFileName = STORM_TEST_RESOURCES_DIR "/smg-shields/" + filename;
+            std::string compareFileName = STORM_TEST_RESOURCES_DIR "/shields/smg-shields/" + filename;
             this->convertShieldingFileToString(compareFileName, compareFileString);
             filename += shieldFiletype;
             std::remove(filename.c_str());
