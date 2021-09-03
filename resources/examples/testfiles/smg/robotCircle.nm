@@ -1,0 +1,61 @@
+// PRISM Model of a simple robot game
+// - A player - friendlyRobot - moves around and tries not to "crash" with another player - adversary Robot.
+// - friendlyRobot can choose the direction of movement.
+// - adversaryRobot should move in a circle counterclockwise on the grid, but has a probabilty to fail and move into the wrong direction.
+// - The movement of adversaryRobot is defined as a pseudo random movement with probabilty = 1/4 into one of the 4 possible directions.
+
+smg
+
+player friendlyRobot
+  [e1], [w1], [n1], [s1]
+endplayer
+
+player adversaryRobot
+  [e2], [w2], [n2], [s2], [middle]
+endplayer
+
+// 3x3 grid
+const int width = 2;
+const int height = 2;
+
+const int xmin = 0;
+const int xmax = width;
+const int ymin = 0;
+const int ymax = height;
+
+// probabilty to fail
+const double failProb = 1/10;
+const double notFailProb = 1-failProb;
+
+// definition of randomProb, this has to be 0.25 since it is the prob of go into one direction from the middle for the adverseryRobot
+const double randomProb = 1/4;
+
+global move : [0..1] init 0;
+
+//F__
+//___
+//__R
+
+label "crash" = x1=x2 & y1=y2;
+
+module robot1
+  x1 : [0..width] init 0;
+  y1 : [0..height] init 0;
+
+  [e1]    move=0 & x1<xmax -> (x1'=x1+1) & (move'=1);
+  [w1]    move=0 & x1>0    -> (x1'=x1-1) & (move'=1);
+  [n1]    move=0 & y1>0    -> (y1'=y1-1) & (move'=1);
+  [s1]    move=0 & y1<ymax -> (y1'=y1+1) & (move'=1);
+endmodule
+
+module robot2
+  x2 : [0..width] init width;
+  y2 : [0..height] init height;
+
+  [e2]     move=1 & x2<xmax & y2=ymax -> notFailProb : (x2'=x2+1) & (move'=0) + failProb : (y2'=y2-1) & (move'=0);
+  [w2]     move=1 & x2>0 & y2=0 -> notFailProb : (x2'=x2-1) & (move'=0) + failProb : (y2'=y2+1) & (move'=0);
+  [n2]     move=1 & x2=xmax & y2>0 -> notFailProb : (y2'=y2-1) & (move'=0) + failProb : (x2'=x2-1) & (move'=0);
+  [s2]     move=1 & x2=0 & y2<ymax -> notFailProb : (y2'=y2+1) & (move'=0) + failProb : (x2'=x2+1) & (move'=0);
+
+  [middle] move=1 & x2=1 & y2=1 -> randomProb : (x2'=x2+1) & (move'=0) + randomProb : (x2'=x2-1) & (move'=0) + randomProb : (y2'=y2-1) & (move'=0) + randomProb : (y2'=y2+1) & (move'=0);
+endmodule

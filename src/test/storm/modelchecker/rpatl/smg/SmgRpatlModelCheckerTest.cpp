@@ -229,6 +229,7 @@ namespace {
         result = checker->check(this->env(), tasks[15]);
         EXPECT_NEAR(this->parseNumber("0.6336"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
     }
+
     TYPED_TEST(SmgRpatlModelCheckerTest, MessageHack) {
         // This test is for borders of bounded U with conversations from G and F
         // bounded G
@@ -320,6 +321,52 @@ namespace {
         EXPECT_NEAR(this->parseNumber("1"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
         result = checker->check(this->env(), tasks[3]);
         EXPECT_NEAR(this->parseNumber("0"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+    }
+
+    TYPED_TEST(SmgRpatlModelCheckerTest, RobotCircle) {
+        // This test is for testing bounded globally with upper bound and in an interval (with upper and lower bound)
+        std::string formulasString = " <<friendlyRobot>> Pmax=? [ G<1 !\"crash\" ]";
+        formulasString += "; <<friendlyRobot>> Pmax=? [ G<=1 !\"crash\" ]";
+        formulasString += "; <<friendlyRobot>> Pmax=? [ G<=5 !\"crash\" ]";
+        formulasString += "; <<friendlyRobot>> Pmax=? [ G<=6 !\"crash\" ]";
+        formulasString += "; <<friendlyRobot>> Pmax=? [ G<=7 !\"crash\" ]";
+        formulasString += "; <<friendlyRobot>> Pmax=? [ G<=8 !\"crash\" ]";
+
+        formulasString += "; <<friendlyRobot>> Pmax=? [ G[1,5] !\"crash\" ]";
+        formulasString += "; <<friendlyRobot>> Pmax=? [ G[5,6] !\"crash\" ]";
+        formulasString += "; <<friendlyRobot>> Pmax=? [ G[7,8] !\"crash\" ]";
+
+        auto modelFormulas = this->buildModelFormulas(STORM_TEST_RESOURCES_DIR "/smg/robotCircle.nm", formulasString);
+        auto model = std::move(modelFormulas.first);
+        auto tasks = this->getTasks(modelFormulas.second);
+        EXPECT_EQ(81ul, model->getNumberOfStates());
+        EXPECT_EQ(196ul, model->getNumberOfTransitions());
+        EXPECT_EQ(148ul, model->getNumberOfChoices());
+        ASSERT_EQ(model->getType(), storm::models::ModelType::Smg);
+        auto checker = this->createModelChecker(model);
+        std::unique_ptr<storm::modelchecker::CheckResult> result;
+
+        // results for bounded globally with upper bound
+        result = checker->check(this->env(), tasks[0]);
+        EXPECT_NEAR(this->parseNumber("1"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[1]);
+        EXPECT_NEAR(this->parseNumber("1"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[2]);
+        EXPECT_NEAR(this->parseNumber("1"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[3]);
+        EXPECT_NEAR(this->parseNumber("0.975"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[4]);
+        EXPECT_NEAR(this->parseNumber("0.975"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[5]);
+        EXPECT_NEAR(this->parseNumber("0.975"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+
+        // results for bounded globally with upper and lower bound
+        result = checker->check(this->env(), tasks[6]);
+        EXPECT_NEAR(this->parseNumber("1"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[7]);
+        EXPECT_NEAR(this->parseNumber("0.975"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
+        result = checker->check(this->env(), tasks[8]);
+        EXPECT_NEAR(this->parseNumber("1"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
     }
 
     // TODO: create more test cases (files)
