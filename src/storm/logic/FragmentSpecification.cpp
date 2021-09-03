@@ -114,35 +114,6 @@ namespace storm {
             return rpatl;
         }
 
-        FragmentSpecification prctl() {
-            FragmentSpecification prctl = pctl();
-
-            prctl.setRewardOperatorsAllowed(true);
-            prctl.setCumulativeRewardFormulasAllowed(true);
-            prctl.setInstantaneousFormulasAllowed(true);
-            prctl.setReachabilityRewardFormulasAllowed(true);
-            prctl.setLongRunAverageOperatorsAllowed(true);
-            prctl.setStepBoundedCumulativeRewardFormulasAllowed(true);
-            prctl.setTimeBoundedCumulativeRewardFormulasAllowed(true);
-
-            return prctl;
-        }
-
-        FragmentSpecification prctlstar() {
-            FragmentSpecification prctlstar = pctlstar();
-
-            prctlstar.setRewardOperatorsAllowed(true);
-            prctlstar.setCumulativeRewardFormulasAllowed(true);
-            prctlstar.setInstantaneousFormulasAllowed(true);
-            prctlstar.setReachabilityRewardFormulasAllowed(true);
-            prctlstar.setLongRunAverageOperatorsAllowed(true);
-            prctlstar.setStepBoundedCumulativeRewardFormulasAllowed(true);
-            prctlstar.setTimeBoundedCumulativeRewardFormulasAllowed(true);
-
-            return prctlstar;
-
-        }
-
         FragmentSpecification csl() {
             FragmentSpecification csl = pctl();
 

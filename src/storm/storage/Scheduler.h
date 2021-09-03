@@ -143,8 +143,9 @@ namespace storm {
              * Prints the scheduler in json format to the given output stream.
              */
             void printJsonToStream(std::ostream& out, std::shared_ptr<storm::models::sparse::Model<ValueType>> model = nullptr, bool skipUniqueChoices = false,  bool skipDontCareStates = false) const;
+            void setPrintUndefinedChoices(bool value);
 
-        private:
+        protected:
             boost::optional<storm::storage::MemoryStructure> memoryStructure;
             std::vector<std::vector<SchedulerChoice<ValueType>>> schedulerChoices;
 
