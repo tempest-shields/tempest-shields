@@ -55,6 +55,9 @@ namespace storm {
             bool areBoundedGloballyFormulasAllowed() const;
             FragmentSpecification& setBoundedGloballyFormulasAllowed(bool newValue);
 
+            bool areHOAPathFormulasAllowed() const;
+            FragmentSpecification& setHOAPathFormulasAllowed(bool newValue);
+
             bool areAtomicExpressionFormulasAllowed() const;
             FragmentSpecification& setAtomicExpressionFormulasAllowed(bool newValue);
 
@@ -67,8 +70,14 @@ namespace storm {
             bool areUnaryBooleanStateFormulasAllowed() const;
             FragmentSpecification& setUnaryBooleanStateFormulasAllowed(bool newValue);
 
+            bool areUnaryBooleanPathFormulasAllowed() const;
+            FragmentSpecification& setUnaryBooleanPathFormulasAllowed(bool newValue);
+
             bool areBinaryBooleanStateFormulasAllowed() const;
             FragmentSpecification& setBinaryBooleanStateFormulasAllowed(bool newValue);
+
+            bool areBinaryBooleanPathFormulasAllowed() const;
+            FragmentSpecification& setBinaryBooleanPathFormulasAllowed(bool newValue);
 
             bool areCumulativeRewardFormulasAllowed() const;
             FragmentSpecification& setCumulativeRewardFormulasAllowed(bool newValue);
@@ -180,12 +189,15 @@ namespace storm {
             bool untilFormula;
             bool boundedUntilFormula;
             bool boundedGloballyFormula;
+            bool hoaPathFormula;
 
             bool atomicExpressionFormula;
             bool atomicLabelFormula;
             bool booleanLiteralFormula;
             bool unaryBooleanStateFormula;
             bool binaryBooleanStateFormula;
+            bool unaryBooleanPathFormula;
+            bool binaryBooleanPathFormula;
 
             bool cumulativeRewardFormula;
             bool instantaneousRewardFormula;
@@ -239,15 +251,26 @@ namespace storm {
 
         // rPATL for SMGs
         FragmentSpecification rpatl();
+        // PCTL*
+        FragmentSpecification pctlstar();
 
         // PCTL + cumulative, instantaneous, reachability and long-run rewards.
         FragmentSpecification prctl();
 
+        // PCTL* + cumulative, instantaneous, reachability and long-run rewards.
+        FragmentSpecification prctlstar();
+
         // Regular CSL.
         FragmentSpecification csl();
 
+        // CSL*, i.e., CSL with LTL path formulas.
+        FragmentSpecification cslstar();
+
         // CSL + cumulative, instantaneous, reachability and long-run rewards.
         FragmentSpecification csrl();
+
+        // CSL* + cumulative, instantaneous, reachability and long-run rewards.
+        FragmentSpecification csrlstar();
 
         // Multi-Objective formulas.
         FragmentSpecification multiObjective();

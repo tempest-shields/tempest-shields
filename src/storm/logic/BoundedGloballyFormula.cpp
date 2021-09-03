@@ -218,7 +218,7 @@ namespace storm {
             STORM_LOG_THROW(!bound.containsVariables(), storm::exceptions::InvalidOperationException, "Cannot evaluate time-bound '" << bound << "' as it contains undefined constants.");
         }
 
-        std::ostream& BoundedGloballyFormula::writeToStream(std::ostream& out) const {
+        std::ostream& BoundedGloballyFormula::writeToStream(std::ostream& out, bool allowParentheses) const {
             out << "G" ;
             if (this->isMultiDimensional()) {
                 out << "^{";
