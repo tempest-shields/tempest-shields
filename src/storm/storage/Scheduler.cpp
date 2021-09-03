@@ -323,9 +323,9 @@ namespace storm {
                 }
             }
             if (numOfSkippedStatesWithUniqueChoice > 0) {
-                stateString << "Skipped " << numOfSkippedStatesWithUniqueChoice << " deterministic states with unique choice." << std::endl;
+                out << "Skipped " << numOfSkippedStatesWithUniqueChoice << " deterministic states with unique choice." << std::endl;
             }
-            stateString << "___________________________________________________________________" << std::endl;
+            out << "___________________________________________________________________" << std::endl;
 
         }
 
