@@ -386,8 +386,20 @@ namespace storm {
             }
         }
 
-        std::shared_ptr<storm::logic::Formula const> FormulaParserGrammar::createGloballyFormula(std::shared_ptr<storm::logic::Formula const> const& subformula) const {
-            return std::shared_ptr<storm::logic::Formula const>(new storm::logic::GloballyFormula(subformula));
+        std::shared_ptr<storm::logic::Formula const> FormulaParserGrammar::createGloballyFormula(boost::optional<std::vector<std::tuple<boost::optional<storm::logic::TimeBound>, boost::optional<storm::logic::TimeBound>, std::shared_ptr<storm::logic::TimeBoundReference>>>> const& timeBounds, std::shared_ptr<storm::logic::Formula const> const& subformula) const {
+            if (timeBounds && !timeBounds.get().empty()) {
+                std::vector<boost::optional<storm::logic::TimeBound>> lowerBounds, upperBounds;
+                std::vector<storm::logic::TimeBoundReference> timeBoundReferences;
+                for (auto const& timeBound : timeBounds.get()) {
+                    STORM_LOG_ASSERT(!std::get<0>(timeBound), "Cannot use lower time bounds (or intervals) in globally formulas.");
+                    lowerBounds.push_back(std::get<0>(timeBound));
+                    upperBounds.push_back(std::get<1>(timeBound));
+                    timeBoundReferences.emplace_back(*std::get<2>(timeBound));
+                }
+                return std::shared_ptr<storm::logic::Formula const>(new storm::logic::BoundedGloballyFormula(subformula, lowerBounds, upperBounds, timeBoundReferences));
+            } else {
+                return std::shared_ptr<storm::logic::Formula const>(new storm::logic::GloballyFormula(subformula));
+            }
         }
 
         std::shared_ptr<storm::logic::Formula const> FormulaParserGrammar::createNextFormula(std::shared_ptr<storm::logic::Formula const> const& subformula) const {

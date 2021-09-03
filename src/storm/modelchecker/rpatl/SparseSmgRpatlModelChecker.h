@@ -28,6 +28,7 @@ namespace storm {
 
             // The implemented methods of the AbstractModelChecker interface.
             bool canHandle(CheckTask<storm::logic::Formula, ValueType> const& checkTask) const override;
+
             std::unique_ptr<CheckResult> checkGameFormula(Environment const& env, CheckTask<storm::logic::GameFormula, ValueType> const& checkTask) override;
             std::unique_ptr<CheckResult> checkProbabilityOperatorFormula(Environment const& env, CheckTask<storm::logic::ProbabilityOperatorFormula, ValueType> const& checkTask) override;
             std::unique_ptr<CheckResult> checkRewardOperatorFormula(Environment const& env, CheckTask<storm::logic::RewardOperatorFormula, ValueType> const& checkTask) override;
@@ -40,11 +41,11 @@ namespace storm {
             std::unique_ptr<CheckResult> computeGloballyProbabilities(Environment const& env, CheckTask<storm::logic::GloballyFormula, ValueType> const& checkTask) override;
             std::unique_ptr<CheckResult> computeNextProbabilities(Environment const& env, CheckTask<storm::logic::NextFormula, ValueType> const& checkTask) override;
             std::unique_ptr<CheckResult> computeBoundedGloballyProbabilities(Environment const& env, CheckTask<storm::logic::BoundedGloballyFormula, ValueType> const& checkTask) override;
+            std::unique_ptr<CheckResult> computeBoundedUntilProbabilities(Environment const& env, CheckTask<storm::logic::BoundedUntilFormula, ValueType> const& checkTask) override;
 
             std::unique_ptr<CheckResult> computeLongRunAverageProbabilities(Environment const& env, CheckTask<storm::logic::StateFormula, ValueType> const& checkTask) override;
             std::unique_ptr<CheckResult> computeLongRunAverageRewards(Environment const& env, storm::logic::RewardMeasureType rewardMeasureType, CheckTask<storm::logic::LongRunAverageRewardFormula, ValueType> const& checkTask) override;
 
-            //void coalitionIndicator(Environment& env, CheckTask<storm::logic::GameFormula, ValueType> const& checkTask);
         private:
             storm::storage::BitVector statesOfCoalition;
         };

@@ -110,6 +110,9 @@ namespace storm {
             rpatl.setGloballyFormulasAllowed(true);
             rpatl.setNextFormulasAllowed(true);
             rpatl.setBoundedGloballyFormulasAllowed(true);
+            rpatl.setBoundedUntilFormulasAllowed(true);
+            rpatl.setStepBoundedUntilFormulasAllowed(true);
+            rpatl.setTimeBoundedUntilFormulasAllowed(true);
 
             return rpatl;
         }

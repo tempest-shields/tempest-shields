@@ -15,22 +15,22 @@ namespace storm {
 
                 template <typename ValueType>
                 GameViHelper<ValueType>::GameViHelper(storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::BitVector statesOfCoalition) : _transitionMatrix(transitionMatrix), _statesOfCoalition(statesOfCoalition) {
+                    // Intentionally left empty.
                 }
 
                 template <typename ValueType>
                 void GameViHelper<ValueType>::prepareSolversAndMultipliers(const Environment& env) {
                     _multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, _transitionMatrix);
-
                     _x1IsCurrent = false;
                 }
 
                 template <typename ValueType>
                 void GameViHelper<ValueType>::performValueIteration(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir) {
                     prepareSolversAndMultipliers(env);
+                    // Get precision for convergence check.
                     ValueType precision = storm::utility::convertNumber<ValueType>(env.solver().game().getPrecision());
                     uint64_t maxIter = env.solver().game().getMaximalNumberOfIterations();
                     _b = b;
-
                     _x1.assign(_transitionMatrix.getRowGroupCount(), storm::utility::zero<ValueType>());
                     _x2 = _x1;
 
@@ -114,34 +114,40 @@ namespace storm {
                 }
 
                 template <typename ValueType>
-                void GameViHelper<ValueType>::fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector relevantStates, storm::storage::BitVector psiStates) {
-                    std::vector<ValueType> filledVector = std::vector<ValueType>(relevantStates.size(), storm::utility::zero<ValueType>());
-                    uint bitIndex = 0;
-                    for(uint i = 0; i < filledVector.size(); i++) {
-                        if (relevantStates.get(i)) {
-                            filledVector.at(i) = result.at(bitIndex);
-                            bitIndex++;
+                void GameViHelper<ValueType>::performValueIterationUpperBound(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir, uint64_t upperBound, std::vector<ValueType>& constrainedChoiceValues) {
+                    prepareSolversAndMultipliers(env);
+                    _x = x;
+                    _b = b;
+
+                    if (this->isProduceSchedulerSet()) {
+                        if (!this->_producedOptimalChoices.is_initialized()) {
+                            this->_producedOptimalChoices.emplace();
                         }
-                        else if (psiStates.get(i)) {
-                            filledVector.at(i) = 1;
-                        }
+                        this->_producedOptimalChoices->resize(this->_transitionMatrix.getRowGroupCount());
                     }
-                    result = filledVector;
+                    for (uint64_t iter = 0; iter < upperBound; iter++) {
+                        if(iter == upperBound - 1) {
+                            _multiplier->multiply(env, _x, &_b, constrainedChoiceValues);
+                        }
+                        performIterationStepUpperBound(env, dir);
+                    }
+
+                    x = _x;
                 }
 
                 template <typename ValueType>
-                void GameViHelper<ValueType>::fillChoiceValuesVector(std::vector<ValueType>& choiceValues, storm::storage::BitVector psiStates, std::vector<storm::storage::SparseMatrix<double>::index_type> rowGroupIndices) {
-                    std::vector<ValueType> allChoices = std::vector<ValueType>(rowGroupIndices.at(rowGroupIndices.size() - 1), storm::utility::zero<ValueType>());
-                    auto choice_it = choiceValues.begin();
-                    for(uint state = 0; state < rowGroupIndices.size() - 1; state++) {
-                        uint rowGroupSize = rowGroupIndices[state + 1] - rowGroupIndices[state];
-                        if (psiStates.get(state)) {
-                            for(uint choice = 0; choice < rowGroupSize; choice++, choice_it++) {
-                                allChoices.at(rowGroupIndices.at(state) + choice) = *choice_it;
-                            }
-                        }
+                void GameViHelper<ValueType>::performIterationStepUpperBound(Environment const& env, storm::solver::OptimizationDirection const dir, std::vector<uint64_t>* choices) {
+                    if (!_multiplier) {
+                        prepareSolversAndMultipliers(env);
                     }
-                    choiceValues = allChoices;
+                    // multiplyandreducegaussseidel
+                    // Ax = x'
+                    if (choices == nullptr) {
+                        _multiplier->multiplyAndReduce(env, dir, _x, &_b, _x, nullptr, &_statesOfCoalition);
+                    } else {
+                        // Also keep track of the choices made.
+                        _multiplier->multiplyAndReduce(env, dir, _x, &_b, _x, choices, &_statesOfCoalition);
+                    }
                 }
 
                 template <typename ValueType>
@@ -152,6 +158,16 @@ namespace storm {
                 template <typename ValueType>
                 bool GameViHelper<ValueType>::isProduceSchedulerSet() const {
                     return _produceScheduler;
+                }
+
+                template <typename ValueType>
+                void GameViHelper<ValueType>::updateTransitionMatrix(storm::storage::SparseMatrix<ValueType> newTransitionMatrix) {
+                    _transitionMatrix = newTransitionMatrix;
+                }
+
+                template <typename ValueType>
+                void GameViHelper<ValueType>::updateStatesOfCoaltion(storm::storage::BitVector newStatesOfCoaltion) {
+                    _statesOfCoalition = newStatesOfCoaltion;
                 }
 
                 template <typename ValueType>
@@ -181,6 +197,21 @@ namespace storm {
                 template <typename ValueType>
                 void GameViHelper<ValueType>::getChoiceValues(Environment const& env, std::vector<ValueType> const& x, std::vector<ValueType>& choiceValues) {
                     _multiplier->multiply(env, x, &_b, choiceValues);
+                }
+
+                template <typename ValueType>
+                void GameViHelper<ValueType>::fillChoiceValuesVector(std::vector<ValueType>& choiceValues, storm::storage::BitVector psiStates, std::vector<storm::storage::SparseMatrix<double>::index_type> rowGroupIndices) {
+                    std::vector<ValueType> allChoices = std::vector<ValueType>(rowGroupIndices.at(rowGroupIndices.size() - 1), storm::utility::zero<ValueType>());
+                    auto choice_it = choiceValues.begin();
+                    for(uint state = 0; state < rowGroupIndices.size() - 1; state++) {
+                        uint rowGroupSize = rowGroupIndices[state + 1] - rowGroupIndices[state];
+                        if (psiStates.get(state)) {
+                            for(uint choice = 0; choice < rowGroupSize; choice++, choice_it++) {
+                                allChoices.at(rowGroupIndices.at(state) + choice) = *choice_it;
+                            }
+                        }
+                    }
+                    choiceValues = allChoices;
                 }
 
                 template <typename ValueType>

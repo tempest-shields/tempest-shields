@@ -39,8 +39,6 @@ namespace storm {
             // Intentionally left empty.
         }
 
-
-
         template<typename SparseSmgModelType>
         bool SparseSmgRpatlModelChecker<SparseSmgModelType>::canHandleStatic(CheckTask<storm::logic::Formula, ValueType> const& checkTask, bool* requiresSingleInitialState) {
             storm::logic::Formula const& formula = checkTask.getFormula();
@@ -56,8 +54,6 @@ namespace storm {
                 return false;
             }
         }
-
-
 
         template<typename SparseSmgModelType>
         std::unique_ptr<CheckResult> SparseSmgRpatlModelChecker<SparseSmgModelType>::checkGameFormula(Environment const& env, CheckTask<storm::logic::GameFormula, ValueType> const& checkTask) {
@@ -97,7 +93,6 @@ namespace storm {
         std::unique_ptr<CheckResult> SparseSmgRpatlModelChecker<ModelType>::checkRewardOperatorFormula(Environment const& env, CheckTask<storm::logic::RewardOperatorFormula, ValueType> const& checkTask) {
             storm::logic::RewardOperatorFormula const& formula = checkTask.getFormula();
             std::unique_ptr<CheckResult> result = this->computeRewards(env, formula.getMeasureType(), checkTask.substituteFormula(formula.getSubformula()));
-
             return result;
         }
 
@@ -105,7 +100,6 @@ namespace storm {
 		std::unique_ptr<CheckResult> SparseSmgRpatlModelChecker<ModelType>::checkLongRunAverageOperatorFormula(Environment const& env, CheckTask<storm::logic::LongRunAverageOperatorFormula, ValueType> const& checkTask) {
             storm::logic::LongRunAverageOperatorFormula const& formula = checkTask.getFormula();
             std::unique_ptr<CheckResult> result = this->computeLongRunAverageProbabilities(env, checkTask.substituteFormula(formula.getSubformula().asStateFormula()));
-
             return result;
         }
 
@@ -122,6 +116,8 @@ namespace storm {
                 return this->computeNextProbabilities(env, checkTask.substituteFormula(formula.asNextFormula()));
             } else if (formula.isBoundedGloballyFormula()) {
                 return this->computeBoundedGloballyProbabilities(env, checkTask.substituteFormula(formula.asBoundedGloballyFormula()));
+            } else if (formula.isBoundedUntilFormula()) {
+                return this->computeBoundedUntilProbabilities(env, checkTask.substituteFormula(formula.asBoundedUntilFormula()));
             }
             STORM_LOG_THROW(false, storm::exceptions::InvalidArgumentException, "The given formula '" << formula << "' is invalid.");
         }
@@ -187,10 +183,37 @@ namespace storm {
         std::unique_ptr<CheckResult> SparseSmgRpatlModelChecker<ModelType>::computeBoundedGloballyProbabilities(Environment const& env, CheckTask<storm::logic::BoundedGloballyFormula, ValueType> const& checkTask) {
             storm::logic::BoundedGloballyFormula const& pathFormula = checkTask.getFormula();
             STORM_LOG_THROW(checkTask.isOptimizationDirectionSet(), storm::exceptions::InvalidPropertyException, "Formula needs to specify whether minimal or maximal values are to be computed on nondeterministic model.");
+            // checks for bounds
+            STORM_LOG_THROW(pathFormula.hasUpperBound(), storm::exceptions::InvalidPropertyException, "Formula needs to have (a single) upper step bound.");
+            STORM_LOG_THROW(pathFormula.hasIntegerLowerBound(), storm::exceptions::InvalidPropertyException, "Formula lower step bound must be discrete.");
+            STORM_LOG_THROW(pathFormula.hasIntegerUpperBound(), storm::exceptions::InvalidPropertyException, "Formula upper step bound must be discrete.");
+
             std::unique_ptr<CheckResult> subResultPointer = this->check(env, pathFormula.getSubformula());
             ExplicitQualitativeCheckResult const& subResult = subResultPointer->asExplicitQualitativeCheckResult();
 
             auto ret = storm::modelchecker::helper::SparseSmgRpatlHelper<ValueType>::computeBoundedGloballyProbabilities(env, storm::solver::SolveGoal<ValueType>(this->getModel(), checkTask), this->getModel().getTransitionMatrix(), this->getModel().getBackwardTransitions(), subResult.getTruthValuesVector(), checkTask.isQualitativeSet(), statesOfCoalition, checkTask.isProduceSchedulersSet(), checkTask.getHint(), pathFormula.getNonStrictLowerBound<uint64_t>(), pathFormula.getNonStrictUpperBound<uint64_t>());
+            std::unique_ptr<CheckResult> result(new ExplicitQuantitativeCheckResult<ValueType>(std::move(ret.values)));
+            if(checkTask.isShieldingTask()) {
+                tempest::shields::createShield<ValueType>(std::make_shared<storm::models::sparse::Smg<ValueType>>(this->getModel()), std::move(ret.choiceValues), checkTask.getShieldingExpression(), checkTask.getOptimizationDirection(), std::move(ret.relevantStates), ~statesOfCoalition);
+            }
+            return result;
+        }
+
+        template<typename ModelType>
+        std::unique_ptr<CheckResult> SparseSmgRpatlModelChecker<ModelType>::computeBoundedUntilProbabilities(Environment const& env, CheckTask<storm::logic::BoundedUntilFormula, ValueType> const& checkTask) {
+            storm::logic::BoundedUntilFormula const& pathFormula = checkTask.getFormula();
+            STORM_LOG_THROW(checkTask.isOptimizationDirectionSet(), storm::exceptions::InvalidPropertyException, "Formula needs to specify whether minimal or maximal values are to be computed on nondeterministic model.");
+            // checks for bounds
+            STORM_LOG_THROW(pathFormula.hasUpperBound(), storm::exceptions::InvalidPropertyException, "Formula needs to have (a single) upper step bound.");
+            STORM_LOG_THROW(pathFormula.hasIntegerLowerBound(), storm::exceptions::InvalidPropertyException, "Formula lower step bound must be discrete.");
+            STORM_LOG_THROW(pathFormula.hasIntegerUpperBound(), storm::exceptions::InvalidPropertyException, "Formula upper step bound must be discrete.");
+
+            std::unique_ptr<CheckResult> leftResultPointer = this->check(env, pathFormula.getLeftSubformula());
+            std::unique_ptr<CheckResult> rightResultPointer = this->check(env, pathFormula.getRightSubformula());
+            ExplicitQualitativeCheckResult const& leftResult = leftResultPointer->asExplicitQualitativeCheckResult();
+            ExplicitQualitativeCheckResult const& rightResult = rightResultPointer->asExplicitQualitativeCheckResult();
+
+            auto ret = storm::modelchecker::helper::SparseSmgRpatlHelper<ValueType>::computeBoundedUntilProbabilities(env, storm::solver::SolveGoal<ValueType>(this->getModel(), checkTask), this->getModel().getTransitionMatrix(), this->getModel().getBackwardTransitions(), leftResult.getTruthValuesVector(), rightResult.getTruthValuesVector(), checkTask.isQualitativeSet(), statesOfCoalition, checkTask.isProduceSchedulersSet(), checkTask.getHint(), pathFormula.getNonStrictLowerBound<uint64_t>(), pathFormula.getNonStrictUpperBound<uint64_t>());
             std::unique_ptr<CheckResult> result(new ExplicitQuantitativeCheckResult<ValueType>(std::move(ret.values)));
             if(checkTask.isShieldingTask()) {
                 tempest::shields::createShield<ValueType>(std::make_shared<storm::models::sparse::Smg<ValueType>>(this->getModel()), std::move(ret.choiceValues), checkTask.getShieldingExpression(), checkTask.getOptimizationDirection(), std::move(ret.relevantStates), ~statesOfCoalition);
@@ -216,7 +239,6 @@ namespace storm {
             } else if (checkTask.isProduceSchedulersSet()) {
                 result->asExplicitQuantitativeCheckResult<ValueType>().setScheduler(std::make_unique<storm::storage::Scheduler<ValueType>>(helper.extractScheduler()));
             }
-
             return result;
         }
 

@@ -23,17 +23,15 @@ namespace storm {
 
                     void prepareSolversAndMultipliers(const Environment& env);
 
+                    /*!
+                     * Perform value iteration until convergence
+                     */
                     void performValueIteration(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir);
 
                     /*!
-                     * Fills the result vector to the original size with ones for being psiStates, zeros for being not phiStates
+                     * Perform value iteration until upper bound
                      */
-                    void fillResultVector(std::vector<ValueType>& result, storm::storage::BitVector relevantStates, storm::storage::BitVector psiStates);
-
-                    /*!
-                     * Fills the choice values vector to the original size with zeros for ~psiState choices.
-                     */
-                    void fillChoiceValuesVector(std::vector<ValueType>& choiceValues, storm::storage::BitVector psiStates, std::vector<storm::storage::SparseMatrix<double>::index_type> rowGroupIndices);
+                    void performValueIterationUpperBound(Environment const& env, std::vector<ValueType>& x, std::vector<ValueType> b, storm::solver::OptimizationDirection const dir, uint64_t upperBound, std::vector<ValueType>& constrainedChoiceValues);
 
                     /*!
                      * Sets whether an optimal scheduler shall be constructed during the computation
@@ -45,11 +43,35 @@ namespace storm {
                      */
                     bool isProduceSchedulerSet() const;
 
+                    /*!
+                     * Changes the transitionMatrix to the given one.
+                     */
+                    void updateTransitionMatrix(storm::storage::SparseMatrix<ValueType> newTransitionMatrix);
+
+                    /*!
+                     * Changes the statesOfCoalition to the given one.
+                     */
+                    void updateStatesOfCoaltion(storm::storage::BitVector newStatesOfCoaltion);
+
                     storm::storage::Scheduler<ValueType> extractScheduler() const;
 
                     void getChoiceValues(Environment const& env, std::vector<ValueType> const& x, std::vector<ValueType>& choiceValues);
+
+                    /*!
+                     * Fills the choice values vector to the original size with zeros for ~psiState choices.
+                     */
+                    void fillChoiceValuesVector(std::vector<ValueType>& choiceValues, storm::storage::BitVector psiStates, std::vector<storm::storage::SparseMatrix<double>::index_type> rowGroupIndices);
+
                 private:
+                    /*!
+                     * Performs one iteration step for value iteration
+                     */
                     void performIterationStep(Environment const& env, storm::solver::OptimizationDirection const dir, std::vector<uint64_t>* choices = nullptr);
+
+                    /*!
+                     * Performs one iteration step for value iteration with upper bound
+                     */
+                    void performIterationStepUpperBound(Environment const& env, storm::solver::OptimizationDirection const dir, std::vector<uint64_t>* choices = nullptr);
 
                     /*!
                      * Checks whether the curently computed value achieves the desired precision
@@ -77,7 +99,7 @@ namespace storm {
 
                     storm::storage::SparseMatrix<ValueType> _transitionMatrix;
                     storm::storage::BitVector _statesOfCoalition;
-                    std::vector<ValueType> _x1, _x2, _b;
+                    std::vector<ValueType> _x, _x1, _x2, _b;
                     std::unique_ptr<storm::solver::Multiplier<ValueType>> _multiplier;
 
                     bool _produceScheduler = false;
