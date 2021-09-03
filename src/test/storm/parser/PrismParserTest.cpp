@@ -14,6 +14,7 @@ TEST(PrismParser, StandardModelTest) {
     EXPECT_NO_THROW(result = storm::parser::PrismParser::parse(STORM_TEST_RESOURCES_DIR "/dtmc/leader3_5.pm"));
     EXPECT_NO_THROW(result = storm::parser::PrismParser::parse(STORM_TEST_RESOURCES_DIR "/mdp/two_dice.nm"));
     EXPECT_NO_THROW(result = storm::parser::PrismParser::parse(STORM_TEST_RESOURCES_DIR "/mdp/wlan0_collide.nm"));
+    EXPECT_NO_THROW(result = storm::parser::PrismParser::parse(STORM_TEST_RESOURCES_DIR "/smg/walker.nm"));
 }
 
 TEST(PrismParser, SimpleTest) {
@@ -23,16 +24,16 @@ TEST(PrismParser, SimpleTest) {
         b : bool;
         [a] true -> 1: (b'=true != false = b => false);
     endmodule)";
-    
+
     storm::prism::Program result;
     EXPECT_NO_THROW(result = storm::parser::PrismParser::parseFromString(testInput, "testfile"));
     EXPECT_EQ(1ul, result.getNumberOfModules());
     EXPECT_EQ(storm::prism::Program::ModelType::DTMC, result.getModelType());
     EXPECT_FALSE(result.hasUnboundedVariables());
-    
+
     testInput =
     R"(mdp
-    
+
     module main
         x : [1..5] init 1;
         [] x=1 -> 1:(x'=2);
@@ -51,21 +52,21 @@ TEST(PrismParser, SimpleTest) {
 TEST(PrismParser, ComplexTest) {
     std::string testInput =
     R"(ma
-    
+
     const int a;
     const int b = 10;
     const bool c;
     const bool d = true | false;
     const double e;
     const double f = 9;
-    
+
     formula test = a >= 10 & (max(a,b) > floor(e));
     formula test2 = a+b;
     formula test3 = (a + b > 10 ? floor(e) : h) + a;
-    
+
     global g : bool init false;
     global h : [0 .. b];
-    
+
     module mod1
         i : bool;
         j : bool init c;
@@ -74,25 +75,25 @@ TEST(PrismParser, ComplexTest) {
         [a] test&false -> (i'=true)&(k'=1+1) + 1 : (k'=floor(e) + max(k, b) - 1 + k);
         [b] true -> (i'=i);
     endmodule
-                                              
+
     module mod2
         [] (k > 3) & false & (min(a, 0) < max(h, k)) -> 1-e: (g'=(1-a) * 2 + floor(f) > 2);
     endmodule
-    
+
     module mod3 = mod1 [ i = i1, j = j1, k = k1 ] endmodule
-                                                               
+
     label "mal" = max(a, 10) > 0;
-    
+
     rewards "testrewards"
         [a] true : a + 7;
         max(f, a) <= 8 : 2*b;
     endrewards
-                                                               
+
     rewards "testrewards2"
         [b] true : a + 7;
         max(f, a) <= 8 : 2*b;
     endrewards)";
-    
+
     storm::prism::Program result;
     EXPECT_NO_THROW(result = storm::parser::PrismParser::parseFromString(testInput, "testfile"));
     EXPECT_EQ(storm::prism::Program::ModelType::MA, result.getModelType());
@@ -100,6 +101,44 @@ TEST(PrismParser, ComplexTest) {
     EXPECT_EQ(2ul, result.getNumberOfRewardModels());
     EXPECT_EQ(1ul, result.getNumberOfLabels());
     EXPECT_FALSE(result.hasUnboundedVariables());
+
+    testInput =
+            R"(smg
+
+    player walker
+      [a0], [a00], [a1], [a2], [a3]
+    endplayer
+
+    player blocker
+      [a40], [a41]
+    endplayer
+
+    label "s0" = c=0 & b=0 & a=0;
+    label "s1" = c=0 & b=0 & a=1;
+    label "s2" = c=0 & b=1 & a=0;
+    label "s3" = c=0 & b=1 & a=1;
+    label "s4" = c=1 & b=0 & a=0;
+
+    module transitions
+       a : [0..1] init 0;
+       b : [0..1] init 0;
+       c : [0..1] init 0;
+
+      [a0] a=0 & b=0 & c=0 -> 4/10 : (a'=1) + 6/10 : (b'=1);
+      [a00] a=0 & b=0 & c=0 -> true;
+      [a1] a=1 & b=0 & c=0 -> 3/10 : (a'=0) + 3/10 : (a'=0) & (b'=1) + 4/10 : (b'=1);
+      [a2] a=0 & b=1 & c=0 -> 2/10 : (a'=1) + 8/10 : (b'=0) & (c'=1);
+      [a3] a=1 & b=1 & c=0 -> true;
+      [a40] a=0 & b=0 & c=1 -> 3/10 : (c'=0) + 7/10 : (a'=1) & (b'=1) & (c'=0);
+      [a41] a=0 & b=0 & c=1 -> true;
+    endmodule)";
+
+    EXPECT_NO_THROW(result = storm::parser::PrismParser::parseFromString(testInput, "testfile"));
+    EXPECT_EQ(storm::prism::Program::ModelType::SMG, result.getModelType());
+    EXPECT_EQ(1ul, result.getNumberOfModules());
+    EXPECT_EQ(2ul, result.getNumberOfPlayers());
+    EXPECT_EQ(5ul, result.getNumberOfLabels());
+>>>>>>> d7e3f7ed6 (added a smg to PrismParserTest.cpp)
 }
 
 TEST(PrismParser, UnboundedTest) {
@@ -109,7 +148,7 @@ TEST(PrismParser, UnboundedTest) {
         b : int;
         [a] true -> 1: (b'=b+1);
     endmodule)";
-    
+
     storm::prism::Program result;
     EXPECT_NO_THROW(result = storm::parser::PrismParser::parseFromString(testInput, "testfile"));
     EXPECT_EQ(1ul, result.getNumberOfModules());
@@ -186,119 +225,119 @@ TEST(PrismParser, IllegalInputTest) {
 
     const int a;
     const bool a = true;
-    
+
     module mod1
         c : [0 .. 8] init 1;
-        [] c < 3 -> 2: (c' = c+1); 
+        [] c < 3 -> 2: (c' = c+1);
     endmodule
     )";
-    
+
     storm::prism::Program result;
     STORM_SILENT_EXPECT_THROW(result = storm::parser::PrismParser::parseFromString(testInput, "testfile"), storm::exceptions::WrongFormatException);
-    
+
     testInput =
     R"(dtmc
-    
+
     const int a;
-    
+
     module mod1
         a : [0 .. 8] init 1;
-        [] a < 3 -> 1: (a' = a+1); 
+        [] a < 3 -> 1: (a' = a+1);
     endmodule)";
-    
+
     STORM_SILENT_EXPECT_THROW(result = storm::parser::PrismParser::parseFromString(testInput, "testfile"), storm::exceptions::WrongFormatException);
-    
+
     testInput =
     R"(dtmc
-    
+
     const int a = 2;
     formula a = 41;
-    
+
     module mod1
         c : [0 .. 8] init 1;
-        [] c < 3 -> 1: (c' = c+1); 
+        [] c < 3 -> 1: (c' = c+1);
     endmodule)";
-    
+
     STORM_SILENT_EXPECT_THROW(result = storm::parser::PrismParser::parseFromString(testInput, "testfile"), storm::exceptions::WrongFormatException);
-    
+
     testInput =
     R"(dtmc
-    
+
     const int a = 2;
-    
+
     init
         c > 3
     endinit
-    
+
     module mod1
         c : [0 .. 8] init 1;
-        [] c < 3 -> 1: (c' = c+1); 
+        [] c < 3 -> 1: (c' = c+1);
     endmodule
-        
+
     init
         c > 3
     endinit
 
     )";
-    
+
     STORM_SILENT_EXPECT_THROW(result = storm::parser::PrismParser::parseFromString(testInput, "testfile"), storm::exceptions::WrongFormatException);
-    
+
     testInput =
     R"(dtmc
-    
+
     module mod1
         c : [0 .. 8] init 1;
         [] c < 3 -> 1: (c' = c+1);
     endmodule
-                    
+
     module mod2
         [] c < 3 -> 1: (c' = c+1);
     endmodule)";
-    
+
     STORM_SILENT_EXPECT_THROW(result = storm::parser::PrismParser::parseFromString(testInput, "testfile"), storm::exceptions::WrongFormatException);
-                        
+
     testInput =
     R"(dtmc
-                        
+
     module mod1
         c : [0 .. 8] init 1;
         [] c < 3 -> 1: (c' = c+1)&(c'=c-1);
     endmodule)";
-                                        
+
     STORM_SILENT_EXPECT_THROW(result = storm::parser::PrismParser::parseFromString(testInput, "testfile"), storm::exceptions::WrongFormatException);
-    
+
     testInput =
     R"(dtmc
-    
+
     module mod1
         c : [0 .. 8] init 1;
         [] c < 3 -> 1: (c' = true || false);
     endmodule)";
-    
+
     STORM_SILENT_EXPECT_THROW(result = storm::parser::PrismParser::parseFromString(testInput, "testfile"), storm::exceptions::WrongFormatException);
-    
+
     testInput =
     R"(dtmc
-    
+
     module mod1
         c : [0 .. 8] init 1;
         [] c + 3 -> 1: (c' = 1);
     endmodule)";
-    
+
     STORM_SILENT_EXPECT_THROW(result = storm::parser::PrismParser::parseFromString(testInput, "testfile"), storm::exceptions::WrongFormatException);
-    
+
     testInput =
     R"(dtmc
-    
+
     module mod1
         c : [0 .. 8] init 1;
         [] c + 3 -> 1: (c' = 1);
     endmodule
-    
+
     label "test" = c + 1;
-    
+
     )";
-    
+
     STORM_SILENT_EXPECT_THROW(result = storm::parser::PrismParser::parseFromString(testInput, "testfile"), storm::exceptions::WrongFormatException);
 }
 
