@@ -138,7 +138,6 @@ TEST(PrismParser, ComplexTest) {
     EXPECT_EQ(1ul, result.getNumberOfModules());
     EXPECT_EQ(2ul, result.getNumberOfPlayers());
     EXPECT_EQ(5ul, result.getNumberOfLabels());
->>>>>>> d7e3f7ed6 (added a smg to PrismParserTest.cpp)
 }
 
 TEST(PrismParser, UnboundedTest) {
