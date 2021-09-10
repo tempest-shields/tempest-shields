@@ -113,9 +113,9 @@ namespace {
     auto mdp = std::move(modelFormulas.first);
     auto tasks = this->getTasks(modelFormulas.second);
     EXPECT_EQ(13ul, mdp->getNumberOfStates());
-    EXPECT_EQ(43ul, mdp->getNumberOfTransitions());
+    EXPECT_EQ(48ul, mdp->getNumberOfTransitions());
     ASSERT_EQ(mdp->getType(), storm::models::ModelType::Mdp);
-    EXPECT_EQ(25ull, mdp->getNumberOfChoices());
+    EXPECT_EQ(27ul, mdp->getNumberOfChoices());
 
     storm::modelchecker::SparseMdpPrctlModelChecker<storm::models::sparse::Mdp<ValueType>> checker(*mdp);
 
