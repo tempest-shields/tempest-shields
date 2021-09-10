@@ -548,7 +548,6 @@ namespace storm {
                 // Iterate over all commands.
                 for (uint_fast64_t j = 0; j < module.getNumberOfCommands(); ++j) {
                     storm::prism::Command const& command = module.getCommand(j);
-
                     // Only consider commands that are not possibly synchronizing.
                     if (isCommandPotentiallySynchronizing(command)) continue;
 
@@ -615,9 +614,15 @@ namespace storm {
                     }
 
                     if (program.getModelType() == storm::prism::Program::ModelType::SMG) {
-                        storm::storage::PlayerIndex const& playerOfModule = moduleIndexToPlayerIndexMap.at(i);
-                        STORM_LOG_THROW(playerOfModule != storm::storage::INVALID_PLAYER_INDEX, storm::exceptions::WrongFormatException, "Module " << module.getName() << " is not owned by any player but has at least one enabled, unlabeled command.");
-                        choice.setPlayerIndex(playerOfModule);
+                        if(command.getActionName() != "") {
+                            storm::storage::PlayerIndex const& playerOfAction = actionIndexToPlayerIndexMap.at(command.getActionIndex());
+                            STORM_LOG_THROW(playerOfAction != storm::storage::INVALID_PLAYER_INDEX, storm::exceptions::WrongFormatException, "Command " << command.getActionName() << " is not owned by any player.");
+                            choice.setPlayerIndex(playerOfAction);
+                        } else {
+                            storm::storage::PlayerIndex const& playerOfModule = moduleIndexToPlayerIndexMap.at(i);
+                            STORM_LOG_THROW(playerOfModule != storm::storage::INVALID_PLAYER_INDEX, storm::exceptions::WrongFormatException, "Module " << module.getName() << " is not owned by any player but has at least one enabled, unlabeled command.");
+                            choice.setPlayerIndex(playerOfModule);
+                        }
                     }
 
                     if (this->options.isExplorationChecksSet()) {

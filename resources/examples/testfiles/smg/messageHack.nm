@@ -1,0 +1,52 @@
+// PRISM Model of hacking a communication
+// - Bob and Alice are chatting.
+// - Eve wants to hack the messages from Bob.
+// - The propability of successfull hacking is 0.05.
+
+smg
+
+player bob
+  [receiveB], [readWriteB], [sendB], [waitB]
+endplayer
+
+player alice
+  [receiveA], [readWriteA], [sendA], [waitA]
+endplayer
+
+player eve
+  [hackE], [waitE]
+endplayer
+
+// 0 bob, 1 eve, 2 alice
+global move : [0..2] init 0;
+//
+global bobSent : [0..1] init 0;
+global hacked : [0..1] init 0;
+
+label "hacked" = hacked=1;
+
+module communication
+  bobReceived : [0..1] init 0;
+  bobWroteMessage : [0..1] init 1;
+  aliceReceived : [0..1] init 0;
+  aliceWroteMessage : [0..1] init 0;
+  aliceSent : [0..1] init 0;
+
+  // bob's communication part
+  [receiveB] move=0 & aliceSent=1 -> (bobReceived'=1) & (aliceSent'=0) & (move'=1);
+  [readWriteB] move=0 & bobReceived=1 -> (bobWroteMessage'=1) & (bobReceived'=0) & (move'=1);
+  [sendB] move=0 & bobWroteMessage=1 -> (bobSent'=1) & (bobWroteMessage'=0) & (move'=1);
+  [waitB] move=0 & !(aliceSent=1 | bobReceived=1 | bobWroteMessage=1) -> (move'=1);
+
+  // alice's communication part
+  [receiveA] move=2 & bobSent=1 -> (aliceReceived'=1) & (bobSent'=0) & (move'=0);
+  [readWriteA] move=2 & aliceReceived=1 -> (aliceWroteMessage'=1) & (aliceReceived'=0) & (move'=0);
+  [sendA] move=2 & aliceWroteMessage=1 -> (aliceSent'=1) & (aliceWroteMessage'=0) & (move'=0);
+  [waitA] move=2 & !(bobSent=1 | aliceReceived=1 | aliceWroteMessage=1) -> (move'=0);
+
+endmodule
+
+module hacking
+  [hackE] move=1 & bobSent=1 -> 0.05: (hacked'=1) & (move'=2) + 0.95: (move'=2);
+  [waitE] move=1 & !(bobSent=1) -> (move'=2);
+endmodule

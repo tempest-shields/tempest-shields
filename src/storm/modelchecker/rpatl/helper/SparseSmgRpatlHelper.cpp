@@ -1,4 +1,5 @@
 #include <utility/graph.h>
+#include <environment/solver/GameSolverEnvironment.h>
 #include "SparseSmgRpatlHelper.h"
 
 #include "storm/environment/Environment.h"
@@ -15,7 +16,6 @@ namespace storm {
 
             template<typename ValueType>
             SMGSparseModelCheckingHelperReturnType<ValueType> SparseSmgRpatlHelper<ValueType>::computeUntilProbabilities(Environment const& env, storm::solver::SolveGoal<ValueType>&& goal, storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::SparseMatrix<ValueType> const& backwardTransitions, storm::storage::BitVector const& phiStates, storm::storage::BitVector const& psiStates, bool qualitative, storm::storage::BitVector statesOfCoalition, bool produceScheduler, ModelCheckerHint const& hint) {
-                // TODO add Kwiatkowska original reference
                 auto solverEnv = env;
                 solverEnv.solver().minMax().setMethod(storm::solver::MinMaxMethod::ValueIteration, false);
 
@@ -40,7 +40,7 @@ namespace storm {
                     if (produceScheduler) {
                         viHelper.setProduceScheduler(true);
                     }
-                    viHelper.performValueIteration(env, x, b, goal.direction());
+                    viHelper.performValueIteration(env, x, b, goal.direction(), constrainedChoiceValues);
                     if(goal.isShieldingTask()) {
                         viHelper.getChoiceValues(env, x, constrainedChoiceValues);
                     }
@@ -52,6 +52,7 @@ namespace storm {
                         scheduler = std::make_unique<storm::storage::Scheduler<ValueType>>(expandScheduler(viHelper.extractScheduler(), psiStates, ~phiStates));
                     }
                 }
+
                 // Fill up the result vector with the values of x for the relevant states, with 1s for psi states (0 is default)
                 storm::utility::vector::setVectorValues(result, relevantStates, x);
                 storm::utility::vector::setVectorValues(result, psiStates, storm::utility::one<ValueType>());
@@ -109,7 +110,9 @@ namespace storm {
                 }
                 // Create a multiplier for reduction.
                 auto multiplier = storm::solver::MultiplierFactory<ValueType>().create(env, transitionMatrix);
-                multiplier->reduce(env, goal.direction(), b, transitionMatrix.getRowGroupIndices(), result, &statesOfCoalition);
+                auto rowGroupIndices = transitionMatrix.getRowGroupIndices();
+                rowGroupIndices.erase(rowGroupIndices.begin());
+                multiplier->reduce(env, goal.direction(), b, rowGroupIndices, result, &statesOfCoalition);
                 if (goal.isShieldingTask()) {
                     choiceValues = b;
                 }
@@ -169,10 +172,12 @@ namespace storm {
                     }
                     // If the lowerBound = 0, value iteration is done until the upperBound.
                     if(lowerBound == 0) {
-                        viHelper.performValueIterationUpperBound(env, x, b, goal.direction(), upperBound, constrainedChoiceValues);
+                        solverEnv.solver().game().setMaximalNumberOfIterations(upperBound);
+                        viHelper.performValueIteration(solverEnv, x, b, goal.direction(), constrainedChoiceValues);
                     } else {
                         // The lowerBound != 0, the first computation between the given bound steps is done.
-                        viHelper.performValueIterationUpperBound(env, x, b, goal.direction(), upperBound - lowerBound, constrainedChoiceValues);
+                        solverEnv.solver().game().setMaximalNumberOfIterations(upperBound - lowerBound);
+                        viHelper.performValueIteration(solverEnv, x, b, goal.direction(), constrainedChoiceValues);
 
                         // Initialization of subResult, fill it with the result of the first computation and 1s for the psiStates in full range.
                         std::vector<ValueType> subResult = std::vector<ValueType>(transitionMatrix.getRowGroupCount(), storm::utility::zero<ValueType>());
@@ -189,14 +194,16 @@ namespace storm {
 
                         // Update the viHelper for the (full-size) submatrix and statesOfCoalition.
                         viHelper.updateTransitionMatrix(submatrix);
-                        viHelper.updateStatesOfCoaltion(statesOfCoalition);
+                        viHelper.updateStatesOfCoalition(statesOfCoalition);
 
                         // Reset constrainedChoiceValues and b to 0-vector in the correct dimension.
                         constrainedChoiceValues = std::vector<ValueType>(transitionMatrix.getConstrainedRowGroupSumVector(relevantStates, newPsiStates).size(), storm::utility::zero<ValueType>());
                         b = std::vector<ValueType>(transitionMatrix.getConstrainedRowGroupSumVector(relevantStates, newPsiStates).size(), storm::utility::zero<ValueType>());
 
                         // The second computation is done between step 0 and the lowerBound
-                        viHelper.performValueIterationUpperBound(env, subResult, b, goal.direction(), lowerBound, constrainedChoiceValues);
+                        solverEnv.solver().game().setMaximalNumberOfIterations(lowerBound);
+                        viHelper.performValueIteration(solverEnv, subResult, b, goal.direction(), constrainedChoiceValues);
+
                         x = subResult;
                     }
                     viHelper.fillChoiceValuesVector(constrainedChoiceValues, relevantStates, transitionMatrix.getRowGroupIndices());
@@ -205,7 +212,11 @@ namespace storm {
                     }
                     storm::utility::vector::setVectorValues(result, relevantStates, x);
                 }
-                // In bounded-globally formulas we not only to reach a psiState on the path but also want to stay in a set of psiStates in the given step bounds.
+                // In bounded until and bounded eventually formula the psiStates have probability 1 to satisfy the formula,
+                // because once reaching a state where psi holds those formulas are satisfied.
+                // In bounded globally formulas we cannot set those states to 1 because it is possible to leave a set of safe states after reaching a psiState
+                // and in globally the formula has to hold in every time step (between the bounds).
+                // e.g. phiState -> phiState -> psiState -> unsafeState
                 if(!computeBoundedGlobally){
                     storm::utility::vector::setVectorValues(result, psiStates, storm::utility::one<ValueType>());
                 }

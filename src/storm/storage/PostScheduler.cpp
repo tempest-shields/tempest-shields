@@ -135,6 +135,7 @@ namespace storm {
                 // jump to label if we find one undefined choice.
                 skipStatesWithUndefinedChoices:;
             }
+            out << "___________________________________________________________________" << std::endl;
         }
 
         template class PostScheduler<double>;

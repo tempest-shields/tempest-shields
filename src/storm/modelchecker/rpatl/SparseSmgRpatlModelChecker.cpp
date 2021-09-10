@@ -63,7 +63,7 @@ namespace storm {
             storm::logic::Formula const& subFormula = gameFormula.getSubformula();
 
             statesOfCoalition = this->getModel().computeStatesOfCoalition(gameFormula.getCoalition());
-            std::cout << "Found " << statesOfCoalition.getNumberOfSetBits() << " states in coalition." << std::endl;
+            STORM_LOG_INFO("Found " << statesOfCoalition.getNumberOfSetBits() << " states in coalition.");
             statesOfCoalition.complement();
 
             if (subFormula.isRewardOperatorFormula()) {
@@ -216,7 +216,7 @@ namespace storm {
             auto ret = storm::modelchecker::helper::SparseSmgRpatlHelper<ValueType>::computeBoundedUntilProbabilities(env, storm::solver::SolveGoal<ValueType>(this->getModel(), checkTask), this->getModel().getTransitionMatrix(), this->getModel().getBackwardTransitions(), leftResult.getTruthValuesVector(), rightResult.getTruthValuesVector(), checkTask.isQualitativeSet(), statesOfCoalition, checkTask.isProduceSchedulersSet(), checkTask.getHint(), pathFormula.getNonStrictLowerBound<uint64_t>(), pathFormula.getNonStrictUpperBound<uint64_t>());
             std::unique_ptr<CheckResult> result(new ExplicitQuantitativeCheckResult<ValueType>(std::move(ret.values)));
             if(checkTask.isShieldingTask()) {
-                tempest::shields::createShield<ValueType>(std::make_shared<storm::models::sparse::Smg<ValueType>>(this->getModel()), std::move(ret.choiceValues), checkTask.getShieldingExpression(), checkTask.getOptimizationDirection(), std::move(ret.relevantStates), ~statesOfCoalition);
+                    tempest::shields::createShield<ValueType>(std::make_shared<storm::models::sparse::Smg<ValueType>>(this->getModel()), std::move(ret.choiceValues), checkTask.getShieldingExpression(), checkTask.getOptimizationDirection(), std::move(ret.relevantStates), ~statesOfCoalition);
             }
             return result;
         }

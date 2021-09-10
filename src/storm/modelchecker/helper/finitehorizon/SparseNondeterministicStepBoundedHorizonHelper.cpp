@@ -20,10 +20,11 @@ namespace storm {
             template<typename ValueType>
             void SparseNondeterministicStepBoundedHorizonHelper<ValueType>::getMaybeStatesRowGroupSizes(storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::BitVector const& maybeStates, std::vector<uint64_t>& maybeStatesRowGroupSizes, uint& choiceValuesCounter) {
                 std::vector<uint64_t> rowGroupIndices = transitionMatrix.getRowGroupIndices();
+                choiceValuesCounter = 0;
                 for(uint counter = 0; counter < maybeStates.size(); counter++) {
                     if(maybeStates.get(counter)) {
-                        maybeStatesRowGroupSizes.push_back(rowGroupIndices.at(counter));
                         choiceValuesCounter += transitionMatrix.getRowGroupSize(counter);
+                        maybeStatesRowGroupSizes.push_back(choiceValuesCounter);
                     }
                 }
             }
@@ -87,7 +88,7 @@ namespace storm {
 
                     std::vector<uint64_t> rowGroupIndices = transitionMatrix.getRowGroupIndices();
                     std::vector<uint64_t> maybeStatesRowGroupSizes;
-                    uint choiceValuesCounter;
+                    uint choiceValuesCounter = 0;
                     getMaybeStatesRowGroupSizes(transitionMatrix, maybeStates, maybeStatesRowGroupSizes, choiceValuesCounter);
                     choiceValues = std::vector<ValueType>(choiceValuesCounter, storm::utility::zero<ValueType>());
 

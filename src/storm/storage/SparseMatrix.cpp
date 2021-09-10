@@ -1848,11 +1848,11 @@ namespace storm {
                     // Finally write value to target vector.
                     *resultIt = currentValue;
                     if(dirOverridden) {
-                        if (choices && dirOverride->get(currentRowGroup) ? compare(oldSelectedChoiceValue, currentValue) : compare(currentValue, oldSelectedChoiceValue)) {
+                        if (choices && (dirOverride->get(currentRowGroup) ? compare(oldSelectedChoiceValue, currentValue) : compare(currentValue, oldSelectedChoiceValue))) {
                             *choiceIt = selectedChoice;
                         }
                     } else {
-                        if (choices && compare(currentValue, oldSelectedChoiceValue)) {
+                        if (choices && (compare(currentValue, oldSelectedChoiceValue))) {
                             *choiceIt = selectedChoice;
                         }
                     }
@@ -2129,8 +2129,7 @@ namespace storm {
             } else {
                 target = &result;
             }
-
-            this->multiplyAndReduceForward(dir, rowGroupIndices, vector, summand, *target, choices);
+            this->multiplyAndReduceForward(dir, rowGroupIndices, vector, summand, *target, choices, dirOverride);
 
             if (target == &temporary) {
                 std::swap(temporary, result);
