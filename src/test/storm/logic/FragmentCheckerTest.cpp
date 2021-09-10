@@ -88,7 +88,7 @@ TEST(FragmentCheckerTest, Prctl) {
     ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString("<shield, PostSafety, gamma=0.678> Pmax=? [\"label1\" U [5,7] \"label2\"]"));
     EXPECT_TRUE(checker.conformsToSpecification(*formula, prctl));
 
-    ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString("<shield, PreSafety, lambda=0.9> Pmax=? [G <=10 \"label\"]"));
+    ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString("<shield, PreSafety, lambda=0.9> Pmax=? [G \"label\"]"));
     EXPECT_TRUE(checker.conformsToSpecification(*formula, prctl));
 
     ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString("<shieldFileName, Optimal> Pmin=? [F <5 \"label\"]"));
@@ -205,10 +205,10 @@ TEST(FragmentCheckerTest, Rpatl) {
     ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString("<shield, PostSafety, gamma=0.749> <<1,2,3,4,5>> Pmax=? [\"label1\" U [0,7] \"label2\"]"));
     EXPECT_TRUE(checker.conformsToSpecification(*formula, rpatl));
 
-    ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString("<shield, PreSafety, lambda=0.749> <<a,b,c>> Pmax=? [G <=5 \"label\"]"));
+    ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString("<shield, PreSafety, lambda=0.749> <<a,b,c>> Pmax=? [G \"label\"]"));
     EXPECT_TRUE(checker.conformsToSpecification(*formula, rpatl));
 
-    ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString("<shieldFileName, Optimal> <<p1,p2>> Pmin=? [G [0,1] \"label\"]"));
+    ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString("<shieldFileName, Optimal> <<p1,p2>> Pmin=? [G \"label\"]"));
     EXPECT_TRUE(checker.conformsToSpecification(*formula, rpatl));
 
 }

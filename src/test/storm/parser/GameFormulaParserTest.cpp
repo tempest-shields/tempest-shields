@@ -202,34 +202,3 @@ TEST(GameFormulaParserTest, WrongFormatTest) {
     input = "<< 1,2,3 >> P>0.5 [F y!=0)]";
     STORM_SILENT_EXPECT_THROW(formula = formulaParser.parseSingleFormulaFromString(input), storm::exceptions::WrongFormatException);
 }
-
-TEST(GameFormulaParserTest, MultiObjectiveFormulaTest) {
-    storm::parser::FormulaParser formulaParser;
-
-    std::string input = "multi(<<p1>> P<0.9 [ F \"a\" ], <<p2>> R<42 [ F \"b\" ], <<p1,p2>> Pmin=? [ F\"c\" ])";
-    std::shared_ptr<storm::logic::Formula const> formula;
-    ASSERT_NO_THROW(formula = formulaParser.parseSingleFormulaFromString(input));
-    ASSERT_TRUE(formula->isMultiObjectiveFormula());
-    storm::logic::MultiObjectiveFormula mof = formula->asMultiObjectiveFormula();
-    EXPECT_FALSE(formula->isInFragment(storm::logic::rpatl()));
-    ASSERT_EQ(3ull, mof.getNumberOfSubformulas());
-
-    ASSERT_TRUE(mof.getSubformula(0).isGameFormula());
-    ASSERT_TRUE(mof.getSubformula(0).asGameFormula().getSubformula().isProbabilityOperatorFormula());
-    ASSERT_TRUE(mof.getSubformula(0).asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().isEventuallyFormula());
-    ASSERT_TRUE(mof.getSubformula(0).asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().asEventuallyFormula().getSubformula().isAtomicLabelFormula());
-    ASSERT_TRUE(mof.getSubformula(0).asGameFormula().getSubformula().asProbabilityOperatorFormula().hasBound());
-
-    ASSERT_TRUE(mof.getSubformula(1).isGameFormula());
-    ASSERT_TRUE(mof.getSubformula(1).asGameFormula().getSubformula().isRewardOperatorFormula());
-    ASSERT_TRUE(mof.getSubformula(1).asGameFormula().getSubformula().asRewardOperatorFormula().getSubformula().isEventuallyFormula());
-    ASSERT_TRUE(mof.getSubformula(1).asGameFormula().getSubformula().asRewardOperatorFormula().getSubformula().asEventuallyFormula().getSubformula().isAtomicLabelFormula());
-    ASSERT_TRUE(mof.getSubformula(1).asGameFormula().getSubformula().asRewardOperatorFormula().hasBound());
-
-    ASSERT_TRUE(mof.getSubformula(2).isGameFormula());
-    ASSERT_TRUE(mof.getSubformula(2).asGameFormula().getSubformula().isProbabilityOperatorFormula());
-    ASSERT_TRUE(mof.getSubformula(2).asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().isEventuallyFormula());
-    ASSERT_TRUE(mof.getSubformula(2).asGameFormula().getSubformula().asProbabilityOperatorFormula().getSubformula().asEventuallyFormula().getSubformula().isAtomicLabelFormula());
-    ASSERT_TRUE(mof.getSubformula(2).asGameFormula().getSubformula().asProbabilityOperatorFormula().hasOptimalityType());
-    ASSERT_TRUE(storm::solver::minimize(mof.getSubformula(2).asGameFormula().getSubformula().asProbabilityOperatorFormula().getOptimalityType()));
-}
