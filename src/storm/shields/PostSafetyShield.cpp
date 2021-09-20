@@ -43,28 +43,28 @@ namespace tempest {
                     ValueType maxProbability = *(choice_it + maxProbabilityIndex);
                     if(!relative && !choiceFilter(maxProbability, maxProbability, this->shieldingExpression->getValue())) {
                         STORM_LOG_WARN("No shielding action possible with absolute comparison for state with index " << state);
-                        shield.setChoice(0, storm::storage::Distribution<ValueType, IndexType>(), state);
+                        shield.setChoice(storm::storage::PostSchedulerChoice<ValueType>(), state, 0);
                         choice_it += rowGroupSize;
                         continue;
                     }
+                    storm::storage::PostSchedulerChoice<ValueType> choiceMapping;
                     for(uint choice = 0; choice < rowGroupSize; choice++, choice_it++) {
-                        storm::storage::Distribution<ValueType, IndexType> actionDistribution;
                         if(choiceFilter(*choice_it, maxProbability, this->shieldingExpression->getValue())) {
-                            actionDistribution.addProbability(choice, 1);
+                            choiceMapping.addChoice(choice, choice);
                         } else {
-                            actionDistribution.addProbability(maxProbabilityIndex, 1);
+                            choiceMapping.addChoice(choice, maxProbabilityIndex);
                         }
-                        shield.setChoice(choice, storm::storage::SchedulerChoice<ValueType>(actionDistribution), state);
                     }
+                    shield.setChoice(choiceMapping, state, 0);
                 } else {
-                    shield.setChoice(0, storm::storage::Distribution<ValueType, IndexType>(), state);
+                    shield.setChoice(storm::storage::PostSchedulerChoice<ValueType>(), state, 0);
                     choice_it += rowGroupSize;
                 }
             }
             return shield;
         }
 
-        // Explicitly instantiate appropriate
+        // Explicitly instantiate appropriate classes
         template class PostSafetyShield<double, typename storm::storage::SparseMatrix<double>::index_type>;
 #ifdef STORM_HAVE_CARL
         template class PostSafetyShield<storm::RationalNumber, typename storm::storage::SparseMatrix<storm::RationalNumber>::index_type>;

@@ -39,29 +39,30 @@ namespace tempest {
             for(uint state = 0; state < this->rowGroupIndices.size() - 1; state++) {
                 uint rowGroupSize = this->rowGroupIndices[state + 1] - this->rowGroupIndices[state];
                 if(this->relevantStates.get(state)) {
-                    storm::storage::Distribution<ValueType, IndexType> actionDistribution;
+                    storm::storage::PreSchedulerChoice<ValueType> enabledChoices;
                     ValueType maxProbability = *std::max_element(choice_it, choice_it + rowGroupSize);
                     if(!relative && !choiceFilter(maxProbability, maxProbability, this->shieldingExpression->getValue())) {
                         STORM_LOG_WARN("No shielding action possible with absolute comparison for state with index " << state);
-                        shield.setChoice(storm::storage::Distribution<ValueType, IndexType>(), state);
+                        shield.setChoice(storm::storage::PreSchedulerChoice<ValueType>(), state, 0);
                         choice_it += rowGroupSize;
                         continue;
                     }
                     for(uint choice = 0; choice < rowGroupSize; choice++, choice_it++) {
                         if(choiceFilter(*choice_it, maxProbability, this->shieldingExpression->getValue())) {
-                            actionDistribution.addProbability(choice, *choice_it);
+                            enabledChoices.addChoice(choice, *choice_it);
                         }
                     }
-                    shield.setChoice(storm::storage::SchedulerChoice<ValueType>(actionDistribution), state);
+                    shield.setChoice(enabledChoices, state, 0);
 
                 } else {
-                    shield.setChoice(storm::storage::Distribution<ValueType, IndexType>(), state);
+                    shield.setChoice(storm::storage::PreSchedulerChoice<ValueType>(), state, 0);
                     choice_it += rowGroupSize;
                 }
+
             }
             return shield;
         }
-        // Explicitly instantiate appropriate
+        // Explicitly instantiate appropriate classes
         template class PreSafetyShield<double, typename storm::storage::SparseMatrix<double>::index_type>;
 #ifdef STORM_HAVE_CARL
         template class PreSafetyShield<storm::RationalNumber, typename storm::storage::SparseMatrix<storm::RationalNumber>::index_type>;

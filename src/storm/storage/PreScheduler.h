@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <map>
 #include <memory>
-#include "storm/storage/SchedulerChoice.h"
+#include "storm/storage/PreSchedulerChoice.h"
 #include "storm/storage/Scheduler.h"
 #include "storm/logic/ShieldExpression.h"
 
@@ -12,14 +12,11 @@ namespace storm {
 
         /*
          * TODO needs obvious changes in all comment blocks
-         * This class defines which action is chosen in a particular state of a non-deterministic model. More concretely, a scheduler maps a state s to i
-         * if the scheduler takes the i-th action available in s (i.e. the choices are relative to the states).
-         * A Choice can be undefined, deterministic
          */
         template <typename ValueType>
-        class PreScheduler : public Scheduler<ValueType> {
+        class PreScheduler {
         public:
-            typedef uint_fast64_t OldChoice;
+
             /*!
              * Initializes a scheduler for the given number of model states.
              *
@@ -29,14 +26,25 @@ namespace storm {
             PreScheduler(uint_fast64_t numberOfModelStates, boost::optional<storm::storage::MemoryStructure> const& memoryStructure = boost::none);
             PreScheduler(uint_fast64_t numberOfModelStates, boost::optional<storm::storage::MemoryStructure>&& memoryStructure);
 
+            bool isMemorylessScheduler() const;
+            uint_fast64_t getNumberOfMemoryStates() const;
+
+            void setChoice(PreSchedulerChoice<ValueType> const& choice, uint_fast64_t modelState, uint_fast64_t memoryState);
+
             /*!
              * Prints the scheduler to the given output stream.
-             * @param out The output stream
-             * @param model If given, provides additional information for printing (e.g., displaying the state valuations instead of state indices)
-             * @param skipUniqueChoices If true, the (unique) choice for deterministic states (i.e., states with only one enabled choice) is not printed explicitly.
-             *                          Requires a model to be given.
              */
             void printToStream(std::ostream& out, std::shared_ptr<storm::logic::ShieldExpression const> shieldingExpression, std::shared_ptr<storm::models::sparse::Model<ValueType>> model = nullptr, bool skipUniqueChoices = false) const;
+
+        private:
+            boost::optional<storm::storage::MemoryStructure> memoryStructure;
+            std::vector<std::vector<PreSchedulerChoice<ValueType>>> schedulerChoices;
+
+            bool printUndefinedChoices = false;
+
+            uint_fast64_t numOfUndefinedChoices;
+            uint_fast64_t numOfDeterministicChoices;
+            uint_fast64_t numOfDontCareStates;
         };
     }
 }
