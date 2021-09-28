@@ -183,19 +183,19 @@ namespace storm {
                 } else {
                     // We assume an MDP (with nondeterministic timed states and no instant states)
                     storm::modelchecker::helper::internal::LraViHelper<ValueType, storm::storage::MaximalEndComponent, storm::modelchecker::helper::internal::LraViTransitionsType::NondetTsNoIs> viHelper(mec, this->_transitionMatrix, aperiodicFactor);
-                    return viHelper.performValueIteration(env, stateRewardsGetter, actionRewardsGetter, nullptr, &this->getOptimizationDirection(), optimalChoices);
+                    return viHelper.performValueIteration(env, stateRewardsGetter, actionRewardsGetter, nullptr, &this->getOptimizationDirection(), optimalChoices, choiceValues);
                 }
             }
-            
+
             template <typename ValueType>
             ValueType SparseNondeterministicInfiniteHorizonHelper<ValueType>::computeLraForMecLp(Environment const& env, ValueGetter const& stateRewardsGetter,  ValueGetter const& actionRewardsGetter, storm::storage::MaximalEndComponent const& mec) {
                 // Create an LP solver
                 auto solver = storm::utility::solver::LpSolverFactory<ValueType>().create("LRA for MEC");
-                
+
                 // Now build the LP formulation as described in:
                 // Guck et al.: Modelling and Analysis of Markov Reward Automata (ATVA'14), https://doi.org/10.1007/978-3-319-11936-6_13
                 solver->setOptimizationDirection(invert(this->getOptimizationDirection()));
-                
+
                 // Create variables
                 // TODO: Investigate whether we can easily make the variables bounded
                 std::map<uint_fast64_t, storm::expressions::Variable> stateToVariableMap;
