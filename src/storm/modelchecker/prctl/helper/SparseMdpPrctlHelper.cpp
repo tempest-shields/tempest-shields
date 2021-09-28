@@ -146,7 +146,7 @@ namespace storm {
 
                 if(goal.isShieldingTask()) {
                     multiplier->multiply(env, result, nullptr, choiceValues);
-                    multiplier->reduce(env, goal.direction(), choiceValues, transitionMatrix.getRowGroupIndices(), result, nullptr);
+                    multiplier->reduce(env, goal.direction(), transitionMatrix.getRowGroupIndices(), choiceValues, result);
                 }
                 else {
                     multiplier->multiplyAndReduce(env, dir, result, nullptr, result);
