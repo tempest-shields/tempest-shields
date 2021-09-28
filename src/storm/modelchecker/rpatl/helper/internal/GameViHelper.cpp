@@ -50,7 +50,7 @@ namespace storm {
                             _multiplier->multiply(env, xNew(), &_b, constrainedChoiceValues);
                             auto rowGroupIndices = this->_transitionMatrix.getRowGroupIndices();
                             rowGroupIndices.erase(rowGroupIndices.begin());
-                            _multiplier->reduce(env, dir, constrainedChoiceValues, rowGroupIndices, xNew());
+                            _multiplier->reduce(env, dir, rowGroupIndices, constrainedChoiceValues, xNew(), nullptr, &_statesOfCoalition);
                             break;
                         }
                         performIterationStep(env, dir);
@@ -123,6 +123,16 @@ namespace storm {
                 template <typename ValueType>
                 bool GameViHelper<ValueType>::isProduceSchedulerSet() const {
                     return _produceScheduler;
+                }
+
+                template <typename ValueType>
+                void GameViHelper<ValueType>::setShieldingTask(bool value) {
+                    _shieldingTask = value;
+                }
+
+                template <typename ValueType>
+                bool GameViHelper<ValueType>::isShieldingTask() const {
+                    return _shieldingTask;
                 }
 
                 template <typename ValueType>

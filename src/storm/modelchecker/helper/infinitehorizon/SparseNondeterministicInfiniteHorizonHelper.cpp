@@ -22,31 +22,31 @@
 namespace storm {
     namespace modelchecker {
         namespace helper {
-        
+
             template <typename ValueType>
             SparseNondeterministicInfiniteHorizonHelper<ValueType>::SparseNondeterministicInfiniteHorizonHelper(storm::storage::SparseMatrix<ValueType> const& transitionMatrix) : SparseInfiniteHorizonHelper<ValueType, true>(transitionMatrix) {
                 // Intentionally left empty.
             }
-            
+
             template <typename ValueType>
             SparseNondeterministicInfiniteHorizonHelper<ValueType>::SparseNondeterministicInfiniteHorizonHelper(storm::storage::SparseMatrix<ValueType> const& transitionMatrix, storm::storage::BitVector const& markovianStates, std::vector<ValueType> const& exitRates) : SparseInfiniteHorizonHelper<ValueType, true>(transitionMatrix, markovianStates, exitRates) {
                 // Intentionally left empty.
             }
-            
+
             template <typename ValueType>
             std::vector<uint64_t> const& SparseNondeterministicInfiniteHorizonHelper<ValueType>::getProducedOptimalChoices() const {
                 STORM_LOG_ASSERT(this->isProduceSchedulerSet(), "Trying to get the produced optimal choices although no scheduler was requested.");
                 STORM_LOG_ASSERT(this->_producedOptimalChoices.is_initialized(), "Trying to get the produced optimal choices but none were available. Was there a computation call before?");
                 return this->_producedOptimalChoices.get();
             }
-            
+
             template <typename ValueType>
             std::vector<uint64_t>& SparseNondeterministicInfiniteHorizonHelper<ValueType>::getProducedOptimalChoices() {
                 STORM_LOG_ASSERT(this->isProduceSchedulerSet(), "Trying to get the produced optimal choices although no scheduler was requested.");
                 STORM_LOG_ASSERT(this->_producedOptimalChoices.is_initialized(), "Trying to get the produced optimal choices but none were available. Was there a computation call before?");
                 return this->_producedOptimalChoices.get();
             }
-            
+
             template <typename ValueType>
             storm::storage::Scheduler<ValueType> SparseNondeterministicInfiniteHorizonHelper<ValueType>::extractScheduler() const {
                 auto const& optimalChoices = getProducedOptimalChoices();
@@ -56,7 +56,14 @@ namespace storm {
                 }
                 return scheduler;
             }
-            
+
+            template <typename ValueType>
+            std::vector<ValueType> SparseNondeterministicInfiniteHorizonHelper<ValueType>::getChoiceValues() const {
+                STORM_LOG_ASSERT(this->isProduceChoiceValuesSet(), "Trying to get the computed choice values although this was not requested.");
+                STORM_LOG_ASSERT(this->_choiceValues.is_initialized(), "Trying to get the computed choice values but none were available. Was there a computation call before?");
+                return this->_choiceValues.get();
+            }
+
             template <typename ValueType>
             void SparseNondeterministicInfiniteHorizonHelper<ValueType>::createDecomposition() {
                 if (this->_longRunComponentDecomposition == nullptr) {
@@ -73,7 +80,7 @@ namespace storm {
             template <typename ValueType>
             ValueType SparseNondeterministicInfiniteHorizonHelper<ValueType>::computeLraForComponent(Environment const& env, ValueGetter const& stateRewardsGetter, ValueGetter const& actionRewardsGetter, storm::storage::MaximalEndComponent const& component) {
                 // For models with potential nondeterminisim, we compute the LRA for a maximal end component (MEC)
-                
+
                 // Allocate memory for the nondeterministic choices.
                 if (this->isProduceSchedulerSet()) {
                     if (!this->_producedOptimalChoices.is_initialized()) {
@@ -81,12 +88,19 @@ namespace storm {
                     }
                     this->_producedOptimalChoices->resize(this->_transitionMatrix.getRowGroupCount());
                 }
-                
+                // Allocate memory for the choice values.
+                if (this->isProduceSchedulerSet()) {
+                    if (!this->_choiceValues.is_initialized()) {
+                        this->_choiceValues.emplace();
+                    }
+                    this->_choiceValues->resize(this->_transitionMatrix.getRowCount());
+                }
+
                 auto trivialResult = this->computeLraForTrivialMec(env, stateRewardsGetter, actionRewardsGetter, component);
                 if (trivialResult.first) {
                     return trivialResult.second;
                 }
-                
+
                 // Solve nontrivial MEC with the method specified in the settings
                 storm::solver::LraMethod method = env.solver().lra().getNondetLraMethod();
                 if ((storm::NumberTraits<ValueType>::IsExact || env.solver().isForceExact()) && env.solver().lra().isNondetLraMethodSetFromDefault() && method != storm::solver::LraMethod::LinearProgramming) {
@@ -105,10 +119,10 @@ namespace storm {
                     STORM_LOG_THROW(false, storm::exceptions::InvalidSettingsException, "Unsupported technique.");
                 }
             }
-            
+
             template <typename ValueType>
             std::pair<bool, ValueType> SparseNondeterministicInfiniteHorizonHelper<ValueType>::computeLraForTrivialMec(Environment const& env, ValueGetter const& stateRewardsGetter, ValueGetter const& actionRewardsGetter, storm::storage::MaximalEndComponent const& component) {
-                
+
                 // If the component only consists of a single state, we compute the LRA value directly
                 if (component.size() == 1) {
                     auto const& element = *component.begin();
@@ -145,8 +159,8 @@ namespace storm {
                 }
                 return {false, storm::utility::zero<ValueType>()};
             }
-            
-    
+
+
             template <typename ValueType>
             ValueType SparseNondeterministicInfiniteHorizonHelper<ValueType>::computeLraForMecVi(Environment const& env, ValueGetter const& stateRewardsGetter, ValueGetter const& actionRewardsGetter, storm::storage::MaximalEndComponent const& mec) {
 
@@ -156,7 +170,11 @@ namespace storm {
                 if (this->isProduceSchedulerSet()) {
                     optimalChoices = &this->_producedOptimalChoices.get();
                 }
-                
+                std::vector<ValueType>* choiceValues = nullptr;
+                if (this->isProduceChoiceValuesSet()) {
+                    choiceValues = &this->_choiceValues.get();
+                }
+
                 // Now create a helper and perform the algorithm
                 if (this->isContinuousTime()) {
                     // We assume a Markov Automaton (with deterministic timed states and nondeterministic instant states)
@@ -187,12 +205,12 @@ namespace storm {
                 }
                 storm::expressions::Variable k = solver->addUnboundedContinuousVariable("k", storm::utility::one<ValueType>());
                 solver->update();
-                
+
                 // Add constraints.
                 for (auto const& stateChoicesPair : mec) {
                     uint_fast64_t state = stateChoicesPair.first;
                     bool stateIsMarkovian = this->_markovianStates && this->_markovianStates->get(state);
-                    
+
                     // Now create a suitable constraint for each choice
                     // x_s  {≤, ≥}  -k/rate(s) + sum_s' P(s,act,s') * x_s' + (value(s)/rate(s) + value(s,act))
                     for (auto choice : stateChoicesPair.second) {
@@ -231,12 +249,12 @@ namespace storm {
                         solver->addConstraint("s" + std::to_string(state) + "," + std::to_string(choice), constraint);
                     }
                 }
-                
+
                 solver->optimize();
                 STORM_LOG_THROW(!this->isProduceSchedulerSet(), storm::exceptions::NotImplementedException, "Scheduler extraction is not yet implemented for LP based LRA method.");
                 return solver->getContinuousValue(k);
             }
-            
+
             /*!
              * Auxiliary function that adds the entries of the Ssp Matrix for a single choice (i.e., row)
              * Transitions that lead to a Component state will be redirected to a new auxiliary state (there is one aux. state for each component).
@@ -244,10 +262,10 @@ namespace storm {
              */
             template <typename ValueType>
             void addSspMatrixChoice(uint64_t const& inputMatrixChoice, storm::storage::SparseMatrix<ValueType> const& inputTransitionMatrix, std::vector<uint64_t> const& inputToSspStateMap, uint64_t const& numberOfNonComponentStates, uint64_t const& currentSspChoice, storm::storage::SparseMatrixBuilder<ValueType>& sspMatrixBuilder) {
-            
+
                 // As there could be multiple transitions to the same MEC, we accumulate them in this map before adding them to the matrix builder.
                 std::map<uint64_t, ValueType> auxiliaryStateToProbabilityMap;
-                
+
                 for (auto const& transition : inputTransitionMatrix.getRow(inputMatrixChoice)) {
                     if (!storm::utility::isZero(transition.getValue())) {
                         auto const& sspTransitionTarget = inputToSspStateMap[transition.getColumn()];
@@ -268,18 +286,18 @@ namespace storm {
                         }
                     }
                 }
-                
+
                 // Now insert all (cumulative) probability values that target a component.
                 for (auto const& componentToProbEntry : auxiliaryStateToProbabilityMap) {
                     sspMatrixBuilder.addNextValue(currentSspChoice, componentToProbEntry.first, componentToProbEntry.second);
                 }
             }
-            
+
             template <typename ValueType>
             std::pair<storm::storage::SparseMatrix<ValueType>, std::vector<ValueType>> SparseNondeterministicInfiniteHorizonHelper<ValueType>::buildSspMatrixVector(std::vector<ValueType> const& mecLraValues, std::vector<uint64_t> const& inputToSspStateMap, storm::storage::BitVector const& statesNotInComponent, uint64_t numberOfNonComponentStates, std::vector<std::pair<uint64_t, uint64_t>>* sspComponentExitChoicesToOriginalMap) {
-                
+
                 auto const& choiceIndices = this->_transitionMatrix.getRowGroupIndices();
-                
+
                 std::vector<ValueType> rhs;
                 uint64_t numberOfSspStates = numberOfNonComponentStates + this->_longRunComponentDecomposition->size();
                 storm::storage::SparseMatrixBuilder<ValueType> sspMatrixBuilder(0, numberOfSspStates , 0, true, true, numberOfSspStates);
@@ -323,7 +341,7 @@ namespace storm {
                 }
                 return std::make_pair(sspMatrixBuilder.build(currentSspChoice, numberOfSspStates, numberOfSspStates), std::move(rhs));
             }
-            
+
             template <typename ValueType>
             void SparseNondeterministicInfiniteHorizonHelper<ValueType>::constructOptimalChoices(std::vector<uint64_t> const& sspChoices, storm::storage::SparseMatrix<ValueType> const& sspMatrix, std::vector<uint64_t> const& inputToSspStateMap, storm::storage::BitVector const& statesNotInComponent, uint64_t numberOfNonComponentStates, std::vector<std::pair<uint64_t, uint64_t>> const& sspComponentExitChoicesToOriginalMap) {
                 // We first take care of non-mec states
@@ -398,11 +416,11 @@ namespace storm {
             template <typename ValueType>
             std::vector<ValueType> SparseNondeterministicInfiniteHorizonHelper<ValueType>::buildAndSolveSsp(Environment const& env, std::vector<ValueType> const& componentLraValues) {
                 STORM_LOG_ASSERT(this->_longRunComponentDecomposition != nullptr, "Decomposition not computed, yet.");
-                
+
                 // For fast transition rewriting, we build a mapping from the input state indices to the state indices of a new transition matrix
                 // which redirects all transitions leading to a former component state to a new auxiliary state.
                 // There will be one auxiliary state for each component. These states will be appended to the end of the matrix.
-                
+
                 // First gather the states that are part of a component
                 // and create a mapping from states that lie in a component to the corresponding component index.
                 storm::storage::BitVector statesInComponents(this->_transitionMatrix.getRowGroupCount());
@@ -427,14 +445,14 @@ namespace storm {
                 for (auto mecState : statesInComponents) {
                     inputToSspStateMap[mecState] += numberOfNonComponentStates;
                 }
-                
+
                 // For scheduler extraction, we will need to create a mapping between choices at the auxiliary states and the
                 // corresponding choices in the original model.
                 std::vector<std::pair<uint_fast64_t, uint_fast64_t>> sspComponentExitChoicesToOriginalMap;
-                
+
                 // The next step is to create the SSP matrix and the right-hand side of the SSP.
                 auto sspMatrixVector = buildSspMatrixVector(componentLraValues, inputToSspStateMap, statesNotInComponent, numberOfNonComponentStates, this->isProduceSchedulerSet() ? &sspComponentExitChoicesToOriginalMap : nullptr);
-                
+
                 // Set-up a solver
                 storm::solver::GeneralMinMaxLinearEquationSolverFactory<ValueType> minMaxLinearEquationSolverFactory;
                 storm::solver::MinMaxLinearEquationSolverRequirements requirements = minMaxLinearEquationSolverFactory.getRequirements(env, true, true, this->getOptimizationDirection(), false, this->isProduceSchedulerSet());
@@ -448,7 +466,7 @@ namespace storm {
                 solver->setLowerBound(*lowerUpperBounds.first);
                 solver->setUpperBound(*lowerUpperBounds.second);
                 solver->setRequirementsChecked();
-                
+
                 // Solve the equation system
                 std::vector<ValueType> x(sspMatrixVector.first.getRowGroupCount());
                 solver->solveEquations(env, this->getOptimizationDirection(), x, sspMatrixVector.second);
@@ -460,7 +478,7 @@ namespace storm {
                 } else {
                     STORM_LOG_ERROR_COND(!this->isProduceSchedulerSet(), "Requested to produce a scheduler, but no scheduler was generated.");
                 }
-                
+
                 // Prepare result vector.
                 // For efficiency reasons, we re-use the memory of our rhs for this!
                 std::vector<ValueType> result = std::move(sspMatrixVector.second);
@@ -469,10 +487,10 @@ namespace storm {
                 storm::utility::vector::selectVectorValues(result, inputToSspStateMap, x);
                 return result;
             }
-            
+
             template class SparseNondeterministicInfiniteHorizonHelper<double>;
             template class SparseNondeterministicInfiniteHorizonHelper<storm::RationalNumber>;
-            
+
         }
     }
 }

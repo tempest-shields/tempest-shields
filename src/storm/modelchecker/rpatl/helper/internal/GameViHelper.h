@@ -39,6 +39,16 @@ namespace storm {
                     bool isProduceSchedulerSet() const;
 
                     /*!
+                     * Sets whether an optimal scheduler shall be constructed during the computation
+                     */
+                    void setShieldingTask(bool value);
+
+                    /*!
+                     * @return whether an optimal scheduler shall be constructed during the computation
+                     */
+                    bool isShieldingTask() const;
+
+                    /*!
                      * Changes the transitionMatrix to the given one.
                      */
                     void updateTransitionMatrix(storm::storage::SparseMatrix<ValueType> newTransitionMatrix);
@@ -93,6 +103,7 @@ namespace storm {
                     std::unique_ptr<storm::solver::Multiplier<ValueType>> _multiplier;
 
                     bool _produceScheduler = false;
+                    bool _shieldingTask = false;
                     boost::optional<std::vector<uint64_t>> _producedOptimalChoices;
                 };
             }

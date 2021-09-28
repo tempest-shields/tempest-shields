@@ -5,7 +5,7 @@
 namespace storm {
     namespace modelchecker {
         namespace helper {
-            
+
             /*!
              * Forwards relevant information stored in the given CheckTask to the given helper
              */
@@ -26,10 +26,13 @@ namespace storm {
                 // Scheduler Production
 			    helper.setProduceScheduler(checkTask.isProduceSchedulersSet());
 
+                // Shield Synthesis
+			    helper.setProduceChoiceValues(checkTask.isShieldingTask());
+
                 // Qualitative flag
                 helper.setQualitative(checkTask.isQualitativeSet());
             }
-            
+
             /*!
              * Forwards relevant information stored in the given CheckTask to the given helper
              */
