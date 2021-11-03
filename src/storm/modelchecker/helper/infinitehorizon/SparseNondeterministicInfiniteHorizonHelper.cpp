@@ -89,7 +89,7 @@ namespace storm {
                     this->_producedOptimalChoices->resize(this->_transitionMatrix.getRowGroupCount());
                 }
                 // Allocate memory for the choice values.
-                if (this->isProduceSchedulerSet()) {
+                if (this->isProduceChoiceValuesSet()) {
                     if (!this->_choiceValues.is_initialized()) {
                         this->_choiceValues.emplace();
                     }

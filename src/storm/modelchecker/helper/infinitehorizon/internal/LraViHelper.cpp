@@ -214,7 +214,7 @@ namespace storm {
                         STORM_LOG_TRACE("LRA computation converged after " << iter << " iterations.");
                     }
 
-                    if (choices) {
+                    if (choices || choiceValues) {
                         // We will be doing one more iteration step and track scheduler choices this time.
                         if(!gameNondetTs()) {
                             prepareNextIteration(env);
@@ -222,8 +222,11 @@ namespace storm {
                         performIterationStep(env, dir, choices, choiceValues);
                     }
                     if(gameNondetTs()) {
-                      storm::utility::vector::applyPointwise<ValueType, ValueType>(xNew(), xNew(), [&iter] (ValueType const& x_i) -> ValueType { return x_i / (double)iter; });
-                      result = (xOld().at(0) * _uniformizationRate)/(double)iter; // TODO is "init" always going to be .at(0) ?
+                        storm::utility::vector::applyPointwise<ValueType, ValueType>(xNew(), xNew(), [&iter] (ValueType const& x_i) -> ValueType { return x_i / (double)iter; });
+                        result = (xOld().at(0) * _uniformizationRate)/(double)iter; // TODO is "init" always going to be .at(0) ?
+                        if(choiceValues) {
+                            storm::utility::vector::applyPointwise<ValueType, ValueType>(*choiceValues, *choiceValues, [this, &iter] (ValueType const& c_i) -> ValueType { return (c_i * _uniformizationRate) / (double)iter; });
+                        }
                     }
                     return result;
                 }
@@ -360,13 +363,16 @@ namespace storm {
                 template <typename ValueType, typename ComponentType, LraViTransitionsType TransitionsType>
                 void LraViHelper<ValueType, ComponentType, TransitionsType>::setInputModelChoiceValues(std::vector<ValueType>& choiceValues, std::vector<ValueType> const& localMecChoiceValues) const {
                     // Transform the local choiceValues (within this mec) to choice values for the input model
+
                     uint64_t localState = 0;
+                    uint64_t choiceValuesOffset = 0;
                     for (auto const& element : _component) {
                         uint64_t elementState = element.first;
                         uint64_t rowIndex = _transitionMatrix.getRowGroupIndices()[elementState];
                         uint64_t rowGroupSize = _transitionMatrix.getRowGroupEntryCount(elementState);
-                        std::copy(localMecChoiceValues.begin(), localMecChoiceValues.begin() + rowGroupSize, &choiceValues.at(rowIndex));
+                        std::copy(localMecChoiceValues.begin() + choiceValuesOffset, localMecChoiceValues.begin() + choiceValuesOffset + rowGroupSize, &choiceValues.at(rowIndex));
                         localState++;
+                        choiceValuesOffset += rowGroupSize;
                     }
                 }
 
@@ -386,7 +392,7 @@ namespace storm {
 
                     // Compute the values obtained by a single uniformization step between timed states only
                     if (nondetTs() && !gameNondetTs()) {
-                        if (choices == nullptr) {
+                        if (choices == nullptr && choiceValues == nullptr) {
                             _TsMultiplier->multiplyAndReduce(env, *dir, xOld(), &_TsChoiceValues, xNew());
                         } else {
                             // Also keep track of the choices made.
@@ -401,8 +407,12 @@ namespace storm {
                             // Note that nondeterminism within the timed states means that there can not be instant states (We either have MDPs or MAs)
                             // Hence, in this branch we don't have to care for choices at instant states.
                             STORM_LOG_ASSERT(!_hasInstantStates, "Nondeterministic timed states are only supported if there are no instant states.");
-                            setInputModelChoices(*choices, tsChoices);
-                            setInputModelChoiceValues(*choiceValues, resultChoiceValues);
+                            if(choices != nullptr) {
+                                setInputModelChoices(*choices, tsChoices);
+                            }
+                            if(choiceValues != nullptr) {
+                                setInputModelChoiceValues(*choiceValues, resultChoiceValues);
+                            }
                         }
                     } else if(gameNondetTs()) { // TODO DRYness? exact same behaviour as case above?
                         if (choices == nullptr) {
@@ -417,8 +427,12 @@ namespace storm {
                             rowGroupIndices.erase(rowGroupIndices.begin());
                             _TsMultiplier->reduce(env, *dir, rowGroupIndices, resultChoiceValues, xNew(), &tsChoices);
 
-                            setInputModelChoices(*choices, tsChoices); // no components -> no need for that call?
-                            setInputModelChoiceValues(*choiceValues, resultChoiceValues);
+                            if(choices != nullptr) {
+                                setInputModelChoices(*choices, tsChoices); // no components -> no need for that call?
+                            }
+                            if(choiceValues != nullptr) {
+                                setInputModelChoiceValues(*choiceValues, resultChoiceValues);
+                            }
                         }
                     } else {
                         _TsMultiplier->multiply(env, xOld(), &_TsChoiceValues, xNew());
