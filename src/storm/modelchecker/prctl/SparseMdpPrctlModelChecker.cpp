@@ -298,7 +298,10 @@ namespace storm {
 			auto values = helper.computeLongRunAverageProbabilities(env, subResult.getTruthValuesVector());
 
             std::unique_ptr<CheckResult> result(new ExplicitQuantitativeCheckResult<ValueType>(std::move(values)));
-            if (checkTask.isProduceSchedulersSet()) {
+            if(checkTask.isShieldingTask()) {
+                storm::storage::BitVector allStatesBv = storm::storage::BitVector(this->getModel().getTransitionMatrix().getRowGroupCount(), true);
+                tempest::shields::createQuantitativeShield<ValueType>(std::make_shared<storm::models::sparse::Mdp<ValueType>>(this->getModel()), helper.getChoiceValues(), checkTask.getShieldingExpression(), checkTask.getOptimizationDirection(), allStatesBv, allStatesBv);
+            } else if (checkTask.isProduceSchedulersSet()) {
                 result->asExplicitQuantitativeCheckResult<ValueType>().setScheduler(std::make_unique<storm::storage::Scheduler<ValueType>>(helper.extractScheduler()));
             }
             return result;
