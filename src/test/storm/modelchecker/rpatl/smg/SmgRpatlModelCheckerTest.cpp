@@ -299,7 +299,6 @@ namespace {
         EXPECT_NEAR(this->parseNumber("0"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
     }
 
-    /*
     TYPED_TEST(SmgRpatlModelCheckerTest, RobotCircle) {
         // This test is for testing bounded globally with upper bound and in an interval (with upper and lower bound)
         std::string formulasString = " <<friendlyRobot>> Pmax=? [ G<1 !\"crash\" ]";
@@ -345,7 +344,6 @@ namespace {
         result = checker->check(this->env(), tasks[8]);
         EXPECT_NEAR(this->parseNumber("1"), this->getQuantitativeResultAtInitialState(model, result), this->precision());
     }
-    */
 
     // TODO: create more test cases (files)
 }
