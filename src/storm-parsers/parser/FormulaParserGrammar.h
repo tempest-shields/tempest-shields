@@ -237,7 +237,7 @@ namespace storm {
             // Shielding properties
             qi::rule<Iterator, std::shared_ptr<storm::logic::ShieldExpression const>(), Skipper> shieldExpression;
             qi::rule<Iterator, storm::logic::ShieldingType, Skipper> shieldingType;
-            qi::rule<Iterator, double, Skipper> probability;
+            qi::rule<Iterator, double, Skipper> comparisonValue;
             qi::rule<Iterator, std::pair<storm::logic::ShieldComparison, double>, qi::locals<storm::logic::ShieldComparison>, Skipper> shieldComparison;
 
             // Start symbol

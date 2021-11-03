@@ -9,7 +9,8 @@ namespace storm {
         enum class ShieldingType {
             PostSafety,
             PreSafety,
-            Optimal
+            OptimalPre,
+            OptimalPost
         };
 
         enum class ShieldComparison { Absolute, Relative };
@@ -23,7 +24,8 @@ namespace storm {
             bool isRelative() const;
             bool isPreSafetyShield() const;
             bool isPostSafetyShield() const;
-            bool isOptimalShield() const;
+            bool isOptimalPreShield() const;
+            bool isOptimalPostShield() const;
 
             double getValue() const;
 
@@ -36,8 +38,8 @@ namespace storm {
 
         private:
             ShieldingType type;
-            ShieldComparison comparison;
-            double value;
+            ShieldComparison comparison = ShieldComparison::Relative;
+            double value = 0;
 
             std::string filename;
         };

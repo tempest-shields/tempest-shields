@@ -21,9 +21,13 @@ namespace tempest {
         namespace utility {
             template<typename ValueType, typename Compare, bool relative>
             struct ChoiceFilter {
-                bool operator()(ValueType v, ValueType max, double shieldValue) {
+                bool operator()(ValueType v, ValueType opt, double shieldValue) {
                     Compare compare;
-                    if(relative) return compare(v, max * shieldValue);
+                    if(relative && std::is_same<Compare, storm::utility::ElementLessEqual<ValueType>>::value) {
+                        return compare(v, opt + opt * shieldValue);
+                    } else if(relative && std::is_same<Compare, storm::utility::ElementGreaterEqual<ValueType>>::value) {
+                        return compare(v, opt * shieldValue);
+                    }
                     else return compare(v, shieldValue);
                 }
             };

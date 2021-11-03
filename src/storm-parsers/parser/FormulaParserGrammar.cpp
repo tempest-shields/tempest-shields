@@ -184,16 +184,21 @@ namespace storm {
 
             shieldExpression.name("shield expression");
 
-            shieldingType = (qi::lit("PreSafety")[qi::_val = storm::logic::ShieldingType::PreSafety]   |
-                             qi::lit("PostSafety")[qi::_val = storm::logic::ShieldingType::PostSafety] |
-                             qi::lit("Optimal")[qi::_val = storm::logic::ShieldingType::Optimal]) > -qi::lit("Shield");
+            shieldingType = (qi::lit("PreSafety")[qi::_val = storm::logic::ShieldingType::PreSafety]      |
+                             qi::lit("PostSafety")[qi::_val = storm::logic::ShieldingType::PostSafety]    |
+                             qi::lit("OptimalPre")[qi::_val = storm::logic::ShieldingType::OptimalPre]    |
+                             qi::lit("OptimalPost")[qi::_val = storm::logic::ShieldingType::OptimalPost]  |
+                             qi::lit("Optimal")[qi::_val = storm::logic::ShieldingType::OptimalPost])       // backwards compatability, will be disabled in the future
+                          > -qi::lit("Shield");
             shieldingType.name("shielding type");
 
-            probability = qi::double_[qi::_pass = (qi::_1 >= 0) & (qi::_1 <= 1.0), qi::_val = qi::_1 ];
-            probability.name("double between 0 and 1");
+            //probability = qi::double_[qi::_pass = (qi::_1 >= 0) & (qi::_1 <= 1.0), qi::_val = qi::_1 ];
+            //probability.name("double between 0 and 1");
+            comparisonValue = qi::double_[qi::_val = qi::_1 ];
+            comparisonValue.name("double comparison value");
 
             shieldComparison = ((qi::lit("lambda")[qi::_a = storm::logic::ShieldComparison::Relative] |
-                                 qi::lit("gamma")[qi::_a = storm::logic::ShieldComparison::Absolute]) > qi::lit("=") > probability)[qi::_val = phoenix::bind(&FormulaParserGrammar::createShieldComparisonStruct, phoenix::ref(*this), qi::_a, qi::_1)];
+                                 qi::lit("gamma")[qi::_a = storm::logic::ShieldComparison::Absolute]) > qi::lit("=") > comparisonValue)[qi::_val = phoenix::bind(&FormulaParserGrammar::createShieldComparisonStruct, phoenix::ref(*this), qi::_a, qi::_1)];
             shieldComparison.name("shield comparison type");
 
 #pragma clang diagnostic push
@@ -649,10 +654,9 @@ namespace storm {
 
         std::shared_ptr<storm::logic::ShieldExpression const> FormulaParserGrammar::createShieldExpression(storm::logic::ShieldingType type, std::string name, boost::optional<std::pair<storm::logic::ShieldComparison, double>> comparisonStruct) {
             if(comparisonStruct.is_initialized()) {
-                STORM_LOG_WARN_COND(type != storm::logic::ShieldingType::Optimal , "Comparison for optimal shield will be ignored.");
                 return std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(type, name, comparisonStruct.get().first, comparisonStruct.get().second));
             } else {
-                STORM_LOG_THROW(type == storm::logic::ShieldingType::Optimal , storm::exceptions::WrongFormatException, "Construction of safety shield needs a comparison parameter (lambda or gamma)");
+                STORM_LOG_INFO("Construction of shield without a comparison parameter (lambda or gamma) will default to 'lambda=0'");
                 return std::shared_ptr<storm::logic::ShieldExpression>(new storm::logic::ShieldExpression(type, name));
             }
         }

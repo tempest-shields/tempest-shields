@@ -20,15 +20,15 @@ TEST(GameShieldingParserTest, PreSafetyShieldTest) {
 
     std::shared_ptr<storm::logic::ShieldExpression const> shieldExpression(nullptr);
     ASSERT_NO_THROW(shieldExpression = property.at(0).getShieldingExpression());
-    EXPECT_TRUE(shieldExpression->isPreSafetyShield());
-    EXPECT_FALSE(shieldExpression->isPostSafetyShield());
+    EXPECT_TRUE(shieldExpression->isPreShield());
+    EXPECT_FALSE(shieldExpression->isPostShield());
     EXPECT_FALSE(shieldExpression->isOptimalShield());
     EXPECT_TRUE(shieldExpression->isRelative());
     EXPECT_EQ(std::stod(value), shieldExpression->getValue());
     EXPECT_EQ(filename, shieldExpression->getFilename());
 }
 
-TEST(GameShieldingParserTest, PostSafetyShieldTest) {
+TEST(GameShieldingParserTest, PostShieldTest) {
     storm::parser::FormulaParser formulaParser;
 
     std::string filename = "postSafetyShieldFileName";
@@ -46,7 +46,7 @@ TEST(GameShieldingParserTest, PostSafetyShieldTest) {
     std::shared_ptr<storm::logic::ShieldExpression const> shieldExpression(nullptr);
     ASSERT_NO_THROW(shieldExpression = property.at(0).getShieldingExpression());
     EXPECT_FALSE(shieldExpression->isPreSafetyShield());
-    EXPECT_TRUE(shieldExpression->isPostSafetyShield());
+    EXPECT_TRUE(shieldExpression->isPostShield());
     EXPECT_FALSE(shieldExpression->isOptimalShield());
     EXPECT_FALSE(shieldExpression->isRelative());
     EXPECT_EQ(std::stod(value), shieldExpression->getValue());
@@ -74,7 +74,7 @@ TEST(GameShieldingParserTest, OptimalShieldTest) {
     std::shared_ptr<storm::logic::ShieldExpression const> shieldExpression(nullptr);
     ASSERT_NO_THROW(shieldExpression = property.at(0).getShieldingExpression());
     EXPECT_FALSE(shieldExpression->isPreSafetyShield());
-    EXPECT_FALSE(shieldExpression->isPostSafetyShield());
+    EXPECT_FALSE(shieldExpression->isPostShield());
     EXPECT_TRUE(shieldExpression->isOptimalShield());
     EXPECT_FALSE(shieldExpression->isRelative());
     EXPECT_EQ(filename, shieldExpression->getFilename());
