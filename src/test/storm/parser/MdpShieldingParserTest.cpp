@@ -18,7 +18,7 @@ TEST(MdpShieldingParserTest, PreSafetyShieldTest) {
     std::shared_ptr<storm::logic::ShieldExpression const> shieldExpression(nullptr);
     ASSERT_NO_THROW(shieldExpression = property.at(0).getShieldingExpression());
     EXPECT_TRUE(shieldExpression->isPreSafetyShield());
-    EXPECT_FALSE(shieldExpression->isPostShield());
+    EXPECT_FALSE(shieldExpression->isPostSafetyShield());
     EXPECT_FALSE(shieldExpression->isOptimalShield());
     EXPECT_FALSE(shieldExpression->isRelative());
     EXPECT_EQ(std::stod(value), shieldExpression->getValue());
@@ -30,7 +30,7 @@ TEST(MdpShieldingParserTest, PostShieldTest) {
 
     std::string filename = "postSafetyShieldFileName";
     std::string value = "0.95";
-    std::string input = "<" + filename + ", Post, lambda=" + value + "> Pmin=? [X !\"label\"]";
+    std::string input = "<" + filename + ", PostSafety, lambda=" + value + "> Pmin=? [X !\"label\"]";
 
     std::shared_ptr<storm::logic::Formula const> formula(nullptr);
     std::vector<storm::jani::Property> property;
@@ -40,7 +40,7 @@ TEST(MdpShieldingParserTest, PostShieldTest) {
     std::shared_ptr<storm::logic::ShieldExpression const> shieldExpression(nullptr);
     ASSERT_NO_THROW(shieldExpression = property.at(0).getShieldingExpression());
     EXPECT_FALSE(shieldExpression->isPreSafetyShield());
-    EXPECT_TRUE(shieldExpression->isPostShield());
+    EXPECT_TRUE(shieldExpression->isPostSafetyShield());
     EXPECT_FALSE(shieldExpression->isOptimalShield());
     EXPECT_TRUE(shieldExpression->isRelative());
     EXPECT_EQ(std::stod(value), shieldExpression->getValue());
@@ -65,8 +65,7 @@ TEST(MdpShieldingParserTest, OptimalShieldTest) {
     std::shared_ptr<storm::logic::ShieldExpression const> shieldExpression(nullptr);
     ASSERT_NO_THROW(shieldExpression = property.at(0).getShieldingExpression());
     EXPECT_FALSE(shieldExpression->isPreSafetyShield());
-    EXPECT_FALSE(shieldExpression->isPostShield());
+    EXPECT_FALSE(shieldExpression->isPostSafetyShield());
     EXPECT_TRUE(shieldExpression->isOptimalShield());
-    EXPECT_FALSE(shieldExpression->isRelative());
     EXPECT_EQ(filename, shieldExpression->getFilename());
 }

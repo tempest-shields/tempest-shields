@@ -24,6 +24,7 @@ namespace storm {
             bool isRelative() const;
             bool isPreSafetyShield() const;
             bool isPostSafetyShield() const;
+            bool isOptimalShield() const;
             bool isOptimalPreShield() const;
             bool isOptimalPostShield() const;
 
