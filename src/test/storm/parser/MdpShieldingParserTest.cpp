@@ -25,7 +25,7 @@ TEST(MdpShieldingParserTest, PreSafetyShieldTest) {
     EXPECT_EQ(filename, shieldExpression->getFilename());
 }
 
-TEST(MdpShieldingParserTest, PostSafetyShieldTest) {
+TEST(MdpShieldingParserTest, PostShieldTest) {
     storm::parser::FormulaParser formulaParser;
 
     std::string filename = "postSafetyShieldFileName";
@@ -67,6 +67,5 @@ TEST(MdpShieldingParserTest, OptimalShieldTest) {
     EXPECT_FALSE(shieldExpression->isPreSafetyShield());
     EXPECT_FALSE(shieldExpression->isPostSafetyShield());
     EXPECT_TRUE(shieldExpression->isOptimalShield());
-    EXPECT_FALSE(shieldExpression->isRelative());
     EXPECT_EQ(filename, shieldExpression->getFilename());
 }

@@ -108,22 +108,22 @@ namespace {
 
         // testing create shielding expressions
         std::string formulasString = "<" + fileNames[0] + ", PreSafety, lambda=0.9> <<hiker>> Pmax=? [ F <=3 \"target\" ]";
-        formulasString += "; <" + fileNames[1] + ", PreSafety, lambda=0.9> <<hiker>> Pmin=? [ F <=3 \"target\" ]";
+        formulasString += "; <" + fileNames[1] + ", PreSafety, lambda=0.9> <<native>> Pmin=? [ F <=3 \"target\" ]";
         formulasString += "; <" + fileNames[2] + ", PreSafety, gamma=0.9> <<hiker>> Pmax=? [ F <=3 \"target\" ]";
-        formulasString += "; <" + fileNames[3] + ", PreSafety, gamma=0.9> <<hiker>> Pmin=? [ F <=3 \"target\" ]";
+        formulasString += "; <" + fileNames[3] + ", PreSafety, gamma=0.9> <<native>> Pmin=? [ F <=3 \"target\" ]";
         formulasString += "; <" + fileNames[4] + ", PostSafety, lambda=0.9> <<hiker>> Pmax=? [ F <=3 \"target\" ]";
-        formulasString += "; <" + fileNames[5] + ", PostSafety, lambda=0.9> <<hiker>> Pmin=? [ F <=3 \"target\" ]";
+        formulasString += "; <" + fileNames[5] + ", PostSafety, lambda=0.9> <<native>> Pmin=? [ F <=3 \"target\" ]";
         formulasString += "; <" + fileNames[6] + ", PostSafety, gamma=0.9> <<hiker>> Pmax=? [ F <=3 \"target\" ]";
-        formulasString += "; <" + fileNames[7] + ", PostSafety, gamma=0.9> <<hiker>> Pmin=? [ F <=3 \"target\" ]";
+        formulasString += "; <" + fileNames[7] + ", PostSafety, gamma=0.9> <<native>> Pmin=? [ F <=3 \"target\" ]";
 
         formulasString += "; <" + fileNames[8] + ", PreSafety, lambda=0.5> <<hiker>> Pmax=? [ F <=5 \"target\" ]";
-        formulasString += "; <" + fileNames[9] + ", PreSafety, lambda=0.5> <<hiker>> Pmin=? [ F <=5 \"target\" ]";
+        formulasString += "; <" + fileNames[9] + ", PreSafety, lambda=0.5> <<native>> Pmin=? [ F <=5 \"target\" ]";
         formulasString += "; <" + fileNames[10] + ", PreSafety, gamma=0.5> <<hiker>> Pmax=? [ F <=5 \"target\" ]";
-        formulasString += "; <" + fileNames[11] + ", PreSafety, gamma=0.5> <<hiker>> Pmin=? [ F <=5 \"target\" ]";
+        formulasString += "; <" + fileNames[11] + ", PreSafety, gamma=0.5> <<native>> Pmin=? [ F <=5 \"target\" ]";
         formulasString += "; <" + fileNames[12] + ", PostSafety, lambda=0.5> <<hiker>> Pmax=? [ F <=5 \"target\" ]";
-        formulasString += "; <" + fileNames[13] + ", PostSafety, lambda=0.5> <<hiker>> Pmin=? [ F <=5 \"target\" ]";
+        formulasString += "; <" + fileNames[13] + ", PostSafety, lambda=0.5> <<native>> Pmin=? [ F <=5 \"target\" ]";
         formulasString += "; <" + fileNames[14] + ", PostSafety, gamma=0.5> <<hiker>> Pmax=? [ F <=5 \"target\" ]";
-        formulasString += "; <" + fileNames[15] + ", PostSafety, gamma=0.5> <<hiker>> Pmin=? [ F <=5 \"target\" ]";
+        formulasString += "; <" + fileNames[15] + ", PostSafety, gamma=0.5> <<native>> Pmin=? [ F <=5 \"target\" ]";
 
         auto modelFormulas = this->buildModelFormulas(STORM_TEST_RESOURCES_DIR "/smg/rightDecision.nm", formulasString);
         auto smg = std::move(modelFormulas.first);

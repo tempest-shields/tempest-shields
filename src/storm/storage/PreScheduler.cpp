@@ -8,11 +8,36 @@
 namespace storm {
     namespace storage {
         template <typename ValueType>
-        PreScheduler<ValueType>::PreScheduler(uint_fast64_t numberOfModelStates, boost::optional<storm::storage::MemoryStructure> const& memoryStructure) : Scheduler<ValueType>(numberOfModelStates, memoryStructure) {
+        PreScheduler<ValueType>::PreScheduler(uint_fast64_t numberOfModelStates, boost::optional<storm::storage::MemoryStructure> const& memoryStructure) : memoryStructure(memoryStructure) {
+            uint_fast64_t numOfMemoryStates = memoryStructure ? memoryStructure->getNumberOfStates() : 1;
+            schedulerChoices = std::vector<std::vector<PreSchedulerChoice<ValueType>>>(numOfMemoryStates, std::vector<PreSchedulerChoice<ValueType>>(numberOfModelStates));
+            //dontCareStates =  std::vector<storm::storage::BitVector>(numOfMemoryStates, storm::storage::BitVector(numberOfModelStates, false));
+            numOfUndefinedChoices = numOfMemoryStates * numberOfModelStates;
+            numOfDeterministicChoices = 0;
+            numOfDontCareStates = 0;
         }
 
         template <typename ValueType>
-        PreScheduler<ValueType>::PreScheduler(uint_fast64_t numberOfModelStates, boost::optional<storm::storage::MemoryStructure>&& memoryStructure) : Scheduler<ValueType>(numberOfModelStates, std::move(memoryStructure)) {
+        PreScheduler<ValueType>::PreScheduler(uint_fast64_t numberOfModelStates, boost::optional<storm::storage::MemoryStructure>&& memoryStructure) : memoryStructure(std::move(memoryStructure)) {
+        }
+
+        template <typename ValueType>
+        bool PreScheduler<ValueType>::isMemorylessScheduler() const {
+            return getNumberOfMemoryStates() == 1;
+        }
+
+        template <typename ValueType>
+        uint_fast64_t PreScheduler<ValueType>::getNumberOfMemoryStates() const {
+            return memoryStructure ? memoryStructure->getNumberOfStates() : 1;
+        }
+
+        template <typename ValueType>
+        void PreScheduler<ValueType>::setChoice(PreSchedulerChoice<ValueType> const& choice, uint_fast64_t modelState, uint_fast64_t memoryState) {
+            STORM_LOG_ASSERT(memoryState < this->getNumberOfMemoryStates(), "Illegal memory state index");
+            STORM_LOG_ASSERT(modelState < this->schedulerChoices[memoryState].size(), "Illegal model state index");
+
+            auto& schedulerChoice = schedulerChoices[memoryState][modelState];
+            schedulerChoice = choice;
         }
 
         template <typename ValueType>
@@ -67,23 +92,23 @@ namespace storm {
                     }
 
                     // Print choice info
-                    SchedulerChoice<ValueType> const& choice = this->schedulerChoices[memoryState][state];
-                    if (choice.isDefined()) {
+                    PreSchedulerChoice<ValueType> const& choices = this->schedulerChoices[memoryState][state];
+                    if (!choices.isEmpty()) {
                         bool firstChoice = true;
-                        for (auto const& choiceProbPair : choice.getChoiceAsDistribution()) {
+                        for (auto const& choiceProbPair : choices.getChoiceMap()) {
                             if (firstChoice) {
                                 firstChoice = false;
                             } else {
                                 stateString << ";    ";
                             }
-                            stateString << choiceProbPair.second << ": (";
+                            stateString << std::get<0>(choiceProbPair) << ": (";
                             if (choiceOriginsGiven) {
-                                stateString << model->getChoiceOrigins()->getChoiceInfo(model->getTransitionMatrix().getRowGroupIndices()[state] + choiceProbPair.first);
+                                stateString << model->getChoiceOrigins()->getChoiceInfo(model->getTransitionMatrix().getRowGroupIndices()[state] + std::get<1>(choiceProbPair));
                             } else {
-                                stateString << choiceProbPair.first;
+                                stateString << std::get<1>(choiceProbPair);
                             }
                             if (choiceLabelsGiven) {
-                                auto choiceLabels = model->getChoiceLabeling().getLabelsOfChoice(model->getTransitionMatrix().getRowGroupIndices()[state] + choiceProbPair.first);
+                                auto choiceLabels = model->getChoiceLabeling().getLabelsOfChoice(model->getTransitionMatrix().getRowGroupIndices()[state] + std::get<1>(choiceProbPair));
                                 stateString << " {" << boost::join(choiceLabels, ", ") << "}";
                             }
                             stateString << ")";

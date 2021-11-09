@@ -28,7 +28,7 @@ TEST(GameShieldingParserTest, PreSafetyShieldTest) {
     EXPECT_EQ(filename, shieldExpression->getFilename());
 }
 
-TEST(GameShieldingParserTest, PostSafetyShieldTest) {
+TEST(GameShieldingParserTest, PostShieldTest) {
     storm::parser::FormulaParser formulaParser;
 
     std::string filename = "postSafetyShieldFileName";
@@ -76,6 +76,5 @@ TEST(GameShieldingParserTest, OptimalShieldTest) {
     EXPECT_FALSE(shieldExpression->isPreSafetyShield());
     EXPECT_FALSE(shieldExpression->isPostSafetyShield());
     EXPECT_TRUE(shieldExpression->isOptimalShield());
-    EXPECT_FALSE(shieldExpression->isRelative());
     EXPECT_EQ(filename, shieldExpression->getFilename());
 }

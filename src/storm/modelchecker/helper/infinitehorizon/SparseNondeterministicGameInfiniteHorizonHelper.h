@@ -58,6 +58,11 @@ namespace storm {
                  */
                 storm::storage::Scheduler<ValueType> extractScheduler() const;
 
+                /*!
+                 * @return the computed choice values for the states.
+                 */
+                std::vector<ValueType> getChoiceValues() const;
+
                 ValueType computeLraForComponent(Environment const& env, ValueGetter const& stateValuesGetter,  ValueGetter const& actionValuesGetter, storm::storage::MaximalEndComponent const& component);
 
                 ValueType computeLraVi(Environment const& env, ValueGetter const& stateValuesGetter, ValueGetter const& actionValuesGetter, storm::storage::MaximalEndComponent const& mec);

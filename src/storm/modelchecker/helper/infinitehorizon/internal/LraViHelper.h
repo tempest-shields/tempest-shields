@@ -68,7 +68,7 @@ namespace storm {
                      * @return The (optimal) long run average value of the specified component.
                      * @note it is possible to call this method multiple times with different values. However, other changes to the environment or the optimization direction might not have the expected effect due to caching.
                      */
-                    ValueType performValueIteration(Environment const& env, ValueGetter const& stateValueGetter, ValueGetter const& actionValueGetter, std::vector<ValueType> const* exitRates = nullptr, storm::solver::OptimizationDirection const* dir = nullptr, std::vector<uint64_t>* choices = nullptr);
+                    ValueType performValueIteration(Environment const& env, ValueGetter const& stateValueGetter, ValueGetter const& actionValueGetter, std::vector<ValueType> const* exitRates = nullptr, storm::solver::OptimizationDirection const* dir = nullptr, std::vector<uint64_t>* choices = nullptr, std::vector<ValueType>* choiceValues = nullptr);
 
                 private:
 
@@ -89,7 +89,7 @@ namespace storm {
                      *                Note that these choices will be inserted w.r.t. the original model states/choices, i.e. the size of the vector should match the state-count of the input model
                      * @pre when calling this the first time, initializeNewValues must have been called before. Moreover, prepareNextIteration must be called between two calls of this.
                     */
-                    void performIterationStep(Environment const& env, storm::solver::OptimizationDirection const* dir = nullptr, std::vector<uint64_t>* choices = nullptr);
+                    void performIterationStep(Environment const& env, storm::solver::OptimizationDirection const* dir = nullptr, std::vector<uint64_t>* choices = nullptr, std::vector<ValueType>* choiceValues = nullptr);
 
                     struct ConvergenceCheckResult {
                         bool isPrecisionAchieved;
@@ -110,6 +110,8 @@ namespace storm {
                     void prepareSolversAndMultipliers(Environment const& env, storm::solver::OptimizationDirection const* dir = nullptr);
 
                     void setInputModelChoices(std::vector<uint64_t>& choices, std::vector<uint64_t> const& localMecChoices, bool setChoiceZeroToMarkovianStates = false, bool setChoiceZeroToProbabilisticStates = false) const;
+
+                    void setInputModelChoiceValues(std::vector<ValueType>& choiceValues, std::vector<ValueType> const& localMecChoiceValues) const;
 
                     /// Returns true iff the given state is a timed state
                     bool isTimedState(uint64_t const& inputModelStateIndex) const;

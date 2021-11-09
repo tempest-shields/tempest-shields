@@ -52,6 +52,12 @@ namespace storm {
                 return scheduler;
             }
 
+            template <typename ValueType>
+            std::vector<ValueType> SparseNondeterministicGameInfiniteHorizonHelper<ValueType>::getChoiceValues() const {
+                STORM_LOG_ASSERT(this->isProduceChoiceValuesSet(), "Trying to get the computed choice values although this was not requested.");
+                STORM_LOG_ASSERT(this->_choiceValues.is_initialized(), "Trying to get the computed choice values but none were available. Was there a computation call before?");
+                return this->_choiceValues.get();
+            }
 
             template <typename ValueType>
             void SparseNondeterministicGameInfiniteHorizonHelper<ValueType>::createDecomposition() {
@@ -65,8 +71,6 @@ namespace storm {
                     this->_computedLongRunComponentDecomposition = std::make_unique<storm::storage::GameMaximalEndComponentDecomposition<ValueType>>(this->_transitionMatrix, *this->_backwardTransitions);
 
                     this->_longRunComponentDecomposition = this->_computedLongRunComponentDecomposition.get();
-                    //STORM_LOG_DEBUG("\n" << this->_transitionMatrix);
-                    STORM_LOG_DEBUG("GMEC: " << *(this->_longRunComponentDecomposition));
                 }
             }
 
@@ -91,6 +95,13 @@ namespace storm {
                     }
                     this->_producedOptimalChoices->resize(this->_transitionMatrix.getRowGroupCount());
                 }
+                // Allocate memory for the choice values.
+                if (this->isProduceChoiceValuesSet()) {
+                    if (!this->_choiceValues.is_initialized()) {
+                        this->_choiceValues.emplace();
+                    }
+                    this->_choiceValues->resize(this->_transitionMatrix.getRowCount());
+                }
 
                 storm::solver::LraMethod method = env.solver().lra().getNondetLraMethod();
                 if (method == storm::solver::LraMethod::LinearProgramming) {
@@ -111,13 +122,17 @@ namespace storm {
                 if (this->isProduceSchedulerSet()) {
                     optimalChoices = &this->_producedOptimalChoices.get();
                 }
+                std::vector<ValueType>* choiceValues = nullptr;
+                if (this->isProduceChoiceValuesSet()) {
+                    choiceValues = &this->_choiceValues.get();
+                }
 
                 // Now create a helper and perform the algorithm
                 if (this->isContinuousTime()) {
                     STORM_LOG_THROW(false, storm::exceptions::InternalException, "We cannot handle continuous time games.");
                 } else {
                     storm::modelchecker::helper::internal::LraViHelper<ValueType, storm::storage::MaximalEndComponent, storm::modelchecker::helper::internal::LraViTransitionsType::GameNondetTsNoIs> viHelper(mec, this->_transitionMatrix, aperiodicFactor, nullptr, nullptr, &statesOfCoalition);
-                    return viHelper.performValueIteration(env, stateRewardsGetter, actionRewardsGetter, nullptr, &this->getOptimizationDirection(), optimalChoices);
+                    return viHelper.performValueIteration(env, stateRewardsGetter, actionRewardsGetter, nullptr, &this->getOptimizationDirection(), optimalChoices, choiceValues);
                 }
             }
 

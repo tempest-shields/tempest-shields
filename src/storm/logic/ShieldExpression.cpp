@@ -27,7 +27,15 @@ namespace storm {
         }
 
         bool ShieldExpression::isOptimalShield() const {
-            return type == storm::logic::ShieldingType::Optimal;
+            return type == storm::logic::ShieldingType::OptimalPre || type == storm::logic::ShieldingType::OptimalPost;
+        }
+
+        bool ShieldExpression::isOptimalPreShield() const {
+            return type == storm::logic::ShieldingType::OptimalPre;
+        }
+
+        bool ShieldExpression::isOptimalPostShield() const {
+            return type == storm::logic::ShieldingType::OptimalPost;
         }
 
         double ShieldExpression::getValue() const {
@@ -36,9 +44,10 @@ namespace storm {
 
         std::string ShieldExpression::typeToString() const {
             switch(type) {
-                case storm::logic::ShieldingType::PostSafety: return "PostSafety";
-                case storm::logic::ShieldingType::PreSafety:  return "PreSafety";
-                case storm::logic::ShieldingType::Optimal:    return "Optimal";
+                case storm::logic::ShieldingType::PostSafety: return "Post";
+                case storm::logic::ShieldingType::PreSafety:  return "Pre";
+                case storm::logic::ShieldingType::OptimalPre:    return "OptimalPre";
+                case storm::logic::ShieldingType::OptimalPost:    return "OptimalPost";
             }
         }
 
@@ -57,14 +66,13 @@ namespace storm {
             std::string prettyString = "";
             std::string comparisonType = isRelative() ? "relative" : "absolute";
             switch(type) {
-                case storm::logic::ShieldingType::PostSafety: prettyString += "Post-Safety"; break;
-                case storm::logic::ShieldingType::PreSafety:  prettyString += "Pre-Safety"; break;
-                case storm::logic::ShieldingType::Optimal:    prettyString += "Optimal"; break;
+                case storm::logic::ShieldingType::PostSafety:  prettyString += "Post-Safety"; break;
+                case storm::logic::ShieldingType::PreSafety:   prettyString += "Pre-Safety"; break;
+                case storm::logic::ShieldingType::OptimalPre:  prettyString += "Optimal-Pre"; break;
+                case storm::logic::ShieldingType::OptimalPost: prettyString += "Optimal-Post"; break;
             }
             prettyString += "-Shield ";
-            if(!(type == storm::logic::ShieldingType::Optimal)) {
-                prettyString += "with " + comparisonType + " comparison (" + comparisonToString() + " = " + std::to_string(value) + "):";
-            }
+            prettyString += "with " + comparisonType + " comparison (" + comparisonToString() + " = " + std::to_string(value) + "):";
             return prettyString;
         }
 

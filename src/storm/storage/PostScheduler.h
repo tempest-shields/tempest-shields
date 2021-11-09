@@ -2,7 +2,7 @@
 
 #include <cstdint>
 #include <map>
-#include "storm/storage/SchedulerChoice.h"
+#include "storm/storage/PostSchedulerChoice.h"
 #include "storm/storage/Scheduler.h"
 #include "storm/logic/ShieldExpression.h"
 
@@ -16,7 +16,7 @@ namespace storm {
          * A Choice can be undefined, deterministic
          */
         template <typename ValueType>
-        class PostScheduler : public Scheduler<ValueType> {
+        class PostScheduler {
         public:
             typedef uint_fast64_t OldChoice;
             /*!
@@ -35,7 +35,7 @@ namespace storm {
              * @param modelState The state of the model for which to set the choice.
              * @param memoryState The state of the memoryStructure for which to set the choice.
              */
-            void setChoice(OldChoice const& oldChoice, SchedulerChoice<ValueType> const& newChoice, uint_fast64_t modelState, uint_fast64_t memoryState = 0);
+            void setChoice(PostSchedulerChoice<ValueType> const& newChoice, uint_fast64_t modelState, uint_fast64_t memoryState = 0);
 
             /*!
              * Is the scheduler defined on the states indicated by the selected-states bitvector?
@@ -49,14 +49,6 @@ namespace storm {
              * @param memoryState The state of the memoryStructure for which to clear the choice.
              */
             void clearChoice(uint_fast64_t modelState, uint_fast64_t memoryState = 0);
-
-            /*!
-             * Gets the choice defined by the scheduler for the given model and memory state.
-             *
-             * @param state The state for which to get the choice.
-             * @param memoryState the memory state which we consider.
-             */
-            SchedulerChoice<ValueType> const& getChoice(uint_fast64_t modelState, OldChoice oldChoice, uint_fast64_t memoryState = 0) ;
 
             /*!
              * Compute the Action Support: A bit vector that indicates all actions that are selected with positive probability in some memory state
@@ -92,8 +84,14 @@ namespace storm {
              */
             void printToStream(std::ostream& out, std::shared_ptr<storm::logic::ShieldExpression const> shieldingExpression, std::shared_ptr<storm::models::sparse::Model<ValueType>> model = nullptr, bool skipUniqueChoices = false) const;
         private:
-            std::vector<std::vector<std::vector<SchedulerChoice<ValueType>>>> schedulerChoiceMapping;
+            boost::optional<storm::storage::MemoryStructure> memoryStructure;
+            std::vector<std::vector<PostSchedulerChoice<ValueType>>> schedulerChoiceMapping;
 
+            bool printUndefinedChoices = false;
+
+            uint_fast64_t numOfUndefinedChoices;
+            uint_fast64_t numOfDeterministicChoices;
+            uint_fast64_t numOfDontCareStates;
             std::vector<uint_fast64_t> numberOfChoicesPerState;
             uint_fast64_t numberOfChoices;
         };

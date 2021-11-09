@@ -9,14 +9,10 @@ namespace storm {
     namespace storage {
 
         template <typename ValueType>
-        PostScheduler<ValueType>::PostScheduler(uint_fast64_t numberOfModelStates, std::vector<uint_fast64_t> numberOfChoicesPerState, boost::optional<storm::storage::MemoryStructure> const& memoryStructure) : Scheduler<ValueType>(numberOfModelStates, memoryStructure) {
-            STORM_LOG_DEBUG(numberOfChoicesPerState.size() << " " << numberOfModelStates);
-            STORM_LOG_ASSERT(numberOfChoicesPerState.size() == numberOfModelStates, "Need to know amount of choices per model state");
+        PostScheduler<ValueType>::PostScheduler(uint_fast64_t numberOfModelStates, std::vector<uint_fast64_t> numberOfChoicesPerState, boost::optional<storm::storage::MemoryStructure> const& memoryStructure) : memoryStructure(memoryStructure) {
+            //STORM_LOG_ASSERT(numberOfChoicesPerState.size() == numberOfModelStates, "Need to know amount of choices per model state");
             uint_fast64_t numOfMemoryStates = memoryStructure ? memoryStructure->getNumberOfStates() : 1;
-            schedulerChoiceMapping = std::vector<std::vector<std::vector<SchedulerChoice<ValueType>>>>(numOfMemoryStates, std::vector<std::vector<SchedulerChoice<ValueType>>>(numberOfModelStates));
-            for(uint state = 0; state < numberOfModelStates; state++) {
-                schedulerChoiceMapping[0][state].resize(numberOfChoicesPerState[state]);
-            }
+            schedulerChoiceMapping = std::vector<std::vector<PostSchedulerChoice<ValueType>>>(numOfMemoryStates, std::vector<PostSchedulerChoice<ValueType>>(numberOfModelStates));
             numberOfChoices = 0;
             for(std::vector<uint_fast64_t>::iterator it = numberOfChoicesPerState.begin(); it != numberOfChoicesPerState.end(); ++it)
                 numberOfChoices += *it;
@@ -25,13 +21,10 @@ namespace storm {
         }
 
         template <typename ValueType>
-        PostScheduler<ValueType>::PostScheduler(uint_fast64_t numberOfModelStates, std::vector<uint_fast64_t> numberOfChoicesPerState, boost::optional<storm::storage::MemoryStructure>&& memoryStructure) : Scheduler<ValueType>(numberOfModelStates, std::move(memoryStructure)) {
+        PostScheduler<ValueType>::PostScheduler(uint_fast64_t numberOfModelStates, std::vector<uint_fast64_t> numberOfChoicesPerState, boost::optional<storm::storage::MemoryStructure>&& memoryStructure) : memoryStructure(std::move(memoryStructure)) {
             STORM_LOG_ASSERT(numberOfChoicesPerState.size() == numberOfModelStates, "Need to know amount of choices per model state");
             uint_fast64_t numOfMemoryStates = memoryStructure ? memoryStructure->getNumberOfStates() : 1;
-            schedulerChoiceMapping = std::vector<std::vector<std::vector<SchedulerChoice<ValueType>>>>(numOfMemoryStates, std::vector<std::vector<SchedulerChoice<ValueType>>>(numberOfModelStates));
-            for(uint state = 0; state < numberOfModelStates; state++) {
-                schedulerChoiceMapping[0][state].resize(numberOfChoicesPerState[state]);
-            }
+            schedulerChoiceMapping = std::vector<std::vector<PostSchedulerChoice<ValueType>>>(numOfMemoryStates, std::vector<PostSchedulerChoice<ValueType>>(numberOfModelStates));
             numberOfChoices = 0;
             for(std::vector<uint_fast64_t>::iterator it = numberOfChoicesPerState.begin(); it != numberOfChoicesPerState.end(); ++it)
                 numberOfChoices += *it;
@@ -40,20 +33,12 @@ namespace storm {
         }
 
         template <typename ValueType>
-        void PostScheduler<ValueType>::setChoice(OldChoice const& oldChoice, SchedulerChoice<ValueType> const& newChoice, uint_fast64_t modelState, uint_fast64_t memoryState) {
+        void PostScheduler<ValueType>::setChoice(PostSchedulerChoice<ValueType> const& choice, uint_fast64_t modelState, uint_fast64_t memoryState) {
             STORM_LOG_ASSERT(memoryState == 0, "Currently we do not support PostScheduler with memory");
             STORM_LOG_ASSERT(modelState < schedulerChoiceMapping[memoryState].size(), "Illegal model state index");
 
-            schedulerChoiceMapping[memoryState][modelState][oldChoice] = newChoice;
+            schedulerChoiceMapping[memoryState][modelState] = choice;
         }
-
-        template <typename ValueType>
-        SchedulerChoice<ValueType> const& PostScheduler<ValueType>::getChoice(uint_fast64_t modelState, OldChoice oldChoice, uint_fast64_t memoryState)  {
-            STORM_LOG_ASSERT(memoryState < this->getNumberOfMemoryStates(), "Illegal memory state index");
-            STORM_LOG_ASSERT(modelState < schedulerChoiceMapping[memoryState].size(), "Illegal model state index");
-            return schedulerChoiceMapping[memoryState][modelState][oldChoice];
-        }
-
 
         template <typename ValueType>
         bool PostScheduler<ValueType>::isDeterministicScheduler() const {
@@ -89,7 +74,11 @@ namespace storm {
             out << ":" << std::endl;
             uint_fast64_t numOfSkippedStatesWithUniqueChoice = 0;
             for (uint_fast64_t state = 0; state < schedulerChoiceMapping.front().size(); ++state) {
+                PostSchedulerChoice<ValueType> const& choices = schedulerChoiceMapping[0][state];
+                if(choices.isEmpty() && !printUndefinedChoices) continue;
+
                 std::stringstream stateString;
+
                 // Print the state info
                 if (stateValuationsGiven) {
                     stateString << std::setw(widthOfStates)  << (std::to_string(state) + ": " + model->getStateValuations().getStateInfo(state));
@@ -98,42 +87,37 @@ namespace storm {
                 }
                 stateString << "    ";
 
+
                 bool firstChoiceIndex = true;
-                for(uint choiceIndex = 0; choiceIndex < schedulerChoiceMapping[0][state].size(); choiceIndex++) {
-                    SchedulerChoice<ValueType> const& choice = schedulerChoiceMapping[0][state][choiceIndex];
+                for(auto const& choiceMap : choices.getChoiceMap()) {
                     if(firstChoiceIndex) {
                         firstChoiceIndex = false;
                     } else {
                         stateString << ";    ";
                     }
-                    if (choice.isDefined()) {
-                        auto choiceProbPair = *(choice.getChoiceAsDistribution().begin());
-                        if(choiceLabelsGiven) {
-                            auto choiceLabels = model->getChoiceLabeling().getLabelsOfChoice(model->getTransitionMatrix().getRowGroupIndices()[state] + choiceIndex);
-                            stateString << std::to_string(choiceIndex) << " {" << boost::join(choiceLabels, ", ") << "}: ";
-                        } else {
-                            stateString << std::to_string(choiceIndex) << ": ";
-                        }
-                        //stateString << choiceProbPair.second << ": (";
-                        if (choiceOriginsGiven) {
-                            stateString << model->getChoiceOrigins()->getChoiceInfo(model->getTransitionMatrix().getRowGroupIndices()[state] + choiceProbPair.first);
-                        } else {
-                            stateString << choiceProbPair.first;
-                        }
-                        if (choiceLabelsGiven) {
-                            auto choiceLabels = model->getChoiceLabeling().getLabelsOfChoice(model->getTransitionMatrix().getRowGroupIndices()[state] + choiceProbPair.first);
-                            stateString << " {" << boost::join(choiceLabels, ", ") << "}";
-                        }
 
+                    if(choiceLabelsGiven) {
+                        auto choiceLabels = model->getChoiceLabeling().getLabelsOfChoice(model->getTransitionMatrix().getRowGroupIndices()[state] + std::get<0>(choiceMap));
+                        stateString << std::to_string(std::get<0>(choiceMap)) << " {" << boost::join(choiceLabels, ", ") << "}: ";
                     } else {
-                        if(!this->printUndefinedChoices) goto skipStatesWithUndefinedChoices;
-                        stateString << "undefined.";
+                        stateString << std::to_string(std::get<0>(choiceMap)) << ": ";
                     }
+
+                    if (choiceOriginsGiven) {
+                        stateString << model->getChoiceOrigins()->getChoiceInfo(model->getTransitionMatrix().getRowGroupIndices()[state] + std::get<1>(choiceMap));
+                    } else {
+                        stateString << std::to_string(std::get<1>(choiceMap));
+                    }
+                    if (choiceLabelsGiven) {
+                        auto choiceLabels = model->getChoiceLabeling().getLabelsOfChoice(model->getTransitionMatrix().getRowGroupIndices()[state] + std::get<1>(choiceMap));
+                        stateString << " {" << boost::join(choiceLabels, ", ") << "}";
+                    }
+
                     // Todo: print memory updates
                 }
                 out << stateString.str() << std::endl;
                 // jump to label if we find one undefined choice.
-                skipStatesWithUndefinedChoices:;
+                //skipStatesWithUndefinedChoices:;
             }
             out << "___________________________________________________________________" << std::endl;
         }
