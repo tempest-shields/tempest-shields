@@ -1,0 +1,54 @@
+smg
+
+player sh
+  [planA], [planA_Dev], [planB], [planB_Dev]
+endplayer
+
+player learned_controller
+  controller, env
+endplayer
+
+global move : [0..2] init 0;
+
+const int lengthA;
+const int lengthB = lengthA + 5;
+
+global stepA : [0..lengthA] init 0;
+global stepB : [0..lengthB] init 0;
+
+global planA : bool init true;
+global shieldPlanA : bool init true;
+
+global stepTaken : bool init false;
+global waiting : bool init false;
+
+const int waiting_cost = 2;
+
+const double blockedProb = 0.5;
+module controller
+  [] move=0 & shieldPlanA & stepA<lengthA -> (planA'=true)  & (stepTaken'=false) & (waiting'=false) & (move'=1);
+  [] move=0 & shieldPlanA & stepA<lengthA -> (planA'=false) & (stepTaken'=false) & (waiting'=false) & (move'=1);
+
+  [] move=0 & !shieldPlanA & stepB<lengthB -> (planA'=false) & (stepTaken'=false) & (waiting'=false) & (move'=1);
+endmodule
+
+module shield
+  [planA] move=1 & planA ->  (shieldPlanA'=true)  & (move'=2);
+  [planB_Dev] move=1 & planA ->  (shieldPlanA'=false) & (move'=2);
+
+  [planB] move=1 & !planA -> (shieldPlanA'=false) & (move'=2);
+  [planA_Dev] move=1 & !planA -> (shieldPlanA'=true)  & (move'=2);
+endmodule
+
+module env
+  [] move=2 & shieldPlanA& stepA<lengthA -> 1 - blockedProb : (stepA'=min(stepA+1, lengthA)) & (stepTaken'=true) & (move'=0) + blockedProb : (stepA'=stepA) & (waiting'=true) & (move'=0);
+
+  [] move=2 & !shieldPlanA & stepB<lengthB -> (stepB'=min(stepB+1, lengthB)) & (stepTaken'=true) & (move'=0);
+
+  [] move=2 & (lengthB=stepB | lengthA=stepA) -> (stepTaken'=false) & (waiting'=false);
+endmodule
+
+rewards "travel_costs"
+  stepTaken : 1;
+  waiting : waiting_cost;
+endrewards

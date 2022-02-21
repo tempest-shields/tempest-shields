@@ -1,0 +1,119 @@
+// modeltype
+smg
+
+player controlledRobot
+  [e1], [w1], [n1], [s1]
+  , [pickUp], [deliver]
+endplayer
+
+player adverseryRobot
+  [e2], [w2], [n2], [s2]
+endplayer
+
+// (w+1)x16 - grid
+const int w;
+const int width = w;
+const int height = 15;
+
+const int xmin = 0;
+const int xmax = width;
+const int ymin = 0;
+const int ymax = height;
+
+// probabilty to get stuck
+const double stuckProp = 1/5;
+const double notstuckProp = 1 - stuckProp;
+
+global move : [0..1] init 0;
+
+formula robot1BetweenShelves = !(y1=0 | y1=height);
+formula robot2BetweenShelves = !(y2=0 | y2=height);
+formula robot1AboveShelves = mod(x1, 2) = 1;
+formula robot1BelowShelves = mod(x1, 2) = 1;
+formula robot2AboveShelves = mod(x2, 2) = 1;
+formula robot2BelowShelves = mod(x2, 2) = 1;
+formula robot1OpenRow = mod(y1, 5) = 0;
+formula robot2OpenRow = mod(y2, 5) = 0;
+
+
+//grid:
+
+//w=2 -> 3x16 grid:
+
+//__R  -> 1/5
+//_x_R -> 4/5
+//_x_
+//_x_
+//_x_
+//___
+//_x_
+//_x_
+//_x_
+//_x_
+//___
+//_x_
+//_x_
+//_x_
+//_x_
+//F__
+
+//w=4 -> 5x16 grid:
+
+//   R   -> 4/5
+//____R  -> 1/5
+//_x_x_R -> 4/5
+//_x_x_
+//_x_x_
+//_x_x_
+//_____
+//_x_x_
+//_x_x_
+//_x_x_
+//_x_x_
+//_____
+//_x_x_
+//_x_x_
+//_x_x_
+//_x_x_
+//F____
+
+//...
+
+//player shieldedRobot
+//player adverseryRobot (with prob of being stuck one time step)
+
+label "crash" = x1=x2 & y1=y2;
+
+module robot1
+  x1 : [0..width] init width;
+  y1 : [0..height] init 0;
+  picked_up : bool init false;
+
+  [e1]    move=0 & x1<xmax & (!robot1BetweenShelves | robot1OpenRow) -> (x1'=x1+1) & (move'=1);
+  [w1]    move=0 & x1>0    & (!robot1BetweenShelves | robot1OpenRow) -> (x1'=x1-1) & (move'=1);
+
+  [n1]    move=0 & y1>0    & !robot1BelowShelves -> (y1'=y1-1) & (move'=1);
+  [s1]    move=0 & y1<ymax & !robot1AboveShelves -> (y1'=y1+1) & (move'=1);
+
+  [pickUp] move=0 & !picked_up & x1=0 & y1=ymax -> (picked_up'=true) & (move'=1);
+  [deliver] move=0 & picked_up & x1=width & y1=0 -> (picked_up'=false) & (move'=1);
+endmodule
+
+module robot2
+  x2 : [0..width] init xmax;
+  y2 : [0..height] init 0;
+
+  [e2]    move=1 & x2<xmax & (!robot2BetweenShelves | robot2OpenRow) -> notstuckProp : (x2'=x2+1) & (move'=0) + stuckProp : (move'=0);
+  [w2]    move=1 & x2>0    & (!robot2BetweenShelves | robot2OpenRow) -> notstuckProp : (x2'=x2-1) & (move'=0) + stuckProp : (move'=0);
+
+  [n2]    move=1 & y2>0    & !robot2BelowShelves -> notstuckProp : (y2'=y2-1) & (move'=0) + stuckProp : (move'=0);
+  [s2]    move=1 & y2<ymax & !robot2AboveShelves -> notstuckProp : (y2'=y2+1) & (move'=0) + stuckProp : (move'=0);
+
+  //[stay2] move=1 & true -> (move'=0);
+endmodule
+
+rewards
+  true : -1;
+  x1=x2 & y1=y2 : -25;
+  [deliver] true : 100;
+endrewards

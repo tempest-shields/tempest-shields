@@ -1,0 +1,58 @@
+#!/bin/sh
+
+VALID_ARGS="aseidwc:p:"
+BUILDSCHED=0
+VERBOSESHIELDS=0
+VERBOSESTATES=0
+WAIT=0
+DEBUG=0
+ANALYSE=0
+CONSTANT=0
+CONSTANTS=""
+PRECISION=0
+PRECISION_SET=0
+
+while getopts $VALID_ARGS arg
+do
+    case $arg in
+        s) BUILDSCHED=1 ;;
+        e) VERBOSESHIELDS=1 ;;
+        i) VERBOSESTATES=1 ;;
+        a) ANALYSE=1 ;;
+        d) DEBUG=1 ;;
+        w) WAIT=1 ;;
+        c) CONSTANT=1 && CONSTANTS="$OPTARG" ;;
+        p) PRECISION=$OPTARG && PRECISION_SET=1 ;;
+        ?) echo "Invalid usage" ;;
+    esac
+done
+shift $(($OPTIND -1))
+
+export BUILDSCHED
+export DEBUG
+export CONSTANT
+export CONSTANTS
+export PRECISION
+export PRECISION_SET
+
+first=1
+for model in $@; do
+    export model
+    [ $WAIT -eq 1 ] && ( [ $first -eq 1 ] && first=0 || ( printf "\nEnter to continue... " ; read ) )
+
+
+    /tempest-shields/build/bin/storm \
+        --prism "${model}/model.prism" \
+        --prop  "${model}/properties.prop" \
+        $( [ $VERBOSESHIELDS -eq 1 ] && echo "--buildchoicelab" ) \
+        $( [ $VERBOSESTATES -eq 1 ] && echo "--buildstateval" ) \
+        $( [ $BUILDSCHED -eq 1 ] && echo "--exportscheduler $model_${CONSTANTS}.sched" ) \
+        $( [ $DEBUG -eq 1 ] && echo '--debug' ) \
+        $( [ $CONSTANT -eq 1 ] && echo "--io:constants $CONSTANTS" ) \
+        $( [ $PRECISION_SET -eq 1 ] && echo "--precision $PRECISION" ) \
+        | tee ${model}_${CONSTANTS}.run
+
+    if [ $ANALYSE -eq 1 ]; then
+        less $model.run $( [ $BUILDSCHED -eq 1 ] && echo "$model.sched" ) $model.prism $model.prop
+    fi
+done
